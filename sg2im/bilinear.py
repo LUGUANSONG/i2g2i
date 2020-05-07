@@ -48,7 +48,9 @@ def crop_bbox_batch(feats, bbox, bbox_to_feats, HH, WW=None, backend='cudnn'):
   crops = torch.zeros(B, C, HH, WW, dtype=dtype, device=device)
   for i in range(N):
     idx = (bbox_to_feats.data == i).nonzero()
-    if idx.dim() == 0:
+    # if idx.dim() == 0:
+    # from torch 0.3 to 0.4
+    if idx.dim() <= 1:
       continue
     idx = idx.view(-1)
     n = idx.size(0)
@@ -61,7 +63,7 @@ def crop_bbox_batch(feats, bbox, bbox_to_feats, HH, WW=None, backend='cudnn'):
 
 def _invperm(p):
   N = p.size(0)
-  eye = torch.arange(0, N).type_as(p)
+  eye = torch.arange(0, N).type_as(p).to(p.device)
   pp = (eye[:, None] == p).nonzero()[:, 1]
   return pp
 
@@ -75,7 +77,9 @@ def crop_bbox_batch_cudnn(feats, bbox, bbox_to_feats, HH, WW=None):
   feats_flat, bbox_flat, all_idx = [], [], []
   for i in range(N):
     idx = (bbox_to_feats.data == i).nonzero()
-    if idx.dim() == 0:
+    # if idx.dim() == 0:
+    # from torch 0.3 to 0.4
+    if idx.dim() <= 1:
       continue
     idx = idx.view(-1)
     n = idx.size(0)
@@ -94,7 +98,7 @@ def crop_bbox_batch_cudnn(feats, bbox, bbox_to_feats, HH, WW=None):
   # simply return them; otherwise we need to permute crops by the inverse
   # permutation from all_idx.
   all_idx = torch.cat(all_idx, dim=0)
-  eye = torch.arange(0, B).type_as(all_idx)
+  eye = torch.arange(0, B).type_as(all_idx).to(all_idx.device)
   if (all_idx == eye).all():
     return crops
   return crops[_invperm(all_idx)]

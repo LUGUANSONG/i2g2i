@@ -15,3 +15,12 @@ CUDA_VISIBLE_DEVICES=1 python combine_sg2im_neural_motifs/train.py -b 12 -ckpt v
 v100
 CUDA_VISIBLE_DEVICES=0 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 3 \
 --output_dir ../detector-sg2im-checkpoints/vg128 --print_every 100 --image_size 128,128 --num_val_samples 128
+
+
+8 v100
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 4 \
+--output_dir ../detector-sg2im-checkpoints/vg128 --print_every 100 --image_size 128,128 --num_val_samples 128
+
+
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train.py -b 2 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 2 \
+--output_dir ../detector-sg2im-checkpoints/vg128_debug --print_every 100 --image_size 128,128 --num_val_samples 128

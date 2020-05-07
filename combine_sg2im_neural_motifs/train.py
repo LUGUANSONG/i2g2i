@@ -292,6 +292,7 @@ def check_model(args, t, loader, model):
       # samples[k] = imagenet_deprocess_batch(v, rescale=False)
       images = images * torch.tensor([0.229, 0.224, 0.225], device=images.device).reshape(1, 3, 1, 1)
       images = images + torch.tensor([0.485, 0.456, 0.406], device=images.device).reshape(1, 3, 1, 1)
+      images = images.clamp(min=0, max=1)
       samples[k] = images
 
     mean_losses = {k: np.mean(v) for k, v in all_losses.items()}
@@ -351,6 +352,8 @@ def main(args):
   check_args(args)
   float_dtype = torch.cuda.FloatTensor
   long_dtype = torch.cuda.LongTensor
+  detector_gather_device = args.num_gpus - 1
+  sg2im_device = torch.device(args.num_gpus - 1)
   if not exists(args.output_dir):
       os.makedirs(args.output_dir)
   summary_writer = SummaryWriter(args.output_dir)
@@ -360,9 +363,11 @@ def main(args):
   vocab = {
     'object_idx_to_name': train_detector.train.ind_to_classes,
   }
-  model, model_kwargs = build_model(args) #, vocab)
-  model.type(float_dtype)
-  model = DataParallel(model, list(range(args.ngpu)))
+  model, model_kwargs = build_model(args) #, vocab)print(type(batch.imgs), len(batch.imgs), type(batch.imgs[0]))
+
+  # model.type(float_dtype)
+  model = model.to(sg2im_device)
+  # model = DataParallel(model, list(range(args.num_gpus)))
   print(model)
 
   optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
@@ -372,16 +377,18 @@ def main(args):
   gan_g_loss, gan_d_loss = get_gan_losses(args.gan_loss_type)
 
   if obj_discriminator is not None:
-    obj_discriminator.type(float_dtype)
-    obj_discriminator = DataParallel(obj_discriminator, list(range(args.ngpu)))
+    # obj_discriminator.type(float_dtype)
+    obj_discriminator = obj_discriminator.to(sg2im_device)
+    # obj_discriminator = DataParallel(obj_discriminator, list(range(args.num_gpus)))
     obj_discriminator.train()
     print(obj_discriminator)
     optimizer_d_obj = torch.optim.Adam(obj_discriminator.parameters(),
                                        lr=args.learning_rate)
 
   if img_discriminator is not None:
-    img_discriminator.type(float_dtype)
-    img_discriminator = DataParallel(img_discriminator, list(range(args.ngpu)))
+    # img_discriminator.type(float_dtype)
+    img_discriminator = img_discriminator.to(sg2im_device)
+    # img_discriminator = DataParallel(img_discriminator, list(range(args.num_gpus)))
     img_discriminator.train()
     print(img_discriminator)
     optimizer_d_img = torch.optim.Adam(img_discriminator.parameters(),
@@ -395,15 +402,15 @@ def main(args):
     print('Restoring from checkpoint:')
     print(restore_path)
     checkpoint = torch.load(restore_path)
-    model.module.load_state_dict(checkpoint['model_state'])
+    model.load_state_dict(checkpoint['model_state'])
     optimizer.load_state_dict(checkpoint['optim_state'])
 
     if obj_discriminator is not None:
-      obj_discriminator.module.load_state_dict(checkpoint['d_obj_state'])
+      obj_discriminator.load_state_dict(checkpoint['d_obj_state'])
       optimizer_d_obj.load_state_dict(checkpoint['d_obj_optim_state'])
 
     if img_discriminator is not None:
-      img_discriminator.module.load_state_dict(checkpoint['d_img_state'])
+      img_discriminator.load_state_dict(checkpoint['d_img_state'])
       optimizer_d_img.load_state_dict(checkpoint['d_img_optim_state'])
 
     t = checkpoint['counters']['t']
@@ -474,12 +481,23 @@ def main(args):
         # model_out = model(objs, triples, obj_to_img,
         #                   boxes_gt=model_boxes, masks_gt=model_masks)
         # imgs_pred, boxes_pred, masks_pred, predicate_scores = model_out
+        imgs = F.interpolate(batch.imgs, size=args.image_size).to(sg2im_device)
         with torch.no_grad():
+          if args.num_gpus > 2:
+            result = train_detector.detector.__getitem__(batch, target_device=detector_gather_device)
+          else:
             result = train_detector.detector[batch]
-        imgs = F.interpolate(batch.imgs, size=args.image_size)
         objs = result.obj_preds
-        boxes = result.rm_box_priors / train_detector.IM_SCALE
+        boxes = result.rm_box_priors
         obj_to_img = result.im_inds
+        obj_fmap = result.obj_fmap
+        if args.num_gpus == 2:
+          objs = objs.to(sg2im_device)
+          boxes = boxes.to(sg2im_device)
+          obj_to_img = obj_to_img.to(sg2im_device)
+          obj_fmap = obj_fmap.to(sg2im_device)
+
+        boxes /= train_detector.IM_SCALE
         # check if all image have detection
         cnt = torch.zeros(len(imgs)).byte()
         cnt[obj_to_img] += 1
@@ -495,7 +513,6 @@ def main(args):
           obj_to_img = obj_to_img_new
 
         # assert (cnt > 0).sum() == len(imgs), "some imgs have no detection"
-        obj_fmap = result.obj_fmap
         model_out = model(obj_to_img, boxes, obj_fmap)
         imgs_pred = model_out
 
@@ -503,7 +520,7 @@ def main(args):
         # Skip the pixel loss if using GT boxes
         # skip_pixel_loss = (model_boxes is None)
         skip_pixel_loss = True
-        total_loss, losses =  calculate_model_losses(
+        total_loss, losses = calculate_model_losses(
                                 args, skip_pixel_loss, model, imgs, imgs_pred)
 
       if obj_discriminator is not None:
@@ -624,14 +641,14 @@ def main(args):
         for k, v in val_losses.items():
           checkpoint['val_losses'][k].append(v)
           summary_writer.add_scalar("val_%s" % k, v, t)
-        checkpoint['model_state'] = model.module.state_dict()
+        checkpoint['model_state'] = model.state_dict()
 
         if obj_discriminator is not None:
-          checkpoint['d_obj_state'] = obj_discriminator.module.state_dict()
+          checkpoint['d_obj_state'] = obj_discriminator.state_dict()
           checkpoint['d_obj_optim_state'] = optimizer_d_obj.state_dict()
 
         if img_discriminator is not None:
-          checkpoint['d_img_state'] = img_discriminator.module.state_dict()
+          checkpoint['d_img_state'] = img_discriminator.state_dict()
           checkpoint['d_img_optim_state'] = optimizer_d_img.state_dict()
 
         checkpoint['optim_state'] = optimizer.state_dict()

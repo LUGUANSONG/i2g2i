@@ -25,21 +25,24 @@ from PIL import Image, ImageDraw, ImageFont
 cudnn.benchmark = True
 conf = ModelConfig()
 
+if conf.num_gpus > 1:
+    detector_num_gpus = conf.num_gpus - 1
+
 if conf.coco:
     train, val = CocoDetection.splits()
     val.ids = val.ids[:conf.val_size]
     train.ids = train.ids
     train_loader, val_loader = CocoDataLoader.splits(train, val, batch_size=conf.batch_size,
                                                      num_workers=conf.num_workers,
-                                                     num_gpus=conf.num_gpus)
+                                                     num_gpus=detector_num_gpus)
 else:
     train, val, _ = VG.splits(num_val_im=conf.val_size, filter_non_overlap=False,
                               filter_empty_rels=False, use_proposals=conf.use_proposals)
     train_loader, val_loader = VGDataLoader.splits(train, val, batch_size=conf.batch_size,
                                                    num_workers=conf.num_workers,
-                                                   num_gpus=conf.num_gpus)
+                                                   num_gpus=detector_num_gpus)
 
-detector = ObjectDetector(classes=train.ind_to_classes, num_gpus=conf.num_gpus,
+detector = ObjectDetector(classes=train.ind_to_classes, num_gpus=detector_num_gpus,
                           mode='refinerels' if not conf.use_proposals else 'proposals', use_resnet=conf.use_resnet)
 # print(detector)
 # os._exit(0)

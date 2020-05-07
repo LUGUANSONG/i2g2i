@@ -427,7 +427,7 @@ class ObjectDetector(nn.Module):
         nms_boxes = torch.cat((rois[:, 1:][nms_inds][:, None], boxes[nms_inds][:, 1:]), 1)
         return nms_inds, nms_scores, nms_labels, nms_boxes_assign, nms_boxes, inds[nms_inds]
 
-    def __getitem__(self, batch):
+    def __getitem__(self, batch, target_device=0):
         """ Hack to do multi-GPU training"""
         batch.scatter()
         if self.num_gpus == 1:
@@ -439,7 +439,7 @@ class ObjectDetector(nn.Module):
         if any([x.is_none() for x in outputs]):
             assert not self.training
             return None
-        return gather_res(outputs, 0, dim=0)
+        return gather_res(outputs, target_device, dim=0)
 
 
 def filter_det(scores, boxes, start_ind=0, max_per_img=100, thresh=0.001, pre_nms_topn=6000,
