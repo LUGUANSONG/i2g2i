@@ -471,11 +471,39 @@ class RelModel(nn.Module):
         """
         result = self.detector(x, im_sizes, image_offset, gt_boxes, gt_classes, gt_rels, proposals,
                                train_anchor_inds, return_fmap=True)
+        '''
+        return Result(
+            od_obj_dists=od_obj_dists, # 1
+            rm_obj_dists=obj_dists, # 2
+            obj_scores=nms_scores, # 3
+            obj_preds=nms_preds, # 4
+            obj_fmap=obj_fmap, # 5
+            od_box_deltas=od_box_deltas, # 6
+            rm_box_deltas=box_deltas, # 7
+            od_box_targets=bbox_targets, # 8
+            rm_box_targets=bbox_targets, # 9
+            od_box_priors=od_box_priors, # 10
+            rm_box_priors=box_priors, # 11
+            boxes_assigned=nms_boxes_assign, # 12
+            boxes_all=nms_boxes, # 13
+            od_obj_labels=obj_labels, # 14
+            rm_obj_labels=rm_obj_labels, # 15
+            rpn_scores=rpn_scores, # 16
+            rpn_box_deltas=rpn_box_deltas, # 17
+            rel_labels=rel_labels, # 18
+            im_inds=im_inds, # 19
+            fmap=fmap if return_fmap else None, # 20
+        )
+        '''
         if result.is_none():
             return ValueError("heck")
 
         im_inds = result.im_inds - image_offset
         boxes = result.rm_box_priors
+        print("*** RelModel.forward ***")
+        print("im_sizes", im_sizes)
+        print("boxes", boxes)
+        print("im_inds", im_inds)
 
         if self.training and result.rel_labels is None:
             assert self.mode == 'sgdet'

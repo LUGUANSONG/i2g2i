@@ -14,7 +14,9 @@ def apply_nms(scores, boxes,  pre_nms_topn=12000, post_nms_topn=2000, boxes_per_
     if boxes_per_im is None:
         boxes_per_im = [boxes.size(0)]
 
-
+    # print("*** apply_nms ***")
+    # print("pre_nms_topn", pre_nms_topn)
+    # print("post_nms_topn", post_nms_topn)
     s = 0
     keep = []
     im_per = []
@@ -42,4 +44,8 @@ def _nms_single_im(scores, boxes,  pre_nms_topn=12000, post_nms_topn=2000, nms_t
     num_out = min(num_out, post_nms_topn)
     keep = keep[:num_out].long()
     keep = idx[keep.cuda(scores.get_device())]
+    # print("*** _nms_single_im ***")
+    # print("pre_nms_topn", pre_nms_topn)
+    # print("post_nms_topn", post_nms_topn)
+    # print("keep.shape", keep.shape)
     return keep

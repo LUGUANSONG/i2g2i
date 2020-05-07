@@ -12,7 +12,7 @@ CUDA_PATH=/usr/local/cuda/
 #   35                    K40, K20
 #   30                    K10, Grid K520 (AWS G2)
 
-CUDA_MODELS=(52 61)
+CUDA_MODELS=(70)
 
 # Nvidia doesn't guarantee binary compatability across GPU versions.
 # However, binary compatibility within one GPU generation can be guaranteed

@@ -98,3 +98,15 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+vg-faster-rcnn.tar
+lib/*/*.so
+lib/*/*/*.so
+lib/*/*/build
+lib/*/*/_ext
+.idea
+lib/*/*/*/*.o
+lib/*/*/*/*/*.o
+checkpoints/*
+data/*
+

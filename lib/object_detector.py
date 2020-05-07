@@ -17,6 +17,7 @@ from lib.pytorch_misc import enumerate_by_image, gather_nd, diagonal_inds, Flatt
 from torchvision.models.vgg import vgg16
 from torchvision.models.resnet import resnet101
 from torch.nn.parallel._functions import Gather
+from termcolor import colored
 
 
 class Result(object):
@@ -135,6 +136,7 @@ class ObjectDetector(nn.Module):
         """
         feature_pool = RoIAlignFunction(self.pooling_size, self.pooling_size, spatial_scale=1 / 16)(
             self.compress(features) if self.use_resnet else features, rois)
+        # print("ObjectDetector.obj_feature_map feature_pool.shape", feature_pool.shape)
         return self.roi_fmap(feature_pool.view(rois.size(0), -1))
 
     def rpn_boxes(self, fmap, im_sizes, image_offset, gt_boxes=None, gt_classes=None, gt_rels=None,
@@ -151,11 +153,15 @@ class ObjectDetector(nn.Module):
         :return:
         """
         rpn_feats = self.rpn_head(fmap)
+        # print("*** ObjectDetector.rpn_boxes ***")
+        # print("fmap.shape", fmap.shape) # [6, 512, 37, 37]
+        # print("rpn_feats.shape", rpn_feats.shape) # [6, 37, 37, 20, 6]
         rois = self.rpn_head.roi_proposals(
             rpn_feats, im_sizes, nms_thresh=0.7,
             pre_nms_topn=12000 if self.training and self.mode == 'rpntrain' else 6000,
             post_nms_topn=2000 if self.training and self.mode == 'rpntrain' else 1000,
         )
+        # print("rois.shape", rois.shape) # [6000, 5]
         if self.training:
             if gt_boxes is None or gt_classes is None or train_anchor_inds is None:
                 raise ValueError(
@@ -188,7 +194,8 @@ class ObjectDetector(nn.Module):
                 rel_labels = None
 
         else:
-            all_rois = Variable(rois, volatile=True)
+            # print("self not training")
+            all_rois = Variable(rois) #, volatile=True)
             labels = None
             bbox_targets = None
             rel_labels = None
@@ -251,7 +258,7 @@ class ObjectDetector(nn.Module):
             # RETRAINING FOR DETECTION HERE.
             all_rois = torch.cat((all_rois, Variable(rois)), 0)
         else:
-            all_rois = Variable(rois, volatile=True)
+            all_rois = Variable(rois) #, volatile=True)
             labels = None
             bbox_targets = None
 
@@ -290,6 +297,9 @@ class ObjectDetector(nn.Module):
         :return: If train:
         """
         fmap = self.feature_map(x)
+        # print("*** ObjectDetector.forward ***")
+        # print("x.shape", x.shape) # [6, 3, 592, 592]
+        # print("fmap.shape", fmap.shape) # [6, 512, 37, 37]
 
         # Get boxes from RPN
         rois, obj_labels, bbox_targets, rpn_scores, rpn_box_deltas, rel_labels = \
@@ -301,6 +311,9 @@ class ObjectDetector(nn.Module):
         od_obj_dists = self.score_fc(obj_fmap)
         od_box_deltas = self.bbox_fc(obj_fmap).view(
             -1, len(self.classes), 4) if self.mode != 'gtbox' else None
+        # print("obj_fmap.shape", obj_fmap.shape) # [6000, 4096]
+        # print("od_obj_dists.shape", od_obj_dists.shape) # [6000, 151]
+        # print("od_box_deltas.shape", od_box_deltas.shape) # [6000, 151, 4]
 
         od_box_priors = rois[:, 1:]
 
@@ -310,11 +323,18 @@ class ObjectDetector(nn.Module):
                 rois,
                 od_box_deltas, im_sizes,
             )
-            im_inds = nms_imgs + image_offset
+            # print("nms_inds.shape", nms_inds.shape) # [384]
+            # print("nms_scores.shape", nms_scores.shape) # [384]
+            # print("nms_preds.shape", nms_preds.shape) # [384]
+            # print("nms_boxes_assign.shape", nms_boxes_assign.shape) # [384, 4]
+            # print("nms_boxes.shape", nms_boxes.shape) # [384, 151, 4]
+            # print("nms_imgs.shape", nms_imgs.shape) # [384]
+
+            im_inds = nms_imgs + image_offset # [384]
             obj_dists = od_obj_dists[nms_inds]
-            obj_fmap = obj_fmap[nms_inds]
+            obj_fmap = obj_fmap[nms_inds] # [384, 4096]
             box_deltas = od_box_deltas[nms_inds]
-            box_priors = nms_boxes[:, 0]
+            box_priors = nms_boxes[:, 0] # [384, 4]
 
             if self.training and not self.mode == 'gtbox':
                 # NOTE: If we're doing this during training, we need to assign labels here.
@@ -338,26 +358,26 @@ class ObjectDetector(nn.Module):
             obj_dists = od_obj_dists
 
         return Result(
-            od_obj_dists=od_obj_dists,
-            rm_obj_dists=obj_dists,
-            obj_scores=nms_scores,
-            obj_preds=nms_preds,
-            obj_fmap=obj_fmap,
-            od_box_deltas=od_box_deltas,
-            rm_box_deltas=box_deltas,
-            od_box_targets=bbox_targets,
-            rm_box_targets=bbox_targets,
-            od_box_priors=od_box_priors,
-            rm_box_priors=box_priors,
-            boxes_assigned=nms_boxes_assign,
-            boxes_all=nms_boxes,
-            od_obj_labels=obj_labels,
-            rm_obj_labels=rm_obj_labels,
-            rpn_scores=rpn_scores,
-            rpn_box_deltas=rpn_box_deltas,
-            rel_labels=rel_labels,
-            im_inds=im_inds,
-            fmap=fmap if return_fmap else None,
+            od_obj_dists=od_obj_dists, # 1
+            rm_obj_dists=obj_dists, # 2
+            obj_scores=nms_scores, # 3 pick
+            obj_preds=nms_preds, # 4 pick
+            obj_fmap=obj_fmap, # 5 pick
+            od_box_deltas=od_box_deltas, # 6
+            rm_box_deltas=box_deltas, # 7
+            od_box_targets=bbox_targets, # 8
+            rm_box_targets=bbox_targets, # 9
+            od_box_priors=od_box_priors, # 10
+            rm_box_priors=box_priors, # 11 pick
+            boxes_assigned=nms_boxes_assign, # 12
+            boxes_all=nms_boxes, # 13
+            od_obj_labels=obj_labels, # 14
+            rm_obj_labels=rm_obj_labels, # 15
+            rpn_scores=rpn_scores, # 16
+            rpn_box_deltas=rpn_box_deltas, # 17
+            rel_labels=rel_labels, # 18
+            im_inds=im_inds, # 19 pick
+            fmap=fmap if return_fmap else None, # 20
         )
 
     def nms_boxes(self, obj_dists, rois, box_deltas, im_sizes):
@@ -436,7 +456,9 @@ def filter_det(scores, boxes, start_ind=0, max_per_img=100, thresh=0.001, pre_nm
     """
 
     valid_cls = (scores[:, 1:].data.max(0)[0] > thresh).nonzero() + 1
-    if valid_cls.dim() == 0:
+    # if valid_cls.dim() == 0:
+    # from torch 0.3 to 0.4
+    if valid_cls.dim() == 1:
         return None
 
     nms_mask = scores.data.clone()
@@ -451,19 +473,23 @@ def filter_det(scores, boxes, start_ind=0, max_per_img=100, thresh=0.001, pre_nm
                          nms_thresh=nms_thresh)
         nms_mask[:, c_i][keep] = 1
 
-    dists_all = Variable(nms_mask * scores.data, volatile=True)
+    dists_all = Variable(nms_mask * scores.data) #, volatile=True)
 
     if nms_filter_duplicates:
         scores_pre, labels_pre = dists_all.data.max(1)
         inds_all = scores_pre.nonzero()
-        assert inds_all.dim() != 0
+        # from torch 0.3 to 0.4
+        # assert inds_all.dim() != 0
+        assert inds_all.dim() > 1
         inds_all = inds_all.squeeze(1)
 
         labels_all = labels_pre[inds_all]
         scores_all = scores_pre[inds_all]
     else:
         nz = nms_mask.nonzero()
-        assert nz.dim() != 0
+        # from torch 0.3 to 0.4
+        # assert nz.dim() != 0
+        assert nz.dim() > 1
         inds_all = nz[:, 0]
         labels_all = nz[:, 1]
         scores_all = scores.data.view(-1)[inds_all * scores.data.size(1) + labels_all]
@@ -478,8 +504,8 @@ def filter_det(scores, boxes, start_ind=0, max_per_img=100, thresh=0.001, pre_nm
         idx = idx[:max_per_img]
 
     inds_all = inds_all[idx] + start_ind
-    scores_all = Variable(scores_all[idx], volatile=True)
-    labels_all = Variable(labels_all[idx], volatile=True)
+    scores_all = Variable(scores_all[idx]) #, volatile=True)
+    labels_all = Variable(labels_all[idx]) #, volatile=True)
     # dists_all = dists_all[idx]
 
     return inds_all, scores_all, labels_all
@@ -563,6 +589,10 @@ class RPNHead(nn.Module):
         :param im_sizes:        [batch_size, 3] numpy array of (h, w, scale)
         :return: ROIS: shape [a <=post_nms_topn, 5] array of ROIS.
         """
+        # print("*** RPNHead.roi_proposals ***")
+        # print("pre_nms_topn", pre_nms_topn) # 6000
+        # print("post_nms_topn", post_nms_topn) # 1000
+
         class_fmap = fmap[:, :, :, :, :2].contiguous()
 
         # GET THE GOOD BOXES AYY LMAO :')
@@ -598,6 +628,9 @@ class RPNHead(nn.Module):
 
 
 def filter_roi_proposals(box_preds, class_preds, boxes_per_im, nms_thresh=0.7, pre_nms_topn=12000, post_nms_topn=2000):
+    # print("*** filter_roi_proposals ***")
+    # print("pre_nms_topn", pre_nms_topn) # 6000
+    # print("post_nms_topn", post_nms_topn) # 1000
     inds, im_per = apply_nms(
         class_preds,
         box_preds,
@@ -609,6 +642,7 @@ def filter_roi_proposals(box_preds, class_preds, boxes_per_im, nms_thresh=0.7, p
     img_inds = torch.cat([val * torch.ones(i) for val, i in enumerate(im_per)], 0).cuda(
         box_preds.get_device())
     rois = torch.cat((img_inds[:, None], box_preds[inds]), 1)
+    # print("filter_roi_proposals rois.shape", rois.shape)
     return rois
 
 

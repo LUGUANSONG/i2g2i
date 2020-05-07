@@ -71,34 +71,37 @@ def get_optim(lr):
                                   verbose=True, threshold=0.0001, threshold_mode='abs', cooldown=1)
     return optimizer, scheduler
 
+if conf.ckpt is not None:
+    ckpt = torch.load(conf.ckpt)
+    if conf.ckpt.split('-')[-2].split('/')[-1] == 'vgrel':
+        print("Loading EVERYTHING")
+        start_epoch = ckpt['epoch']
 
-ckpt = torch.load(conf.ckpt)
-if conf.ckpt.split('-')[-2].split('/')[-1] == 'vgrel':
-    print("Loading EVERYTHING")
-    start_epoch = ckpt['epoch']
-
-    if not optimistic_restore(detector, ckpt['state_dict']):
+        if not optimistic_restore(detector, ckpt['state_dict']):
+            start_epoch = -1
+            # optimistic_restore(detector.detector, torch.load('checkpoints/vgdet/vg-28.tar')['state_dict'])
+    else:
         start_epoch = -1
-        # optimistic_restore(detector.detector, torch.load('checkpoints/vgdet/vg-28.tar')['state_dict'])
+        optimistic_restore(detector.detector, ckpt['state_dict'])
+
+        detector.roi_fmap[1][0].weight.data.copy_(ckpt['state_dict']['roi_fmap.0.weight'])
+        detector.roi_fmap[1][3].weight.data.copy_(ckpt['state_dict']['roi_fmap.3.weight'])
+        detector.roi_fmap[1][0].bias.data.copy_(ckpt['state_dict']['roi_fmap.0.bias'])
+        detector.roi_fmap[1][3].bias.data.copy_(ckpt['state_dict']['roi_fmap.3.bias'])
+
+        detector.roi_fmap_obj[0].weight.data.copy_(ckpt['state_dict']['roi_fmap.0.weight'])
+        detector.roi_fmap_obj[3].weight.data.copy_(ckpt['state_dict']['roi_fmap.3.weight'])
+        detector.roi_fmap_obj[0].bias.data.copy_(ckpt['state_dict']['roi_fmap.0.bias'])
+        detector.roi_fmap_obj[3].bias.data.copy_(ckpt['state_dict']['roi_fmap.3.bias'])
 else:
     start_epoch = -1
-    optimistic_restore(detector.detector, ckpt['state_dict'])
-
-    detector.roi_fmap[1][0].weight.data.copy_(ckpt['state_dict']['roi_fmap.0.weight'])
-    detector.roi_fmap[1][3].weight.data.copy_(ckpt['state_dict']['roi_fmap.3.weight'])
-    detector.roi_fmap[1][0].bias.data.copy_(ckpt['state_dict']['roi_fmap.0.bias'])
-    detector.roi_fmap[1][3].bias.data.copy_(ckpt['state_dict']['roi_fmap.3.bias'])
-
-    detector.roi_fmap_obj[0].weight.data.copy_(ckpt['state_dict']['roi_fmap.0.weight'])
-    detector.roi_fmap_obj[3].weight.data.copy_(ckpt['state_dict']['roi_fmap.3.weight'])
-    detector.roi_fmap_obj[0].bias.data.copy_(ckpt['state_dict']['roi_fmap.0.bias'])
-    detector.roi_fmap_obj[3].bias.data.copy_(ckpt['state_dict']['roi_fmap.3.bias'])
 
 detector.cuda()
 
 
 def train_epoch(epoch_num):
-    detector.train()
+    # detector.train()
+    detector.eval()
     tr = []
     start = time.time()
     for b, batch in enumerate(train_loader):
