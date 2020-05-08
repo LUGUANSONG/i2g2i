@@ -237,11 +237,23 @@ def check_model(args, t, loader, model):
       # model_masks = masks
       # model_out = model(objs, triples, obj_to_img, boxes_gt=boxes, masks_gt=model_masks)
       # imgs_pred, boxes_pred, masks_pred, predicate_scores = model_out
-      result = train_detector.detector[batch]
-      imgs = F.interpolate(batch.imgs, size=args.image_size)
+
+      imgs = F.interpolate(batch.imgs, size=args.image_size).to(args.sg2im_device)
+      if args.num_gpus > 2:
+        result = train_detector.detector.__getitem__(batch, target_device=args.detector_gather_device)
+      else:
+        result = train_detector.detector[batch]
       objs = result.obj_preds
-      boxes = result.rm_box_priors / train_detector.IM_SCALE
+      boxes = result.rm_box_priors
       obj_to_img = result.im_inds
+      obj_fmap = result.obj_fmap
+      if args.num_gpus == 2:
+        objs = objs.to(args.sg2im_device)
+        boxes = boxes.to(args.sg2im_device)
+        obj_to_img = obj_to_img.to(args.sg2im_device)
+        obj_fmap = obj_fmap.to(args.sg2im_device)
+      boxes = boxes / train_detector.IM_SCALE
+
       # check if all image have detection
       cnt = torch.zeros(len(imgs)).byte()
       cnt[obj_to_img] += 1
@@ -250,13 +262,12 @@ def check_model(args, t, loader, model):
         # print(obj_to_img)
         print(cnt)
         imgs = imgs[cnt]
-        obj_to_img_new = deepcopy(obj_to_img)
+        obj_to_img_new = obj_to_img.clone()
         for i in range(len(cnt)):
           if cnt[i] == 0:
             obj_to_img_new -= (obj_to_img > i).long()
         obj_to_img = obj_to_img_new
 
-      obj_fmap = result.obj_fmap
       model_out = model(obj_to_img, boxes, obj_fmap)
       imgs_pred = model_out
 
@@ -292,6 +303,10 @@ def check_model(args, t, loader, model):
       # samples[k] = imagenet_deprocess_batch(v, rescale=False)
       images = images * torch.tensor([0.229, 0.224, 0.225], device=images.device).reshape(1, 3, 1, 1)
       images = images + torch.tensor([0.485, 0.456, 0.406], device=images.device).reshape(1, 3, 1, 1)
+      images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
+      images_max = images.max(3)[0].max(2)[0].max(1)[0].reshape(len(images), 1, 1, 1)
+      images = images - images_min
+      images = images / (images_max - images_min)
       images = images.clamp(min=0, max=1)
       samples[k] = images
 
@@ -325,9 +340,9 @@ def calculate_model_losses(args, skip_pixel_loss, model, img, img_pred):
   total_loss = torch.zeros(1).to(img)
   losses = {}
 
-  l1_pixel_weight = args.l1_pixel_loss_weight
-  if skip_pixel_loss:
-    l1_pixel_weight = 0
+  l1_pixel_weight = args.l1_pixel_loss_weight * (1 - skip_pixel_loss)
+  # if skip_pixel_loss:
+  #   l1_pixel_weight = 0
   l1_pixel_loss = F.l1_loss(img_pred, img)
   total_loss = add_loss(total_loss, l1_pixel_loss, losses, 'L1_pixel_loss',
                         l1_pixel_weight)
@@ -354,6 +369,8 @@ def main(args):
   long_dtype = torch.cuda.LongTensor
   detector_gather_device = args.num_gpus - 1
   sg2im_device = torch.device(args.num_gpus - 1)
+  args.detector_gather_device = detector_gather_device
+  args.sg2im_device = sg2im_device
   if not exists(args.output_dir):
       os.makedirs(args.output_dir)
   summary_writer = SummaryWriter(args.output_dir)
@@ -506,7 +523,7 @@ def main(args):
           # print(obj_to_img)
           print(cnt)
           imgs = imgs[cnt]
-          obj_to_img_new = deepcopy(obj_to_img)
+          obj_to_img_new = obj_to_img.clone()
           for i in range(len(cnt)):
             if cnt[i] == 0:
               obj_to_img_new -= (obj_to_img > i).long()
@@ -519,7 +536,7 @@ def main(args):
       with timeit('loss', args.timing):
         # Skip the pixel loss if using GT boxes
         # skip_pixel_loss = (model_boxes is None)
-        skip_pixel_loss = True
+        skip_pixel_loss = False
         total_loss, losses = calculate_model_losses(
                                 args, skip_pixel_loss, model, imgs, imgs_pred)
 

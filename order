@@ -4,23 +4,76 @@ python models/train_rels.py -m sgdet -model motifnet -order leftright -nl_obj 2 
 
 python models/eval_detector.py -b 6 -lr 1e-3 -save_dir checkpoints/vgdet -ckpt vg-faster-rcnn.tar -nepoch 50 -ngpu 1 -nwork 3 -p 100 -clip 5
 
-
+gpu5 # manually skip l1 loss
 CUDA_VISIBLE_DEVICES=0 python combine_sg2im_neural_motifs/train.py -b 4 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 3 \
---output_dir ../detector-sg2im-checkpoints/vg128 --print_every 100 --image_size 128,128 --num_val_samples 128
+--output_dir ../detector-sg2im-checkpoints/vg128 --l1_pixel_loss_weight 0 --print_every 100 --image_size 128,128 --num_val_samples 128
 
+# manually skip l1 loss
 CUDA_VISIBLE_DEVICES=1 python combine_sg2im_neural_motifs/train.py -b 12 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 4 \
---output_dir ../detector-sg2im-checkpoints/vg64 --print_every 100 --image_size 64,64 --num_val_samples 128
+--output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
+
+export PYTHONPATH=$PYTHONPATH:/newNAS/Workspaces/UCGroup/gslu/aws_ailab/code/neural-motifs-sg2im
+
+CUDA_VISIBLE_DEVICES=0 python combine_sg2im_neural_motifs/test.py -b 1 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 4 \
+--output_dir ../detector-sg2im-checkpoints/vg128 --l1_pixel_loss_weight 0 --print_every 100 --image_size 128,128 --num_val_samples 128
+
+CUDA_VISIBLE_DEVICES=0 python combine_sg2im_neural_motifs/test.py -b 1 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 4 \
+--output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 10
 
 
-v100
+v100 # oom
 CUDA_VISIBLE_DEVICES=0 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 3 \
 --output_dir ../detector-sg2im-checkpoints/vg128 --print_every 100 --image_size 128,128 --num_val_samples 128
 
 
 8 v100
-CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 4 \
+# CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 4 \
 --output_dir ../detector-sg2im-checkpoints/vg128 --print_every 100 --image_size 128,128 --num_val_samples 128
 
+# stop
+CUDA_VISIBLE_DEVICES=1,2 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 8 \
+--output_dir ../detector-sg2im-checkpoints/vg128 --print_every 10 --checkpoint_every 10 --image_size 128,128 --num_val_samples 128
+
+# None
+CUDA_VISIBLE_DEVICES=0,3,4 python combine_sg2im_neural_motifs/train.py -b 1 -ckpt vg-faster-rcnn.tar -ngpu 3 -nwork 8 \
+--output_dir ../detector-sg2im-checkpoints/vg256 --print_every 100 --image_size 256,256 --num_val_samples 128
 
 CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train.py -b 2 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 2 \
 --output_dir ../detector-sg2im-checkpoints/vg128_debug --print_every 100 --image_size 128,128 --num_val_samples 128
+
+
+# manually skip l1 loss
+CUDA_VISIBLE_DEVICES=1,2 python combine_sg2im_neural_motifs/train.py -b 4 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 8 \
+--output_dir ../detector-sg2im-checkpoints/vg128_v2 --l1_pixel_loss_weight 0 --print_every 100 --image_size 128,128 --num_val_samples 128
+
+CUDA_VISIBLE_DEVICES=3,4 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 8 \
+--output_dir ../detector-sg2im-checkpoints/vg128_l1 --l1_pixel_loss_weight 1 --print_every 100 --image_size 128,128 --num_val_samples 128
+
+# manually skip l1 loss
+CUDA_VISIBLE_DEVICES=5,6,7 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 3 -nwork 8 \
+--output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
+
+CUDA_VISIBLE_DEVICES=0 python combine_sg2im_neural_motifs/train.py -b 12 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 8 \
+--output_dir ../detector-sg2im-checkpoints/vg64_l1 --l1_pixel_loss_weight 1 --print_every 100 --image_size 64,64 --num_val_samples 128
+
+
+CUDA_VISIBLE_DEVICES=1 python combine_sg2im_neural_motifs/test.py -b 1 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 1 \
+--output_dir ../detector-sg2im-checkpoints/vg128_v2 --l1_pixel_loss_weight 0 --print_every 100 --image_size 128,128 --num_val_samples 10
+
+CUDA_VISIBLE_DEVICES=1 python combine_sg2im_neural_motifs/test.py -b 1 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 1 \
+--output_dir ../detector-sg2im-checkpoints/vg128_l1 --l1_pixel_loss_weight 1 --print_every 100 --image_size 128,128 --num_val_samples 10
+
+# manually skip l1 loss
+CUDA_VISIBLE_DEVICES=1 python combine_sg2im_neural_motifs/test.py -b 1 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 1 \
+--output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 10
+
+CUDA_VISIBLE_DEVICES=1 python combine_sg2im_neural_motifs/test.py -b 1 -ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 1 \
+--output_dir ../detector-sg2im-checkpoints/vg64_l1 --l1_pixel_loss_weight 1 --print_every 100 --image_size 64,64 --num_val_samples 10
+
+# transfer to local
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@3.136.20.52:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/vg64/train \
+/newNAS/Workspaces/UCGroup/gslu/aws_ailab/code/8ka_vg64_train
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' \
+ubuntu@3.136.20.52:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/vg128_v2/train \
+/newNAS/Workspaces/UCGroup/gslu/aws_ailab/code/8ka_vg128_v2_train

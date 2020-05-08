@@ -25,6 +25,7 @@ from PIL import Image, ImageDraw, ImageFont
 cudnn.benchmark = True
 conf = ModelConfig()
 
+detector_num_gpus = conf.num_gpus
 if conf.num_gpus > 1:
     detector_num_gpus = conf.num_gpus - 1
 
