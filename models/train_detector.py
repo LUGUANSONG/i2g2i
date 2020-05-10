@@ -9,6 +9,7 @@ from torch import optim
 import torch
 import pandas as pd
 import time
+from tqdm import tqdm
 import os
 from config import ModelConfig, FG_FRACTION, RPN_FG_FRACTION, IM_SCALE, BOX_SCALE
 from torch.nn import functional as F
@@ -61,7 +62,7 @@ def train_epoch(epoch_num):
     detector.train()
     tr = []
     start = time.time()
-    for b, batch in enumerate(train_loader):
+    for b, batch in enumerate(tqdm(train_loader, desc="Train Detector Epoch %d" % epoch_num), total=len(train_loader)):
         tr.append(train_batch(batch))
 
         if b % conf.print_interval == 0 and b >= conf.print_interval:

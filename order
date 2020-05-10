@@ -84,6 +84,16 @@ CUDA_VISIBLE_DEVICES=3,4 python combine_sg2im_neural_motifs/train_all_in_one.py 
 --output_dir ../detector-sg2im-checkpoints/vg128_debug --l1_pixel_loss_weight 1 --print_every 10 --checkpoint_every 10 --image_size 128,128 \
 --num_val_samples 128
 
-CUDA_VISIBLE_DEVICES=3,4 python combine_sg2im_neural_motifs/train_all_in_one.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 8 \
---output_dir ../detector-sg2im-checkpoints/vg64_debug --l1_pixel_loss_weight 1 --print_every 10 --checkpoint_every 10 \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python combine_sg2im_neural_motifs/train_all_in_one.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 4 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_debug --l1_pixel_loss_weight 1 --print_every 200 --checkpoint_every 1000 \
 --image_size 64,64 --num_val_samples 128
+
+export PYTHONPATH=$PYTHONPATH:/home/ubuntu/scene_graph/code/i2g2i
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./guansong_aws.pem ubuntu@18.191.153.185:/home/ubuntu/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./neural-motifs-data ubuntu@18.191.153.185:/home/ubuntu/scene_graph/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./code/i2g2i ubuntu@18.191.153.185:/home/ubuntu/scene_graph/code
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./py3.6_pytorch0.4.1 ubuntu@18.191.153.185:/home/ubuntu/scene_graph/
+
+python models/train_detector.py -b 6 -lr 1e-3 -save_dir checkpoints/vgdet -nepoch 50 -ngpu 1 -nwork 3 -p 100 -clip 5
+
