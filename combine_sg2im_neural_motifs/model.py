@@ -88,10 +88,10 @@ class neural_motifs_sg2im_model(nn.Module):
         self.detector = ObjectDetector(classes=ind_to_classes, num_gpus=args.num_gpus,
                                     mode='refinerels' if not args.use_proposals else 'proposals',
                                     use_resnet=args.use_resnet)
-
         if args.ckpt is not None:
             ckpt = torch.load(args.ckpt)
             optimistic_restore(self.detector, ckpt['state_dict'])
+        self.detector.eval()
 
         # define and initial generator, image_discriminator, obj_discriminator,
         # and corresponding optimizer
