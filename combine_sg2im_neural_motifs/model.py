@@ -1,4 +1,4 @@
-from lib.object_detector import ObjectDetector, gather_res
+from lib.object_detector import ObjectDetector, gather_res, Result
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -82,6 +82,7 @@ def build_img_discriminator(args):
 
 class neural_motifs_sg2im_model(nn.Module):
     def __init__(self, args, ind_to_classes):
+        super(neural_motifs_sg2im_model, self).__init__()
         self.args = args
 
         # define and initial detector
@@ -219,17 +220,31 @@ class neural_motifs_sg2im_model(nn.Module):
             d_scores_fake_img = self.img_discriminator(imgs_fake)
             d_scores_real_img = self.img_discriminator(imgs)
 
-        return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
-               d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img
+        return Result(
+            imgs=imgs,
+            imgs_pred=imgs_pred,
+            objs=objs,
+            g_scores_fake_crop=g_scores_fake_crop,
+            g_obj_scores_fake_crop=g_obj_scores_fake_crop,
+            g_scores_fake_img=g_scores_fake_img,
+            d_scores_fake_crop=d_scores_fake_crop,
+            d_obj_scores_fake_crop=d_obj_scores_fake_crop,
+            d_scores_real_crop=d_scores_real_crop,
+            d_obj_scores_real_crop=d_obj_scores_real_crop,
+            d_scores_fake_img=d_scores_fake_img,
+            d_scores_real_img=d_scores_real_img
+        )
+        # return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
+        #        d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img
 
     def __getitem__(self, batch):
         """ Hack to do multi-GPU training"""
         batch.scatter()
-        if self.num_gpus == 1:
+        if self.args.num_gpus == 1:
             return self(*batch[0])
 
-        replicas = nn.parallel.replicate(self, devices=list(range(self.num_gpus)))
-        outputs = nn.parallel.parallel_apply(replicas, [batch[i] for i in range(self.num_gpus)])
+        replicas = nn.parallel.replicate(self, devices=list(range(self.args.num_gpus)))
+        outputs = nn.parallel.parallel_apply(replicas, [batch[i] for i in range(self.args.num_gpus)])
 
         if self.training:
             return gather_res(outputs, 0, dim=0)

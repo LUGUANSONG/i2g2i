@@ -63,9 +63,13 @@ def check_model(args, loader, model):
     all_losses = defaultdict(list)
     with torch.no_grad():
         for batch in loader:
+            result = all_in_one_model[batch]
             imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
             d_scores_fake_crop, d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, \
-            d_scores_fake_img, d_scores_real_img = model[batch]
+            d_scores_fake_img, d_scores_real_img = result.imgs, result.imgs_pred, result.objs, \
+            result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img, \
+            result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
+            result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img
 
             total_loss, losses = calculate_model_losses(
                 args, imgs, imgs_pred)
@@ -151,10 +155,13 @@ def main(args):
             t += 1
 
             with timeit('forward', args.timing):
+                result = all_in_one_model[batch]
                 imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
                 d_scores_fake_crop, d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, \
-                d_scores_fake_img, d_scores_real_img \
-                = all_in_one_model[batch]
+                d_scores_fake_img, d_scores_real_img = result.imgs, result.imgs_pred, result.objs, \
+                result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img, \
+                result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
+                result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img
             with timeit('loss', args.timing):
                 total_loss, losses = calculate_model_losses(
                     args, imgs, imgs_pred)
