@@ -1,10 +1,9 @@
-from lib.object_detector import ObjectDetector, gather_res, Result
+from lib.object_detector import ObjectDetector, gather_res
 import torch
 import torch.nn as nn
 import torch.nn.parallel
 from sg2im.model import Sg2ImModel
 from combine_sg2im_neural_motifs.discriminators import PatchDiscriminator, AcCropDiscriminator
-from sg2im.losses import get_gan_losses
 import os
 from collections import defaultdict
 from lib.pytorch_misc import optimistic_restore
@@ -250,3 +249,22 @@ class neural_motifs_sg2im_model(nn.Module):
             return gather_res(outputs, 0, dim=0)
         return outputs
 
+
+class Result(object):
+    def __init__(self, imgs=None,
+            imgs_pred=None,
+            objs=None,
+            g_scores_fake_crop=None,
+            g_obj_scores_fake_crop=None,
+            g_scores_fake_img=None,
+            d_scores_fake_crop=None,
+            d_obj_scores_fake_crop=None,
+            d_scores_real_crop=None,
+            d_obj_scores_real_crop=None,
+            d_scores_fake_img=None,
+            d_scores_real_img=None):
+        self.__dict__.update(locals())
+        del self.__dict__['self']
+
+    def is_none(self):
+        return all([v is None for k, v in self.__dict__.items() if k != 'self'])
