@@ -40,7 +40,7 @@ from sg2im.data.vg import VgSceneGraphDataset, vg_collate_fn
 from sg2im.discriminators import PatchDiscriminator, AcCropDiscriminator
 from sg2im.losses import get_gan_losses
 from sg2im.metrics import jaccard
-from sg2im.model import Sg2ImModel
+from combine_sg2im_neural_motifs.sg2im_model import Sg2ImModel
 from sg2im.utils import int_tuple, float_tuple, str_tuple
 from sg2im.utils import timeit, bool_flag, LossManager
 

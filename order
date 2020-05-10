@@ -90,10 +90,28 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python combine_sg2im_neural_motifs/train_al
 
 export PYTHONPATH=$PYTHONPATH:/home/ubuntu/scene_graph/code/i2g2i
 
-rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./guansong_aws.pem ubuntu@18.191.153.185:/home/ubuntu/
+rsync -avz --progress -e 'ssh -i ./htong_asail_oregon.pem' ./guansong_aws.pem ubuntu@35.167.208.164:/home/ubuntu/scene_graph
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./neural-motifs-data ubuntu@18.191.153.185:/home/ubuntu/scene_graph/
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./code/i2g2i ubuntu@18.191.153.185:/home/ubuntu/scene_graph/code
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./py3.6_pytorch0.4.1 ubuntu@18.191.153.185:/home/ubuntu/scene_graph/
 
-CUDA_VISIBLE_DEVICES=4 python models/train_detector.py -b 6 -lr 1e-3 -save_dir checkpoints/vgdet -nepoch 50 -ngpu 1 -nwork 3 -p 100 -clip 5
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/datasets/vg/images.zip \
+ubuntu@18.191.153.185:/home/ubuntu/scene_graph/datasets/vg/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/datasets/vg/images2.zip \
+ubuntu@18.191.153.185:/home/ubuntu/scene_graph/datasets/vg/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/datasets/vg/train.h5 \
+ubuntu@18.191.153.185:/home/ubuntu/scene_graph/datasets/vg/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/datasets/vg/val.h5 \
+ubuntu@18.191.153.185:/home/ubuntu/scene_graph/datasets/vg/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/datasets/vg/test.h5 \
+ubuntu@18.191.153.185:/home/ubuntu/scene_graph/datasets/vg/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/datasets/vg/vocab.json \
+ubuntu@18.191.153.185:/home/ubuntu/scene_graph/datasets/vg/
 
+# train detector
+python models/train_detector.py -b 2 -lr 1e-3 -save_dir checkpoints/vgdet -nepoch 50 -ngpu 8 -nwork 3 -p 100 -clip 5
+2.5 items/s with 8 gpu
+
+# sg2im on vg
+CUDA_VISIBLE_DEVICES=1 python sg2im_scripts/train.py --dataset vg --batch_size 16
+12 items/s with 1 gpu
