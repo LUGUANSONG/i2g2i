@@ -111,7 +111,7 @@ class neural_motifs_sg2im_model(nn.Module):
 
         if self.img_discriminator is not None:
             self.img_discriminator.train()
-            self.optimizer.optimizer_d_img = torch.optim.Adam(self.img_discriminator.parameters(), lr=args.learning_rate)
+            self.optimizer_d_img = torch.optim.Adam(self.img_discriminator.parameters(), lr=args.learning_rate)
 
         restore_path = None
         if args.restore_from_checkpoint:
