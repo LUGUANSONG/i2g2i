@@ -95,5 +95,5 @@ rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./neural-motifs-data ubuntu
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./code/i2g2i ubuntu@18.191.153.185:/home/ubuntu/scene_graph/code
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./py3.6_pytorch0.4.1 ubuntu@18.191.153.185:/home/ubuntu/scene_graph/
 
-python models/train_detector.py -b 6 -lr 1e-3 -save_dir checkpoints/vgdet -nepoch 50 -ngpu 1 -nwork 3 -p 100 -clip 5
+CUDA_VISIBLE_DEVICES=4 python models/train_detector.py -b 6 -lr 1e-3 -save_dir checkpoints/vgdet -nepoch 50 -ngpu 1 -nwork 3 -p 100 -clip 5
 

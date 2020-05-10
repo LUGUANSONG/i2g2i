@@ -62,7 +62,7 @@ def train_epoch(epoch_num):
     detector.train()
     tr = []
     start = time.time()
-    for b, batch in enumerate(tqdm(train_loader, desc="Train Detector Epoch %d" % epoch_num), total=len(train_loader)):
+    for b, batch in enumerate(tqdm(train_loader, desc="Train Detector Epoch %d" % epoch_num, total=len(train_loader))):
         tr.append(train_batch(batch))
 
         if b % conf.print_interval == 0 and b >= conf.print_interval:
