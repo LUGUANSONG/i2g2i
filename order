@@ -114,4 +114,5 @@ python models/train_detector.py -b 2 -lr 1e-3 -save_dir checkpoints/vgdet -nepoc
 
 # sg2im on vg
 CUDA_VISIBLE_DEVICES=1 python sg2im_scripts/train.py --dataset vg --batch_size 16
+CUDA_VISIBLE_DEVICES=1 python scripts/train.py --dataset vg --batch_size 16
 12 items/s with 1 gpu
