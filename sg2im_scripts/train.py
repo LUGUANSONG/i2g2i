@@ -21,6 +21,7 @@ import json
 import math
 from collections import defaultdict
 import random
+from tqdm import tqdm
 
 import numpy as np
 import torch
@@ -505,7 +506,7 @@ def main(args):
     epoch += 1
     print('Starting epoch %d' % epoch)
     
-    for batch in train_loader:
+    for batch in tqdm(train_loader, desc="Train Epoch %d" % epoch, total=len(train_loader)):
       if t == args.eval_mode_after:
         print('switching to eval mode')
         model.eval()
