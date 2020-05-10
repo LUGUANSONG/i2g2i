@@ -199,7 +199,7 @@ def main(args):
                     d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_fake_crop, objs), 'd_ac_loss_fake')
 
                 all_in_one_model.optimizer_d_obj.zero_grad()
-                with timeit('d_obj backward'):
+                with timeit('d_obj backward', args.timing):
                     d_obj_losses.total_loss.backward()
                 all_in_one_model.optimizer_d_obj.step()
 
@@ -210,7 +210,7 @@ def main(args):
                     d_img_losses.add_loss(d_img_gan_loss, 'd_img_gan_loss')
 
                 all_in_one_model.optimizer_d_img.zero_grad()
-                with timeit('d_img backward'):
+                with timeit('d_img backward', args.timing):
                     d_img_losses.total_loss.backward()
                 all_in_one_model.optimizer_d_img.step()
 
