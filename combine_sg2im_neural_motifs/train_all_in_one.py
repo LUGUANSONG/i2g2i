@@ -162,6 +162,8 @@ def main(args):
                 result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img, \
                 result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
                 result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img
+                print(imgs.shape, imgs_pred.shape)
+
             with timeit('loss', args.timing):
                 total_loss, losses = calculate_model_losses(
                     args, imgs, imgs_pred)
