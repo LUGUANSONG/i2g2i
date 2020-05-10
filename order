@@ -84,4 +84,6 @@ CUDA_VISIBLE_DEVICES=3,4 python combine_sg2im_neural_motifs/train_all_in_one.py 
 --output_dir ../detector-sg2im-checkpoints/vg128_debug --l1_pixel_loss_weight 1 --print_every 10 --checkpoint_every 10 --image_size 128,128 \
 --num_val_samples 128
 
-
+CUDA_VISIBLE_DEVICES=3,4 python combine_sg2im_neural_motifs/train_all_in_one.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 2 -nwork 8 \
+--output_dir ../detector-sg2im-checkpoints/vg64_debug --l1_pixel_loss_weight 1 --print_every 10 --checkpoint_every 10 \
+--image_size 64,64 --num_val_samples 128

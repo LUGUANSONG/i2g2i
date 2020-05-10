@@ -63,7 +63,7 @@ def check_model(args, loader, model):
     all_losses = defaultdict(list)
     with torch.no_grad():
         for batch in loader:
-            result = all_in_one_model[batch]
+            result = model[batch]
             imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
             d_scores_fake_crop, d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, \
             d_scores_fake_img, d_scores_real_img = result.imgs, result.imgs_pred, result.objs, \
