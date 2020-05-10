@@ -162,23 +162,22 @@ def main(args):
                 result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img, \
                 result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
                 result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img
-                print(imgs.shape, imgs_pred.shape)
 
             with timeit('loss', args.timing):
                 total_loss, losses = calculate_model_losses(
                     args, imgs, imgs_pred)
 
-            if all_in_one_model.obj_discriminator is not None:
-                total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
-                                      args.ac_loss_weight)
-                weight = args.discriminator_loss_weight * args.d_obj_weight
-                total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_crop), losses,
-                                      'g_gan_obj_loss', weight)
+                if all_in_one_model.obj_discriminator is not None:
+                    total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
+                                          args.ac_loss_weight)
+                    weight = args.discriminator_loss_weight * args.d_obj_weight
+                    total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_crop), losses,
+                                          'g_gan_obj_loss', weight)
 
-            if all_in_one_model.img_discriminator is not None:
-                weight = args.discriminator_loss_weight * args.d_img_weight
-                total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_img), losses,
-                                      'g_gan_img_loss', weight)
+                if all_in_one_model.img_discriminator is not None:
+                    weight = args.discriminator_loss_weight * args.d_img_weight
+                    total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_img), losses,
+                                          'g_gan_img_loss', weight)
 
             losses['total_loss'] = total_loss.item()
             if not math.isfinite(losses['total_loss']):
@@ -192,23 +191,27 @@ def main(args):
 
 
             if all_in_one_model.obj_discriminator is not None:
-                d_obj_losses = LossManager()
-                d_obj_gan_loss = gan_d_loss(d_obj_scores_real_crop, d_obj_scores_fake_crop)
-                d_obj_losses.add_loss(d_obj_gan_loss, 'd_obj_gan_loss')
-                d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_real_crop, objs), 'd_ac_loss_real')
-                d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_fake_crop, objs), 'd_ac_loss_fake')
+                with timeit('d_obj loss', args.timing):
+                    d_obj_losses = LossManager()
+                    d_obj_gan_loss = gan_d_loss(d_obj_scores_real_crop, d_obj_scores_fake_crop)
+                    d_obj_losses.add_loss(d_obj_gan_loss, 'd_obj_gan_loss')
+                    d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_real_crop, objs), 'd_ac_loss_real')
+                    d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_fake_crop, objs), 'd_ac_loss_fake')
 
                 all_in_one_model.optimizer_d_obj.zero_grad()
-                d_obj_losses.total_loss.backward()
+                with timeit('d_obj backward'):
+                    d_obj_losses.total_loss.backward()
                 all_in_one_model.optimizer_d_obj.step()
 
             if all_in_one_model.img_discriminator is not None:
-                d_img_losses = LossManager()
-                d_img_gan_loss = gan_d_loss(d_scores_real_img, d_scores_fake_img)
-                d_img_losses.add_loss(d_img_gan_loss, 'd_img_gan_loss')
+                with timeit('d_img loss', args.timing):
+                    d_img_losses = LossManager()
+                    d_img_gan_loss = gan_d_loss(d_scores_real_img, d_scores_fake_img)
+                    d_img_losses.add_loss(d_img_gan_loss, 'd_img_gan_loss')
 
                 all_in_one_model.optimizer_d_img.zero_grad()
-                d_img_losses.total_loss.backward()
+                with timeit('d_img backward'):
+                    d_img_losses.total_loss.backward()
                 all_in_one_model.optimizer_d_img.step()
 
             if t % args.print_every == 0:

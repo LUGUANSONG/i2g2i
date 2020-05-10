@@ -9,6 +9,7 @@ from collections import defaultdict
 from lib.pytorch_misc import optimistic_restore
 import torch.nn.functional as F
 from config import BOX_SCALE
+from sg2im.utils import timeit
 
 
 def build_model(args):
@@ -174,8 +175,9 @@ class neural_motifs_sg2im_model(nn.Module):
                 gt_boxes=None, gt_classes=None, gt_rels=None, proposals=None, train_anchor_inds=None,
                 return_fmap=False):
         # forward detector
-        result = self.detector(x, im_sizes, image_offset, gt_boxes, gt_classes, gt_rels, proposals,
-                                   train_anchor_inds, return_fmap=True)
+        with timeit('detector forward', self.args.timing):
+            result = self.detector(x, im_sizes, image_offset, gt_boxes, gt_classes, gt_rels, proposals,
+                                       train_anchor_inds, return_fmap=True)
         if result.is_none():
             return ValueError("heck")
 
@@ -199,25 +201,30 @@ class neural_motifs_sg2im_model(nn.Module):
                     obj_to_img_new -= (obj_to_img > i).long()
             obj_to_img = obj_to_img_new
 
-        imgs_pred = self.model(obj_to_img, boxes, obj_fmap)
+        with timeit('generator forward', self.args.timing):
+            imgs_pred = self.model(obj_to_img, boxes, obj_fmap)
 
         # forward discriminators to train generator
         if self.obj_discriminator is not None:
-            g_scores_fake_crop, g_obj_scores_fake_crop = self.obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
+            with timeit('d_obj forward for g', self.args.timing):
+                g_scores_fake_crop, g_obj_scores_fake_crop = self.obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
 
         if self.img_discriminator is not None:
-            g_scores_fake_img = self.img_discriminator(imgs_pred)
+            with timeit('d_img forward for g', self.args.timing):
+                g_scores_fake_img = self.img_discriminator(imgs_pred)
 
         # forward discriminators to train discriminators
         if self.obj_discriminator is not None:
             imgs_fake = imgs_pred.detach()
-            d_scores_fake_crop, d_obj_scores_fake_crop = self.obj_discriminator(imgs_fake, objs, boxes, obj_to_img)
-            d_scores_real_crop, d_obj_scores_real_crop = self.obj_discriminator(imgs, objs, boxes, obj_to_img)
+            with timeit('d_obj forward for d', self.args.timing):
+                d_scores_fake_crop, d_obj_scores_fake_crop = self.obj_discriminator(imgs_fake, objs, boxes, obj_to_img)
+                d_scores_real_crop, d_obj_scores_real_crop = self.obj_discriminator(imgs, objs, boxes, obj_to_img)
 
         if self.img_discriminator is not None:
             imgs_fake = imgs_pred.detach()
-            d_scores_fake_img = self.img_discriminator(imgs_fake)
-            d_scores_real_img = self.img_discriminator(imgs)
+            with timeit('d_img forward for d', self.args.timing):
+                d_scores_fake_img = self.img_discriminator(imgs_fake)
+                d_scores_real_img = self.img_discriminator(imgs)
 
         return Result(
             imgs=imgs,
