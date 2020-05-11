@@ -184,10 +184,10 @@ def main(args):
                 print('WARNING: Got loss = NaN, not backpropping')
                 continue
 
-            all_in_one_model.optimizer.zero_grad()
             with timeit('backward', args.timing):
+                all_in_one_model.optimizer.zero_grad()
                 total_loss.backward()
-            all_in_one_model.optimizer.step()
+                all_in_one_model.optimizer.step()
 
 
             if all_in_one_model.obj_discriminator is not None:
@@ -198,10 +198,10 @@ def main(args):
                     d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_real_crop, objs), 'd_ac_loss_real')
                     d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_fake_crop, objs), 'd_ac_loss_fake')
 
-                all_in_one_model.optimizer_d_obj.zero_grad()
                 with timeit('d_obj backward', args.timing):
+                    all_in_one_model.optimizer_d_obj.zero_grad()
                     d_obj_losses.total_loss.backward()
-                all_in_one_model.optimizer_d_obj.step()
+                    all_in_one_model.optimizer_d_obj.step()
 
             if all_in_one_model.img_discriminator is not None:
                 with timeit('d_img loss', args.timing):
@@ -209,10 +209,10 @@ def main(args):
                     d_img_gan_loss = gan_d_loss(d_scores_real_img, d_scores_fake_img)
                     d_img_losses.add_loss(d_img_gan_loss, 'd_img_gan_loss')
 
-                all_in_one_model.optimizer_d_img.zero_grad()
                 with timeit('d_img backward', args.timing):
+                    all_in_one_model.optimizer_d_img.zero_grad()
                     d_img_losses.total_loss.backward()
-                all_in_one_model.optimizer_d_img.step()
+                    all_in_one_model.optimizer_d_img.step()
 
             if t % args.print_every == 0:
                 print('t = %d / %d' % (t, args.num_iterations))
