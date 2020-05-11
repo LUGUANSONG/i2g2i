@@ -132,6 +132,8 @@ def main(args):
         train_loader, val_loader = VGDataLoader.splits(train, val, batch_size=args.batch_size,
                                                        num_workers=args.num_workers,
                                                        num_gpus=args.num_gpus)
+    print(train.ind_to_classes)
+    os._exit(0)
 
     all_in_one_model = neural_motifs_sg2im_model(args, train.ind_to_classes)
     # Freeze the detector

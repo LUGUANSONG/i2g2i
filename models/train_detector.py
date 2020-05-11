@@ -18,6 +18,7 @@ import torch.backends.cudnn as cudnn
 from pycocotools.cocoeval import COCOeval
 from lib.pytorch_misc import optimistic_restore, clip_grad_norm
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from sg2im.utils import timeit
 
 cudnn.benchmark = True
 conf = ModelConfig()
@@ -96,7 +97,8 @@ def train_batch(b):
 
     :return:
     """
-    result = detector[b]
+    with timeit("detector forward"):
+        result = detector[b]
     scores = result.od_obj_dists
     box_deltas = result.od_box_deltas
     labels = result.od_obj_labels
