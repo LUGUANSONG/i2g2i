@@ -1,4 +1,4 @@
-import .load_detector
+import load_detector
 from tqdm import tqdm
 import torch
 import os
