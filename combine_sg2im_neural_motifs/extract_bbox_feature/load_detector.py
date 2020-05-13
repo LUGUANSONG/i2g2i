@@ -43,7 +43,7 @@ else:
         train_not_flip, train_flip, val, test, batch_size=conf.batch_size,
         num_workers=conf.num_workers, num_gpus=detector_num_gpus)
 
-detector = ObjectDetector(classes=train.ind_to_classes, num_gpus=detector_num_gpus,
+detector = ObjectDetector(classes=train_not_flip.ind_to_classes, num_gpus=detector_num_gpus,
                           mode='refinerels' if not conf.use_proposals else 'proposals', use_resnet=conf.use_resnet)
 # print(detector)
 # os._exit(0)
