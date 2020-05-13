@@ -25,8 +25,9 @@ def get_bbox_feature(loader, str, fns_list, flipped_list, objs_list, fmap_list, 
         boxes /= load_detector.IM_SCALE
 
         for i in range(len(imgs)):
-            ind = (obj_to_img == i).nonzero().squeeze(1)
+            ind = (obj_to_img == i).nonzero()
             if len(ind) > 0:
+                ind = ind.squeeze(1)
                 fns_list.append(img_fns[i])
                 flipped_list.append(flipped[i])
                 objs_list.append(objs[ind].cpu())
