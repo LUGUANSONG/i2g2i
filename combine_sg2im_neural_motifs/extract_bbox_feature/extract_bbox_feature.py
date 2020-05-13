@@ -10,7 +10,7 @@ args = load_detector.conf
 
 save_path = "./data/"
 
-def get_bbox_feature(loader, str, fns, flipped, objs, fmap, bbox):
+def get_bbox_feature(loader, str, fns_list, flipped_list, objs_list, fmap_list, bbox_list):
     for step, batch in enumerate(tqdm(loader, desc=str, total=len(loader))):
         with torch.no_grad():
             result = load_detector.detector[batch]
@@ -27,11 +27,11 @@ def get_bbox_feature(loader, str, fns, flipped, objs, fmap, bbox):
         for i in range(len(imgs)):
             ind = (obj_to_img == i).nonzero().squeeze(1)
             if len(ind) > 0:
-                fns.append(img_fns[i])
-                flipped.append(flipped[i])
-                objs.append(objs[ind].cpu())
-                fmap.append(obj_fmap[ind].cpu())
-                bbox.append(boxes[ind].cpu())
+                fns_list.append(img_fns[i])
+                flipped_list.append(flipped[i])
+                objs_list.append(objs[ind].cpu())
+                fmap_list.append(obj_fmap[ind].cpu())
+                bbox_list.append(boxes[ind].cpu())
             else:
                 print("no bbox detected in %s" % img_fns[i])
 
