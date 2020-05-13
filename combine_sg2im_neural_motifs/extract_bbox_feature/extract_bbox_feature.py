@@ -37,6 +37,25 @@ def get_bbox_feature(loader, str, fns_list, flipped_list, objs_list, fmap_list, 
                 print("no bbox detected in %s" % img_fns[i])
 
 
+val_fns = []
+val_flipped = []
+val_objs = []
+val_fmap = []
+val_bbox = []
+get_bbox_feature(load_detector.val_loader, "Val Loader", val_fns, val_flipped, val_objs,
+                 val_fmap, val_bbox)
+val_dataset = {
+    'fns': val_fns,
+    'flipped': val_flipped,
+    'objs': val_objs,
+    'fmap': val_fmap,
+    'bbox': val_bbox
+}
+print("dumping vg_val_bbox_feature.pkl")
+pickle.dump(val_dataset, open(join(save_path, "vg_val_bbox_feature.pkl"), "wb"), protocol=4)
+print("finish")
+
+
 train_fns = []
 train_flipped = []
 train_objs = []
@@ -55,25 +74,6 @@ train_dataset = {
 }
 print("dumping vg_train_bbox_feature.pkl")
 pickle.dump(train_dataset, open(join(save_path, "vg_train_bbox_feature.pkl"), "wb"), protocol=4)
-print("finish")
-
-
-val_fns = []
-val_flipped = []
-val_objs = []
-val_fmap = []
-val_bbox = []
-get_bbox_feature(load_detector.val_loader, "Val Loader", val_fns, val_flipped, val_objs,
-                 val_fmap, val_bbox)
-val_dataset = {
-    'fns': val_fns,
-    'flipped': val_flipped,
-    'objs': val_objs,
-    'fmap': val_fmap,
-    'bbox': val_bbox
-}
-print("dumping vg_val_bbox_feature.pkl")
-pickle.dump(val_dataset, open(join(save_path, "vg_val_bbox_feature.pkl"), "wb"), protocol=4)
 print("finish")
 
 
