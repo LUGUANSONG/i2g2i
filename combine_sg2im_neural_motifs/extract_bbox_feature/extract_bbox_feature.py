@@ -13,7 +13,7 @@ train_fmap = []
 train_bbox = []
 
 for step, batch in enumerate(tqdm(load_detector.train_not_flip_loader, desc='Train Not Flip Loader',
-                                  total=len(load_detector.train_loader))):
+                                  total=len(load_detector.train_not_flip_loader))):
     with torch.no_grad():
         result = load_detector.detector[batch]
     imgs = batch.imgs
