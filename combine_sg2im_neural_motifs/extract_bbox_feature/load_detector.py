@@ -2,7 +2,7 @@
 Training script 4 Detection
 """
 from dataloaders.mscoco import CocoDetection, CocoDataLoader
-from combine_sg2im_neural_motifs.extract_bbox_feature.visual_genome import VGDataLoader, VG
+from visual_genome import VGDataLoader, VG
 from lib.object_detector import ObjectDetector
 import numpy as np
 from torch import optim
