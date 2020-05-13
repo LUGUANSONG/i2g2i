@@ -44,7 +44,7 @@ from combine_sg2im_neural_motifs.sg2im_model import Sg2ImModel
 from sg2im.utils import int_tuple, float_tuple, str_tuple
 from sg2im.utils import timeit, bool_flag, LossManager
 
-from combine_sg2im_neural_motifs import train_detector
+from combine_sg2im_neural_motifs import load_detector
 
 torch.backends.cudnn.benchmark = True
 
@@ -240,9 +240,9 @@ def check_model(args, t, loader, model):
 
             imgs = F.interpolate(batch.imgs, size=args.image_size).to(args.sg2im_device)
             if args.num_gpus > 2:
-                result = train_detector.detector.__getitem__(batch, target_device=args.detector_gather_device)
+                result = load_detector.detector.__getitem__(batch, target_device=args.detector_gather_device)
             else:
-                result = train_detector.detector[batch]
+                result = load_detector.detector[batch]
             objs = result.obj_preds
             boxes = result.rm_box_priors
             obj_to_img = result.im_inds
@@ -252,7 +252,7 @@ def check_model(args, t, loader, model):
                 boxes = boxes.to(args.sg2im_device)
                 obj_to_img = obj_to_img.to(args.sg2im_device)
                 obj_fmap = obj_fmap.to(args.sg2im_device)
-            boxes = boxes / train_detector.IM_SCALE
+            boxes = boxes / load_detector.IM_SCALE
 
             # check if all image have detection
             cnt = torch.zeros(len(imgs)).byte()
@@ -378,7 +378,7 @@ def main(args):
     # vocab, train_loader, val_loader = build_loaders(args)
     # self.ind_to_classes, self.ind_to_predicates
     vocab = {
-        'object_idx_to_name': train_detector.train.ind_to_classes,
+        'object_idx_to_name': load_detector.train.ind_to_classes,
     }
     model, model_kwargs = build_model(args) #, vocab)print(type(batch.imgs), len(batch.imgs), type(batch.imgs[0]))
 
@@ -475,8 +475,8 @@ def main(args):
         
         # for batch in train_loader:
         # for batch in train_detector.train_loader:
-        for step, batch in enumerate(tqdm(train_detector.train_loader, desc='Training Epoch %d' % epoch,
-                                                                                    total=len(train_detector.train_loader))):
+        for step, batch in enumerate(tqdm(load_detector.train_loader, desc='Training Epoch %d' % epoch,
+                                          total=len(load_detector.train_loader))):
             if t == args.eval_mode_after:
                 print('switching to eval mode')
                 model.eval()
@@ -501,9 +501,9 @@ def main(args):
                 imgs = F.interpolate(batch.imgs, size=args.image_size).to(sg2im_device)
                 with torch.no_grad():
                     if args.num_gpus > 2:
-                        result = train_detector.detector.__getitem__(batch, target_device=detector_gather_device)
+                        result = load_detector.detector.__getitem__(batch, target_device=detector_gather_device)
                     else:
-                        result = train_detector.detector[batch]
+                        result = load_detector.detector[batch]
                 objs = result.obj_preds
                 boxes = result.rm_box_priors
                 obj_to_img = result.im_inds
@@ -514,7 +514,7 @@ def main(args):
                     obj_to_img = obj_to_img.to(sg2im_device)
                     obj_fmap = obj_fmap.to(sg2im_device)
 
-                boxes /= train_detector.IM_SCALE
+                boxes /= load_detector.IM_SCALE
                 # check if all image have detection
                 cnt = torch.zeros(len(imgs)).byte()
                 cnt[obj_to_img] += 1
@@ -627,7 +627,7 @@ def main(args):
             
             if t % args.checkpoint_every == 0:
                 print('checking on train')
-                train_results = check_model(args, t, train_detector.train_loader, model)
+                train_results = check_model(args, t, load_detector.train_loader, model)
                 # t_losses, t_samples, t_batch_data, t_avg_iou = train_results
                 t_losses, t_samples, t_batch_data = train_results
 
@@ -641,7 +641,7 @@ def main(args):
                     summary_writer.add_image("train_%s" % name, images, t)
 
                 print('checking on val')
-                val_results = check_model(args, t, train_detector.val_loader, model)
+                val_results = check_model(args, t, load_detector.val_loader, model)
                 # val_losses, val_samples, val_batch_data, val_avg_iou = val_results
                 val_losses, val_samples, val_batch_data = val_results
                 checkpoint['val_samples'].append(val_samples)
@@ -690,6 +690,6 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args = train_detector.conf
+    args = load_detector.conf
     main(args)
 

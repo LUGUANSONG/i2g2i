@@ -1,0 +1,4 @@
+CUDA_VISIBLE_DEVICES=4 python combine_sg2im_neural_motifs/extract_bbox_feature/extract_bbox_feature.py -b 8 \
+-ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 8
+
+

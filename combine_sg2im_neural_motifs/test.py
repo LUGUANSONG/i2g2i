@@ -45,7 +45,7 @@ from sg2im.model import Sg2ImModel
 from sg2im.utils import int_tuple, float_tuple, str_tuple
 from sg2im.utils import timeit, bool_flag, LossManager
 
-from combine_sg2im_neural_motifs import train_detector
+from combine_sg2im_neural_motifs import load_detector
 
 torch.backends.cudnn.benchmark = True
 
@@ -114,9 +114,9 @@ def check_model(args, loader, model, output_path):
     for batch in loader:
       imgs = F.interpolate(batch.imgs, size=args.image_size).to(args.sg2im_device)
       if args.num_gpus > 2:
-        result = train_detector.detector.__getitem__(batch, target_device=args.detector_gather_device)
+        result = load_detector.detector.__getitem__(batch, target_device=args.detector_gather_device)
       else:
-        result = train_detector.detector[batch]
+        result = load_detector.detector[batch]
       objs = result.obj_preds
       boxes = result.rm_box_priors
       obj_to_img = result.im_inds
@@ -126,7 +126,7 @@ def check_model(args, loader, model, output_path):
         boxes = boxes.to(args.sg2im_device)
         obj_to_img = obj_to_img.to(args.sg2im_device)
         obj_fmap = obj_fmap.to(args.sg2im_device)
-      boxes = boxes / train_detector.IM_SCALE
+      boxes = boxes / load_detector.IM_SCALE
 
       # check if all image have detection
       cnt = torch.zeros(len(imgs)).byte()
@@ -189,7 +189,7 @@ def main(args):
   args.sg2im_device = sg2im_device
 
   vocab = {
-    'object_idx_to_name': train_detector.train.ind_to_classes,
+    'object_idx_to_name': load_detector.train.ind_to_classes,
   }
 
   restore_path = '%s_with_model.pt' % args.checkpoint_name
@@ -205,11 +205,11 @@ def main(args):
   model.eval()
   if True:
     print('checking on train')
-    train_results = check_model(args, train_detector.train_loader, model, join(args.output_dir, "train"))
+    train_results = check_model(args, load_detector.train_loader, model, join(args.output_dir, "train"))
     print('checking on val')
-    val_results = check_model(args, train_detector.val_loader, model, join(args.output_dir, "val"))
+    val_results = check_model(args, load_detector.val_loader, model, join(args.output_dir, "val"))
 
 if __name__ == '__main__':
-  args = train_detector.conf
+  args = load_detector.conf
   main(args)
 
