@@ -1,4 +1,4 @@
-from combine_sg2im_neural_motifs.extract_bbox_feature import load_detector
+import .load_detector
 from tqdm import tqdm
 import torch
 import os
