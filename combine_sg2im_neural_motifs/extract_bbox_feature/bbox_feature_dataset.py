@@ -203,4 +203,7 @@ if __name__ == "__main__":
     )
     entry = dataset[0]
     for k, v in entry.items():
-        print(k, type(v))
+        try:
+            print(k, type(v), v.shape)
+        except:
+            print(k, type(v))
