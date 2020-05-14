@@ -45,7 +45,8 @@ class VG(Dataset):
         self.mode = mode
 
         pickle_files_dir = join(dirname(VG_IMAGES), mode)
-        self.pickle_files = os.listdir(pickle_files_dir)
+        self.pickle_files = list(filter(lambda x: x.endswith(".pkl"), os.listdir(pickle_files_dir)))
+        print("number of samples under %s: %d" % (pickle_files_dir, len(self.pickle_files)))
 
         # file_path = "data/vg_%s_bbox_feature.pkl" % mode
         # start_time = time.time()
