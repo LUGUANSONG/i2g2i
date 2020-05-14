@@ -1,6 +1,6 @@
 export PYTHONPATH=$PYTHONPATH:/home/ubuntu/scene_graph/code/i2g2i
 
-CUDA_VISIBLE_DEVICES=3 python combine_sg2im_neural_motifs/extract_bbox_feature/extract_bbox_feature.py -b 8 \
--ckpt vg-faster-rcnn.tar -ngpu 1 -nwork 2
+CUDA_VISIBLE_DEVICES=1,2,3,4 python combine_sg2im_neural_motifs/extract_bbox_feature/extract_bbox_feature.py -b 8 \
+-ckpt vg-faster-rcnn.tar -ngpu 4 -nwork 8
 
 
