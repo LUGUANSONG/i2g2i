@@ -2,8 +2,8 @@ from lib.object_detector import ObjectDetector, gather_res
 import torch
 import torch.nn as nn
 import torch.nn.parallel
-from combine_sg2im_neural_motifs.sg2im_model import Sg2ImModel
-from combine_sg2im_neural_motifs.discriminators import PatchDiscriminator, AcCropDiscriminator
+from sg2im_model import Sg2ImModel
+from discriminators import PatchDiscriminator, AcCropDiscriminator
 import os
 from collections import defaultdict
 from lib.pytorch_misc import optimistic_restore
