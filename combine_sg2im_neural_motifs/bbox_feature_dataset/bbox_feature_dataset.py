@@ -12,7 +12,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import datasets, transforms, utils
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize
-from combine_sg2im_neural_motifs.bbox_feature_dataset.bbox_feature_blob import Blob
+from .bbox_feature_blob import Blob
 from lib.fpn.box_intersections_cpu.bbox import bbox_overlaps
 from config import VG_IMAGES, IM_DATA_FN, VG_SGG_FN, VG_SGG_DICT_FN, BOX_SCALE, IM_SCALE, PROPOSAL_FN
 from collections import defaultdict
