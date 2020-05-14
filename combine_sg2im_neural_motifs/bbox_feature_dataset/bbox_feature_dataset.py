@@ -4,6 +4,7 @@ File that involves dataloaders for the Visual Genome dataset.
 
 import json
 import os
+from os.path import join, basename, dirname, exists
 
 import h5py
 import numpy as np
@@ -43,20 +44,23 @@ class VG(Dataset):
             raise ValueError("Mode must be in test, train, or val. Supplied {}".format(mode))
         self.mode = mode
 
-        file_path = "data/vg_%s_bbox_feature.pkl" % mode
-        start_time = time.time()
-        print("start to read pickle file: %s" % file_path)
-        f = open(file_path, "rb")
-        gc.disable()
-        pickle_file = pickle.load(f)
-        gc.enable()
-        f.close()
-        print("take %.3fs to load pickle file: %s" % (time.time() - start_time, pickle_file))
-        self.filenames = pickle_file['fns']
-        self.flipped = pickle_file['flipped']
-        self.gt_classes = pickle_file['objs']
-        self.fmaps = pickle_file['fmap']
-        self.gt_boxes = pickle_file['bbox']
+        pickle_files_dir = join(dirname(VG_IMAGES), mode)
+        self.pickle_files = os.listdir(pickle_files_dir)
+
+        # file_path = "data/vg_%s_bbox_feature.pkl" % mode
+        # start_time = time.time()
+        # print("start to read pickle file: %s" % file_path)
+        # f = open(file_path, "rb")
+        # gc.disable()
+        # pickle_file = pickle.load(f)
+        # gc.enable()
+        # f.close()
+        # print("take %.3fs to load pickle file: %s" % (time.time() - start_time, file_path))
+        # self.filenames = pickle_file['fns']
+        # self.flipped = pickle_file['flipped']
+        # self.gt_classes = pickle_file['objs']
+        # self.fmaps = pickle_file['fmap']
+        # self.gt_boxes = pickle_file['bbox']
 
         self.ind_to_classes, self.ind_to_predicates = load_info(dict_file)
 
@@ -82,10 +86,21 @@ class VG(Dataset):
         return train, val #, test
 
     def __getitem__(self, index):
-        image_unpadded = Image.open(self.filenames[index]).convert('RGB')
+        '''
+        train_dataset = {
+            'fns': train_fns,
+            'flipped': train_flipped,
+            'objs': train_objs,
+            'fmap': train_fmap,
+            'bbox': train_bbox
+        }
+        '''
+        pickle_file = pickle.load(self.pickle_files[index])
+        fn = pickle_file['fns']
+        image_unpadded = Image.open(fn).convert('RGB')
 
-        flipped = self.flipped[index]
-        gt_boxes = self.gt_boxes[index].clone().numpy()
+        flipped = pickle_file['flipped']
+        gt_boxes = pickle_file['bbox'].numpy()
 
         if flipped:
             image_unpadded = image_unpadded.transpose(Image.FLIP_LEFT_RIGHT)
@@ -93,18 +108,18 @@ class VG(Dataset):
         entry = {
             'img': self.transform(image_unpadded),
             'gt_boxes': gt_boxes,
-            'gt_classes': self.gt_classes[index].clone().numpy(),
+            'gt_classes': pickle_file['objs'].numpy(),
             'index': index,
             'flipped': flipped,
-            'fn': self.filenames[index],
-            'fmap': self.fmaps[index].clone()
+            'fn': fn,
+            'fmap': pickle_file['fmap']
         }
 
         assertion_checks(entry)
         return entry
 
     def __len__(self):
-        return len(self.filenames)
+        return len(self.pickle_files)
 
     @property
     def num_predicates(self):
