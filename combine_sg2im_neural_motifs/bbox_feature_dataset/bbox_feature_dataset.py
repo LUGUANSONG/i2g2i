@@ -18,6 +18,7 @@ from config import VG_IMAGES, IM_DATA_FN, VG_SGG_FN, VG_SGG_DICT_FN, BOX_SCALE, 
 from collections import defaultdict
 import pickle
 import time
+import gc
 
 
 class VG(Dataset):
@@ -44,7 +45,12 @@ class VG(Dataset):
 
         file_path = "data/vg_%s_bbox_feature.pkl" % mode
         start_time = time.time()
-        pickle_file = pickle.load(open(file_path, "rb"))
+        print("start to read pickle file: %s" % file_path)
+        f = open(file_path, "rb")
+        gc.disable()
+        pickle_file = pickle.load(f)
+        gc.enable()
+        f.close()
         print("take %.3fs to load pickle file: %s" % (time.time() - start_time, pickle_file))
         self.filenames = pickle_file['fns']
         self.flipped = pickle_file['flipped']
