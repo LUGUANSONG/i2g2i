@@ -64,6 +64,6 @@ CUDA_VISIBLE_DEVICES=1 python scripts/train.py --dataset vg --batch_size 16 --pr
 12 items/s with 1 gpu
 
 
-CUDA_VISIBLE_DEVICES=2,3,4 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 8 -ngpu 3 -nwork 8 \
+CUDA_VISIBLE_DEVICES=1,2,3,4 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 32 -ngpu 1 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_debug --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
 

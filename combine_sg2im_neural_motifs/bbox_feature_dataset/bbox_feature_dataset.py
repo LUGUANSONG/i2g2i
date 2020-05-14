@@ -45,7 +45,7 @@ class VG(Dataset):
         file_path = "data/vg_%s_bbox_feature.pkl" % mode
         start_time = time.time()
         pickle_file = pickle.load(open(file_path, "rb"))
-        print("take %.3fs to load pickle file" % (time.time() - start_time))
+        print("take %.3fs to load pickle file: %s" % (time.time() - start_time), pickle_file)
         self.filenames = pickle_file['fns']
         self.flipped = pickle_file['flipped']
         self.gt_classes = pickle_file['objs']
