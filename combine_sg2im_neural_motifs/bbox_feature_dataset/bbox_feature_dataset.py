@@ -17,6 +17,7 @@ from lib.fpn.box_intersections_cpu.bbox import bbox_overlaps
 from config import VG_IMAGES, IM_DATA_FN, VG_SGG_FN, VG_SGG_DICT_FN, BOX_SCALE, IM_SCALE, PROPOSAL_FN
 from collections import defaultdict
 import pickle
+import time
 
 
 class VG(Dataset):
@@ -42,11 +43,13 @@ class VG(Dataset):
         self.mode = mode
 
         file_path = "data/vg_%s_bbox_feature.pkl" % mode
+        start_time = time.time()
         pickle_file = pickle.load(open(file_path, "rb"))
+        print("take %.3fs to load pickle file" % (time.time() - start_time))
         self.filenames = pickle_file['fns']
         self.flipped = pickle_file['flipped']
         self.gt_classes = pickle_file['objs']
-        self.fmap = pickle_file['fmap']
+        self.fmaps = pickle_file['fmap']
         self.gt_boxes = pickle_file['bbox']
 
         self.ind_to_classes, self.ind_to_predicates = load_info(dict_file)
@@ -88,7 +91,7 @@ class VG(Dataset):
             'index': index,
             'flipped': flipped,
             'fn': self.filenames[index],
-            'fmap': self.fmap[index].clone()
+            'fmap': self.fmaps[index].clone()
         }
 
         assertion_checks(entry)
@@ -204,6 +207,6 @@ if __name__ == "__main__":
     entry = dataset[0]
     for k, v in entry.items():
         try:
-            print(k, type(v), v.shape)
+            print(k, type(v), v.shape, v.dtype)
         except:
             print(k, type(v))
