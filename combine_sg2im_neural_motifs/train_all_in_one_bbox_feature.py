@@ -37,7 +37,7 @@ from bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
 from config import ModelConfig
 
 # combine
-from model_bbox_feature import neural_motifs_sg2im_model
+from .model_bbox_feature import neural_motifs_sg2im_model
 
 torch.backends.cudnn.benchmark = True
 
