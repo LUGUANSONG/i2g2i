@@ -33,11 +33,11 @@ from sg2im.utils import timeit, bool_flag, LossManager
 # from dataloaders.visual_genome import VGDataLoader, VG
 # from dataloaders.mscoco import CocoDetection, CocoDataLoader
 from torchvision import transforms
-from combine_sg2im_neural_motifs.bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
+from bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
 from config import ModelConfig
 
 # combine
-from combine_sg2im_neural_motifs.model_bbox_feature import neural_motifs_sg2im_model
+from model_bbox_feature import neural_motifs_sg2im_model
 
 torch.backends.cudnn.benchmark = True
 
