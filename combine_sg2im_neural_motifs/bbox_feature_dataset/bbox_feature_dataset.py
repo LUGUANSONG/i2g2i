@@ -96,7 +96,7 @@ class VG(Dataset):
             'bbox': train_bbox
         }
         '''
-        pickle_file = pickle.load(self.pickle_files[index])
+        pickle_file = pickle.load(open(self.pickle_files[index], "rb"))
         fn = pickle_file['fns']
         image_unpadded = Image.open(fn).convert('RGB')
 
