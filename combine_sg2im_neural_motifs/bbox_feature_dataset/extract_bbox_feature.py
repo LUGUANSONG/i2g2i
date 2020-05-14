@@ -24,12 +24,12 @@ def get_bbox_feature(loader, str, fns_list, flipped_list, objs_list, fmap_list, 
         obj_fmap = result.obj_fmap
         boxes /= load_detector.IM_SCALE
 
-        print(len(img_fns))
-        print(len(flipped))
-        print(objs.shape)
-        print(boxes.shape)
-        print(obj_to_img.shape)
-        print(obj_fmap.shape)
+        # print(len(img_fns))
+        # print(len(flipped))
+        # print(objs.shape)
+        # print(boxes.shape)
+        # print(obj_to_img.shape)
+        # print(obj_fmap.shape)
 
         for i in range(len(img_fns)):
             ind = (obj_to_img == i).nonzero()
@@ -58,6 +58,11 @@ val_dataset = {
     'fmap': val_fmap,
     'bbox': val_bbox
 }
+print(len(val_fns))
+print(len(val_flipped))
+print(len(val_objs))
+print(len(val_fmap))
+print(len(val_bbox))
 print("dumping vg_val_bbox_feature.pkl")
 pickle.dump(val_dataset, open(join(save_path, "vg_val_bbox_feature.pkl"), "wb"), protocol=4)
 print("finish")
@@ -79,6 +84,11 @@ train_dataset = {
     'fmap': train_fmap,
     'bbox': train_bbox
 }
+print(len(train_fns))
+print(len(train_flipped))
+print(len(train_objs))
+print(len(train_fmap))
+print(len(train_bbox))
 print("dumping vg_train_bbox_feature.pkl")
 pickle.dump(train_dataset, open(join(save_path, "vg_train_bbox_feature.pkl"), "wb"), protocol=4)
 print("finish")
@@ -98,4 +108,9 @@ test_dataset = {
     'fmap': test_fmap,
     'bbox': test_bbox
 }
+print(len(test_fns))
+print(len(test_flipped))
+print(len(test_objs))
+print(len(test_fmap))
+print(len(test_bbox))
 pickle.dump(test_dataset, open(join(save_path, "vg_test_bbox_feature.pkl"), "wb"), protocol=4)
