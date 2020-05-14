@@ -67,3 +67,8 @@ CUDA_VISIBLE_DEVICES=1 python scripts/train.py --dataset vg --batch_size 16 --pr
 CUDA_VISIBLE_DEVICES=1,2,3,4 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 32 -ngpu 1 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_debug --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
 
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./guansong_aws.pem ubuntu@18.222.130.222:/home/ubuntu/scene_graph/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/code/i2g2i ubuntu@18.222.130.222:/home/ubuntu/scene_graph/code/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data ubuntu@18.222.130.222:/home/ubuntu/scene_graph/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/py3.6_pytorch0.4.1 ubuntu@18.222.130.222:/home/ubuntu/scene_graph/

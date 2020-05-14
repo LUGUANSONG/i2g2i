@@ -45,7 +45,7 @@ class VG(Dataset):
         file_path = "data/vg_%s_bbox_feature.pkl" % mode
         start_time = time.time()
         pickle_file = pickle.load(open(file_path, "rb"))
-        print("take %.3fs to load pickle file: %s" % (time.time() - start_time), pickle_file)
+        print("take %.3fs to load pickle file: %s" % (time.time() - start_time, pickle_file))
         self.filenames = pickle_file['fns']
         self.flipped = pickle_file['flipped']
         self.gt_classes = pickle_file['objs']
@@ -72,8 +72,8 @@ class VG(Dataset):
         """ Helper method to generate splits of the dataset"""
         train = cls('train', *args, **kwargs)
         val = cls('val', *args, **kwargs)
-        test = cls('test', *args, **kwargs)
-        return train, val, test
+        # test = cls('test', *args, **kwargs)
+        return train, val #, test
 
     def __getitem__(self, index):
         image_unpadded = Image.open(self.filenames[index]).convert('RGB')
