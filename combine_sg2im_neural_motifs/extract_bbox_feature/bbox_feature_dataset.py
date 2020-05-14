@@ -76,7 +76,7 @@ class VG(Dataset):
         image_unpadded = Image.open(self.filenames[index]).convert('RGB')
 
         flipped = self.flipped[index]
-        gt_boxes = self.gt_boxes[index].copy().numpy()
+        gt_boxes = self.gt_boxes[index].clone().numpy()
 
         if flipped:
             image_unpadded = image_unpadded.transpose(Image.FLIP_LEFT_RIGHT)
@@ -84,11 +84,11 @@ class VG(Dataset):
         entry = {
             'img': self.transform(image_unpadded),
             'gt_boxes': gt_boxes,
-            'gt_classes': self.gt_classes[index].copy().numpy(),
+            'gt_classes': self.gt_classes[index].clone().numpy(),
             'index': index,
             'flipped': flipped,
             'fn': self.filenames[index],
-            'fmap': self.fmap[index].copy()
+            'fmap': self.fmap[index].clone()
         }
 
         assertion_checks(entry)
