@@ -141,8 +141,8 @@ def main(args):
 
     all_in_one_model = neural_motifs_sg2im_model(args, train.ind_to_classes)
     # Freeze the detector
-    for n, param in all_in_one_model.detector.named_parameters():
-        param.requires_grad = False
+    # for n, param in all_in_one_model.detector.named_parameters():
+    #     param.requires_grad = False
     all_in_one_model.cuda()
     gan_g_loss, gan_d_loss = get_gan_losses(args.gan_loss_type)
 
