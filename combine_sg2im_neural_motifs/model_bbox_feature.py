@@ -39,7 +39,7 @@ def build_model(args):
             'mask_size': args.mask_size,
             'layout_noise_dim': args.layout_noise_dim,
         }
-        model = Sg2ImModel(**kwargs)
+        model = Sg2ImModel(**kwargs).cuda()
     return model, kwargs
 
 
@@ -59,7 +59,7 @@ def build_obj_discriminator(args, vocab):
         'padding': args.d_padding,
         'object_size': args.crop_size,
     }
-    discriminator = AcCropDiscriminator(**d_kwargs)
+    discriminator = AcCropDiscriminator(**d_kwargs).cuda()
     return discriminator, d_kwargs
 
 
@@ -77,7 +77,7 @@ def build_img_discriminator(args):
         'activation': args.d_activation,
         'padding': args.d_padding,
     }
-    discriminator = PatchDiscriminator(**d_kwargs)
+    discriminator = PatchDiscriminator(**d_kwargs).cuda()
     return discriminator, d_kwargs
 
 
