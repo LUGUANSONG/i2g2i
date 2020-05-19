@@ -109,6 +109,7 @@ def calculate_model_losses(args, img, img_pred):
 
     l1_pixel_weight = args.l1_pixel_loss_weight
     l1_pixel_loss = F.l1_loss(img_pred, img)
+    print("check l1_pixel_weight here, it is %.10f" % l1_pixel_weight)
     total_loss = add_loss(total_loss, l1_pixel_loss, losses, 'L1_pixel_loss',
                           l1_pixel_weight)
     return total_loss, losses
@@ -152,6 +153,17 @@ def main(args):
             break
         epoch += 1
         print('Starting epoch %d' % epoch)
+
+        if args.l1_mode == "change":
+            if t in args.l1_change_iters:
+                old_l1_weight = args.l1_pixel_loss_weight
+                args.l1_pixel_loss_weight = args.l1_change_vals[args.l1_change_iters.index(t)]
+                print("Change l1_pixel_loss_weight from %10.f to %.10f at iteration %d" % (old_l1_weight, args.l1_pixel_loss_weight, t))
+        if args.noise_std_mode == "change":
+            if t in args.noise_std_change_iters:
+                old_noise_std = args.noise_std
+                args.noise_std = args.noise_std_change_vals[args.noise_std_change_iters.index(t)]
+                print("Change noise_std from %.10f to %.10f at iteration %d" % (old_noise_std, args.noise_std, t))
 
         for step, batch in enumerate(tqdm(train_loader, desc='Training Epoch %d' % epoch, total=len(train_loader))):
             if t == args.eval_mode_after:

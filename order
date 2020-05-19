@@ -66,9 +66,68 @@ CUDA_VISIBLE_DEVICES=1 python scripts/train.py --dataset vg --batch_size 16 --pr
 
 CUDA_VISIBLE_DEVICES=1,2,3,4 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 32 -ngpu 1 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_debug --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
+~ 3 item/s
+
+CUDA_VISIBLE_DEVICES=1,2,3,4 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_debug --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
+~ 4-5 item/s
+
+running on ubuntu@3.136.20.52
+CUDA_VISIBLE_DEVICES=1,2,3,4 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 8 -ngpu 4 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_debug --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
 
 
-rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./guansong_aws.pem ubuntu@18.222.130.222:/home/ubuntu/scene_graph/
-rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/code/i2g2i ubuntu@18.222.130.222:/home/ubuntu/scene_graph/code/
-rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data ubuntu@18.222.130.222:/home/ubuntu/scene_graph/
-rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/py3.6_pytorch0.4.1 ubuntu@18.222.130.222:/home/ubuntu/scene_graph/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./guansong_aws.pem ubuntu@18.222.96.193:/home/ubuntu/scene_graph/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/code/i2g2i ubuntu@18.222.226.17:/home/ubuntu/scene_graph/code/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data ubuntu@18.222.226.17:/home/ubuntu/scene_graph/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/py3.6_pytorch0.4.1 ubuntu@18.222.96.193:/home/ubuntu/scene_graph/
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/code/neural-motifs-sg2im/vg-faster-rcnn.tar ubuntu@13.59.141.231:/home/ubuntu/scene_graph/code/i2g2i/
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/train ubuntu@18.222.96.193	:/home/ubuntu/scene_graph/neural-motifs-data/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/val ubuntu@18.222.96.193	:/home/ubuntu/scene_graph/neural-motifs-data/
+
+
+CUDA_VISIBLE_DEVICES=5,6,7 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 3 -nwork 8 \
+--output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
+
+
+running on ubuntu@13.59.141.231
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 4 -ngpu 8 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
+
+running on ubuntu@18.222.226.17
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 4 -ngpu 8 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg128_l1 --l1_pixel_loss_weight 1 --print_every 100 --image_size 128,128 --num_val_samples 128
+
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ./guansong_aws.pem ubuntu@18.218.184.140:/home/ubuntu/scene_graph/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' --exclude "detector-sg2im-checkpoints" ./scene_graph ubuntu@18.218.184.140:/home/ubuntu/
+
+['__background__', 'airplane', 'animal', 'arm', 'bag', 'banana', 'basket', 'beach', 'bear', 'bed', 'bench', 'bike', 'bird', 'board', 'boat', 'book', 'boot', 'bottle', 'bowl', 'box', 'boy', 'branch', 'building', 'bus', 'cabinet', 'cap', 'car', 'cat', 'chair', 'child', 'clock', 'coat', 'counter', 'cow', 'cup', 'curtain', 'desk', 'dog', 'door', 'drawer', 'ear', 'elephant', 'engine', 'eye', 'face', 'fence', 'finger', 'flag', 'flower', 'food', 'fork', 'fruit', 'giraffe', 'girl', 'glass', 'glove', 'guy', 'hair', 'hand', 'handle', 'hat', 'head', 'helmet', 'hill', 'horse', 'house', 'jacket', 'jean', 'kid', 'kite', 'lady', 'lamp', 'laptop', 'leaf', 'leg', 'letter', 'light', 'logo', 'man', 'men', 'motorcycle', 'mountain', 'mouth', 'neck', 'nose', 'number', 'orange', 'pant', 'paper', 'paw', 'people', 'person', 'phone', 'pillow', 'pizza', 'plane', 'plant', 'plate', 'player', 'pole', 'post', 'pot', 'racket', 'railing', 'rock', 'roof', 'room', 'screen', 'seat', 'sheep', 'shelf', 'shirt', 'shoe', 'short', 'sidewalk', 'sign', 'sink', 'skateboard', 'ski', 'skier', 'sneaker', 'snow', 'sock', 'stand', 'street', 'surfboard', 'table', 'tail', 'tie', 'tile', 'tire', 'toilet', 'towel', 'tower', 'track', 'train', 'tree', 'truck', 'trunk', 'umbrella', 'vase', 'vegetable', 'vehicle', 'wave', 'wheel', 'window', 'windshield', 'wing', 'wire', 'woman', 'zebra']
+
+banana
+board
+cup
+desk
+ear
+head
+jean
+kite
+laptop
+light
+orange
+pillow
+pizza
+plane
+plate
+pole
+pot
+racket
+screen
+ski
+sock
+umbrella
+vase
+wing
+zebra

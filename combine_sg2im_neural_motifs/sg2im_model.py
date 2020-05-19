@@ -37,7 +37,7 @@ class Sg2ImModel(nn.Module):
   def __init__(self, image_size=(64, 64), gconv_dim=128,
                refinement_dims=(1024, 512, 256, 128, 64),
                normalization='batch', activation='leakyrelu-0.2',
-               layout_noise_dim=0,
+               layout_noise_dim=0, args=None,
                **kwargs):
     super(Sg2ImModel, self).__init__()
 
@@ -49,6 +49,7 @@ class Sg2ImModel(nn.Module):
     # self.vocab = vocab
     self.image_size = image_size
     self.layout_noise_dim = layout_noise_dim
+    self.args = args
 
     # num_objs = len(vocab['object_idx_to_name'])
     # num_preds = len(vocab['pred_idx_to_name'])
@@ -176,8 +177,12 @@ class Sg2ImModel(nn.Module):
     if self.layout_noise_dim > 0:
       N, C, H, W = layout.size()
       noise_shape = (N, self.layout_noise_dim, H, W)
-      layout_noise = torch.randn(noise_shape, dtype=layout.dtype,
-                                 device=layout.device)
+      print("check noise_std here, it is %.10f" % self.args.noise_std)
+      noise_std = torch.zeros(noise_shape, dtype=layout.dtype,
+                                 device=layout.device).fill_(self.args.noise_std)
+      layout_noise = torch.normal(mean=0.0, std=noise_std)
+      # layout_noise = torch.randn(noise_shape, dtype=layout.dtype,
+      #                            device=layout.device)
       layout = torch.cat([layout, layout_noise], dim=1)
     img = self.refinement_net(layout)
     return img

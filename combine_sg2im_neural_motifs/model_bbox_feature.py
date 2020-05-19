@@ -26,6 +26,7 @@ def build_model(args):
         model.load_state_dict(state_dict)
     else:
         kwargs = {
+            'args': args,
             'image_size': args.image_size,
             'embedding_dim': args.embedding_dim,
             'gconv_dim': args.gconv_dim,

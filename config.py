@@ -113,6 +113,12 @@ class ModelConfig(object):
 
         # IM_SCALE = self.image_size[0]
         # print("***************** manual set IM_SCALE to image_size: %d" % IM_SCALE)
+        if self.l1_mode == "change":
+            self.l1_change_iters = [int(x) for x in self.l1_change_iters.split(",")]
+            self.l1_change_vals = [float(x) for x in self.l1_change_vals.split(",")]
+        if self.noise_std_mode == "change":
+            self.noise_std_change_iters = [int(x) for x in self.noise_std_change_iters.split(",")]
+            self.noise_std_change_vals = [float(x) for x in self.noise_std_change_vals.split(",")]
 
         if len(self.ckpt) != 0:
             self.ckpt = os.path.join(ROOT_PATH, self.ckpt)
@@ -256,11 +262,18 @@ class ModelConfig(object):
         parser.add_argument('--normalization', default='batch')
         parser.add_argument('--activation', default='leakyrelu-0.2')
         parser.add_argument('--layout_noise_dim', default=32, type=int)
+        parser.add_argument('--noise_std', type=float, default=1)
+        parser.add_argument('--noise_std_mode', type=str, default='fix', help='can be fix, change')
+        parser.add_argument('--noise_std_change_iters', type=str, default="-1")
+        parser.add_argument('--noise_std_change_vals', type=str, default="")
         parser.add_argument('--use_boxes_pred_after', default=-1, type=int)
 
         # Generator losses
         parser.add_argument('--mask_loss_weight', default=0, type=float)
         parser.add_argument('--l1_pixel_loss_weight', default=1.0, type=float)
+        parser.add_argument('--l1_mode', type=str, default='fix', help='can be fix, change')
+        parser.add_argument('--l1_change_iters', type=str, default="-1")
+        parser.add_argument('--l1_change_vals', type=str, default="")
         parser.add_argument('--bbox_pred_loss_weight', default=10, type=float)
         parser.add_argument('--predicate_pred_loss_weight', default=0, type=float)  # DEPRECATED
 
