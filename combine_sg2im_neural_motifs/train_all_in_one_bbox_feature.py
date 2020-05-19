@@ -34,7 +34,8 @@ from sg2im.utils import timeit, bool_flag, LossManager
 # from dataloaders.mscoco import CocoDetection, CocoDataLoader
 from torchvision import transforms
 from bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
-from config import ModelConfig
+# from config import ModelConfig
+from config import config_args
 
 # combine
 from model_bbox_feature import neural_motifs_sg2im_model
@@ -310,6 +311,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args = ModelConfig()
+    # args = ModelConfig()
+    args = config_args
     main(args)
 
