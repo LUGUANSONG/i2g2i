@@ -177,7 +177,7 @@ class Sg2ImModel(nn.Module):
     if self.layout_noise_dim > 0:
       N, C, H, W = layout.size()
       noise_shape = (N, self.layout_noise_dim, H, W)
-      print("check noise_std here, it is %.10f" % self.args.noise_std)
+      # print("check noise_std here, it is %.10f" % self.args.noise_std)
       noise_std = torch.zeros(noise_shape, dtype=layout.dtype,
                                  device=layout.device).fill_(self.args.noise_std)
       layout_noise = torch.normal(mean=0.0, std=noise_std)

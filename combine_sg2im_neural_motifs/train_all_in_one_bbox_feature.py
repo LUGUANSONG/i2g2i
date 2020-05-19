@@ -110,7 +110,7 @@ def calculate_model_losses(args, img, img_pred):
 
     l1_pixel_weight = args.l1_pixel_loss_weight
     l1_pixel_loss = F.l1_loss(img_pred, img)
-    print("check l1_pixel_weight here, it is %.10f" % l1_pixel_weight)
+    # print("check l1_pixel_weight here, it is %.10f" % l1_pixel_weight)
     total_loss = add_loss(total_loss, l1_pixel_loss, losses, 'L1_pixel_loss',
                           l1_pixel_weight)
     return total_loss, losses
