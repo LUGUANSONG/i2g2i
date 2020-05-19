@@ -106,7 +106,18 @@ rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' --exclude "detector-sg2im-c
 
 
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 4 -ngpu 8 -nwork 16 \
---output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 0 --print_every 10 --checkpoint_every 10 --image_size 64,64 --num_val_samples 128
+--output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 1 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--l1_mode change --l1_change_iters 5,10 --l1_change_vals 0.1,0.01
+
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 4 -ngpu 8 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 1 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--l1_mode change --l1_change_iters 5,10 --l1_change_vals 0.1,0.01 --noise_std 0.1
+
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 4 -ngpu 8 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 1 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--l1_mode change --l1_change_iters 5,10 --l1_change_vals 0.1,0.01 \
+--noise_std 0.01 --noise_std_mode change --noise_std_change_iters 5,10 --noise_std_change_vals 0.1,1
+
 
 
 ['__background__', 'airplane', 'animal', 'arm', 'bag', 'banana', 'basket', 'beach', 'bear', 'bed', 'bench', 'bike', 'bird', 'board', 'boat', 'book', 'boot', 'bottle', 'bowl', 'box', 'boy', 'branch', 'building', 'bus', 'cabinet', 'cap', 'car', 'cat', 'chair', 'child', 'clock', 'coat', 'counter', 'cow', 'cup', 'curtain', 'desk', 'dog', 'door', 'drawer', 'ear', 'elephant', 'engine', 'eye', 'face', 'fence', 'finger', 'flag', 'flower', 'food', 'fork', 'fruit', 'giraffe', 'girl', 'glass', 'glove', 'guy', 'hair', 'hand', 'handle', 'hat', 'head', 'helmet', 'hill', 'horse', 'house', 'jacket', 'jean', 'kid', 'kite', 'lady', 'lamp', 'laptop', 'leaf', 'leg', 'letter', 'light', 'logo', 'man', 'men', 'motorcycle', 'mountain', 'mouth', 'neck', 'nose', 'number', 'orange', 'pant', 'paper', 'paw', 'people', 'person', 'phone', 'pillow', 'pizza', 'plane', 'plant', 'plate', 'player', 'pole', 'post', 'pot', 'racket', 'railing', 'rock', 'roof', 'room', 'screen', 'seat', 'sheep', 'shelf', 'shirt', 'shoe', 'short', 'sidewalk', 'sign', 'sink', 'skateboard', 'ski', 'skier', 'sneaker', 'snow', 'sock', 'stand', 'street', 'surfboard', 'table', 'tail', 'tie', 'tile', 'tire', 'toilet', 'towel', 'tower', 'track', 'train', 'tree', 'truck', 'trunk', 'umbrella', 'vase', 'vegetable', 'vehicle', 'wave', 'wheel', 'window', 'windshield', 'wing', 'wire', 'woman', 'zebra']

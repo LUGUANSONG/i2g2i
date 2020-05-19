@@ -155,22 +155,22 @@ def main(args):
         epoch += 1
         print('Starting epoch %d' % epoch)
 
-        if args.l1_mode == "change":
-            if t in args.l1_change_iters:
-                old_l1_weight = args.l1_pixel_loss_weight
-                args.l1_pixel_loss_weight = args.l1_change_vals[args.l1_change_iters.index(t)]
-                print("Change l1_pixel_loss_weight from %10.f to %.10f at iteration %d" % (old_l1_weight, args.l1_pixel_loss_weight, t))
-        if args.noise_std_mode == "change":
-            if t in args.noise_std_change_iters:
-                old_noise_std = args.noise_std
-                args.noise_std = args.noise_std_change_vals[args.noise_std_change_iters.index(t)]
-                print("Change noise_std from %.10f to %.10f at iteration %d" % (old_noise_std, args.noise_std, t))
-
         for step, batch in enumerate(tqdm(train_loader, desc='Training Epoch %d' % epoch, total=len(train_loader))):
             if t == args.eval_mode_after:
                 print('switching to eval mode')
                 all_in_one_model.model.eval()
                 all_in_one_model.optimizer = optim.Adam(all_in_one_model.parameters(), lr=args.learning_rate)
+            if args.l1_mode == "change":
+                if t in args.l1_change_iters:
+                    old_l1_weight = args.l1_pixel_loss_weight
+                    args.l1_pixel_loss_weight = args.l1_change_vals[args.l1_change_iters.index(t)]
+                    print("Change l1_pixel_loss_weight from %10.f to %.10f at iteration %d" % (
+                    old_l1_weight, args.l1_pixel_loss_weight, t))
+            if args.noise_std_mode == "change":
+                if t in args.noise_std_change_iters:
+                    old_noise_std = args.noise_std
+                    args.noise_std = args.noise_std_change_vals[args.noise_std_change_iters.index(t)]
+                    print("Change noise_std from %.10f to %.10f at iteration %d" % (old_noise_std, args.noise_std, t))
             t += 1
 
             with timeit('forward', args.timing):
