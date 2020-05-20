@@ -160,17 +160,26 @@ def main(args):
                 print('switching to eval mode')
                 all_in_one_model.model.eval()
                 all_in_one_model.optimizer = optim.Adam(all_in_one_model.parameters(), lr=args.learning_rate)
-            if args.l1_mode == "change":
-                if t in args.l1_change_iters:
+            if args.l1_mode == "change" and t in args.l1_change_iters:
                     old_l1_weight = args.l1_pixel_loss_weight
                     args.l1_pixel_loss_weight = args.l1_change_vals[args.l1_change_iters.index(t)]
                     print("Change l1_pixel_loss_weight from %10.f to %.10f at iteration %d" % (
                     old_l1_weight, args.l1_pixel_loss_weight, t))
-            if args.noise_std_mode == "change":
-                if t in args.noise_std_change_iters:
+            elif args.l1_mode == "change_linear":
+                old_l1_weight = args.l1_pixel_loss_weight
+                args.l1_pixel_loss_weight = args.l1_change_vals[0] + (args.l1_change_vals[1] - args.l1_change_vals[0]) * t / args.num_iterations
+                print("Change l1_pixel_loss_weight from %10.f to %.10f at iteration %d" % (
+                    old_l1_weight, args.l1_pixel_loss_weight, t))
+
+            if args.noise_std_mode == "change" and t in args.noise_std_change_iters:
                     old_noise_std = args.noise_std
                     args.noise_std = args.noise_std_change_vals[args.noise_std_change_iters.index(t)]
                     print("Change noise_std from %.10f to %.10f at iteration %d" % (old_noise_std, args.noise_std, t))
+            elif args.noise_std_mode == "change_linear":
+                old_noise_std = args.noise_std
+                args.noise_std = args.noise_std_change_vals[0] + (args.noise_std_change_vals[1] - args.noise_std_change_vals[0]) * t / args.num_iterations
+                print("Change noise_std from %.10f to %.10f at iteration %d" % (old_noise_std, args.noise_std, t))
+
             t += 1
 
             with timeit('forward', args.timing):

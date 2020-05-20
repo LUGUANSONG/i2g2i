@@ -189,10 +189,10 @@ parser.add_argument('--restore_from_checkpoint', default=False, type=bool_flag)
 config_args = parser.parse_args()
 # IM_SCALE = self.image_size[0]
 # print("***************** manual set IM_SCALE to image_size: %d" % IM_SCALE)
-if config_args.l1_mode == "change":
+if config_args.l1_mode in ["change", "change_linear"]:
     config_args.l1_change_iters = [int(x) for x in config_args.l1_change_iters.split(",")]
     config_args.l1_change_vals = [float(x) for x in config_args.l1_change_vals.split(",")]
-if config_args.noise_std_mode == "change":
+if config_args.noise_std_mode in ["change", "change_linear"]:
     config_args.noise_std_change_iters = [int(x) for x in config_args.noise_std_change_iters.split(",")]
     config_args.noise_std_change_vals = [float(x) for x in config_args.noise_std_change_vals.split(",")]
 
