@@ -380,7 +380,8 @@ class ModelConfig(object):
         parser.add_argument('--learning_rate', default=1e-4, type=float)
 
         # Switch the generator to eval mode after this many iterations
-        parser.add_argument('--eval_mode_after', default=100000, type=int)
+        # parser.add_argument('--eval_mode_after', default=100000, type=int)
+        parser.add_argument('--eval_mode_after', default=-1, type=int)
 
         # Dataset options common to both VG and COCO
         parser.add_argument('--image_size', default='64,64', type=int_tuple)

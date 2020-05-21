@@ -202,7 +202,8 @@ class neural_motifs_sg2im_model(nn.Module):
 
         obj_to_img = gt_classes[:, 0] - img_offset
         # print("obj_to_img.min(), obj_to_img.max(), len(imgs) {} {} {}".format(obj_to_img.min(), obj_to_img.max(), len(imgs)))
-        assert obj_to_img.max() < len(imgs), "obj_to_img.max() < len(imgs) is not satidfied: {} {}".format(obj_to_img.max(), len(imgs))
+        assert obj_to_img.min() >= 0 and obj_to_img.max() < len(imgs), \
+            "obj_to_img.min() >= 0 and obj_to_img.max() < len(imgs) is not satidfied: {} {} {}".format(obj_to_img.min(), obj_to_img.max(), len(imgs))
         boxes = gt_boxes
         obj_fmap = gt_fmaps
         objs = gt_classes[:, 1]
