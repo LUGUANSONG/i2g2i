@@ -229,7 +229,7 @@ def main(args):
 
             # train generator for 1 iteration after n_critic iterations
             if t % (args.n_critic + 1) == 0:
-                all_in_one_model.forward_G = False
+                all_in_one_model.forward_G = True
                 all_in_one_model.calc_G_D_loss = True
                 all_in_one_model.forward_D = False
                 all_in_one_model.set_requires_grad(
