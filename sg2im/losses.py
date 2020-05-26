@@ -150,6 +150,7 @@ def gradient_penalty(x_real, x_fake, f, gamma=1.0):
   device, dtype = x_real.device, x_real.dtype
   eps = torch.randn(N, 1, 1, 1, device=device, dtype=dtype)
   x_hat = eps * x_real + (1 - eps) * x_fake
+  x_hat.requires_grad_(True)
   x_hat_score = f(x_hat)
   if x_hat_score.dim() > 1:
     x_hat_score = x_hat_score.view(x_hat_score.size(0), -1).mean(dim=1)
