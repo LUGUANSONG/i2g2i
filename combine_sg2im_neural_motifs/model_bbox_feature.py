@@ -103,18 +103,18 @@ class neural_motifs_sg2im_model(nn.Module):
         }
         self.model, model_kwargs = build_model(args)
 
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.learning_rate)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
         self.obj_discriminator, d_obj_kwargs = build_obj_discriminator(args, vocab)
         self.img_discriminator, d_img_kwargs = build_img_discriminator(args)
 
         if self.obj_discriminator is not None:
             self.obj_discriminator.train()
-            self.optimizer_d_obj = torch.optim.Adam(self.obj_discriminator.parameters(), lr=args.learning_rate)
+            self.optimizer_d_obj = torch.optim.Adam(self.obj_discriminator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
         if self.img_discriminator is not None:
             self.img_discriminator.train()
-            self.optimizer_d_img = torch.optim.Adam(self.img_discriminator.parameters(), lr=args.learning_rate)
+            self.optimizer_d_img = torch.optim.Adam(self.img_discriminator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
         restore_path = None
         if args.restore_from_checkpoint:
