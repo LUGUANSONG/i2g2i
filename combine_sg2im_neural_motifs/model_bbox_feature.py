@@ -250,7 +250,7 @@ class neural_motifs_sg2im_model(nn.Module):
                 with timeit('d_img forward for d', self.args.timing):
                     d_scores_fake_img = self.img_discriminator(imgs_fake)
                     d_scores_real_img = self.img_discriminator(imgs)
-                    d_img_gp = gradient_penalty(imgs, imgs_fake, self.optimizer_d_img)
+                    d_img_gp = gradient_penalty(imgs, imgs_fake, self.img_discriminator)
 
         return Result(
             imgs=imgs,
