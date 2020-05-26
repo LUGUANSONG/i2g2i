@@ -28,7 +28,7 @@ def get_gan_losses(gan_type):
   """
   if gan_type == 'gan':
     return gan_g_loss, gan_d_loss
-  elif gan_type == 'wgan':
+  elif gan_type in ['wgan', 'wgan-gp']:
     return wgan_g_loss, wgan_d_loss
   elif gan_type == 'lsgan':
     return lsgan_g_loss, lsgan_d_loss
