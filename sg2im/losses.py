@@ -152,6 +152,8 @@ def gradient_penalty(x_real, x_fake, f, gamma=1.0):
   x_hat = eps * x_real + (1 - eps) * x_fake
   x_hat.requires_grad_(True)
   x_hat_score = f(x_hat)
+  if len(x_hat_score) == 2:
+    x_hat_score = x_hat_score[0]
   if x_hat_score.dim() > 1:
     x_hat_score = x_hat_score.view(x_hat_score.size(0), -1).mean(dim=1)
   x_hat_score = x_hat_score.sum()

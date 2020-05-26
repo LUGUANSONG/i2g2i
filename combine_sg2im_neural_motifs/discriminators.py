@@ -67,7 +67,7 @@ class AcDiscriminator(nn.Module):
     self.real_classifier = nn.Linear(1024, 1)
     self.obj_classifier = nn.Linear(1024, num_objects)
 
-  def forward(self, x, y):
+  def forward(self, x, y=None):
     if x.dim() == 3:
       x = x[:, None]
     vecs = self.cnn(x)

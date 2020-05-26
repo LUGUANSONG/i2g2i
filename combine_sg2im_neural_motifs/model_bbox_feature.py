@@ -242,7 +242,7 @@ class neural_motifs_sg2im_model(nn.Module):
                     d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops = self.obj_discriminator(imgs_fake, objs, boxes, obj_to_img, return_crops=True)
                     d_scores_real_crop, d_obj_scores_real_crop, real_crops = self.obj_discriminator(imgs, objs, boxes, obj_to_img, return_crops=True)
                     if self.args.gan_loss_type == "wgan-gp":
-                        d_obj_gp = gradient_penalty(real_crops, fake_crops, self.obj_discriminator)
+                        d_obj_gp = gradient_penalty(real_crops, fake_crops, self.obj_discriminator.discriminator)
 
             if self.img_discriminator is not None:
                 imgs_fake = imgs_pred.detach()
