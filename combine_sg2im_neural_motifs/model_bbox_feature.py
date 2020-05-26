@@ -10,6 +10,7 @@ from lib.pytorch_misc import optimistic_restore
 import torch.nn.functional as F
 from config import BOX_SCALE
 from sg2im.utils import timeit
+from sg2im.losses import gradient_penalty
 
 
 def build_model(args):
@@ -171,6 +172,9 @@ class neural_motifs_sg2im_model(nn.Module):
             }
 
         self.t, self.epoch, self.checkpoint = t, epoch, checkpoint
+        self.forward_G = True
+        self.calc_G_D_loss = True
+        self.forward_D = True
 
     def forward(self, imgs, img_offset, gt_boxes, gt_classes, gt_fmaps):
         # forward detector
@@ -208,30 +212,45 @@ class neural_motifs_sg2im_model(nn.Module):
         obj_fmap = gt_fmaps
         objs = gt_classes[:, 1]
 
-        with timeit('generator forward', self.args.timing):
-            imgs_pred = self.model(obj_to_img, boxes, obj_fmap)
+        if self.forward_G:
+            with timeit('generator forward', self.args.timing):
+                self.imgs_pred = self.model(obj_to_img, boxes, obj_fmap)
+        imgs_pred = self.imgs_pred
 
-        # forward discriminators to train generator
-        if self.obj_discriminator is not None:
-            with timeit('d_obj forward for g', self.args.timing):
-                g_scores_fake_crop, g_obj_scores_fake_crop = self.obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
+        g_scores_fake_crop, g_obj_scores_fake_crop = None, None
+        g_scores_fake_img = None
+        if self.calc_G_D_loss:
+            # forward discriminators to train generator
+            if self.obj_discriminator is not None:
+                with timeit('d_obj forward for g', self.args.timing):
+                    g_scores_fake_crop, g_obj_scores_fake_crop = self.obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
 
-        if self.img_discriminator is not None:
-            with timeit('d_img forward for g', self.args.timing):
-                g_scores_fake_img = self.img_discriminator(imgs_pred)
+            if self.img_discriminator is not None:
+                with timeit('d_img forward for g', self.args.timing):
+                    g_scores_fake_img = self.img_discriminator(imgs_pred)
 
-        # forward discriminators to train discriminators
-        if self.obj_discriminator is not None:
-            imgs_fake = imgs_pred.detach()
-            with timeit('d_obj forward for d', self.args.timing):
-                d_scores_fake_crop, d_obj_scores_fake_crop = self.obj_discriminator(imgs_fake, objs, boxes, obj_to_img)
-                d_scores_real_crop, d_obj_scores_real_crop = self.obj_discriminator(imgs, objs, boxes, obj_to_img)
+        d_scores_fake_crop, d_obj_scores_fake_crop = None, None
+        d_scores_real_crop, d_obj_scores_real_crop = None, None
+        d_obj_gp = None
+        d_scores_fake_img = None
+        d_scores_real_img = None
+        d_img_gp = None
+        if self.forward_D:
+            # forward discriminators to train discriminators
+            if self.obj_discriminator is not None:
+                imgs_fake = imgs_pred.detach()
+                with timeit('d_obj forward for d', self.args.timing):
+                    d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops = self.obj_discriminator(imgs_fake, objs, boxes, obj_to_img, return_crops=True)
+                    d_scores_real_crop, d_obj_scores_real_crop, real_crops = self.obj_discriminator(imgs, objs, boxes, obj_to_img, return_crops=True)
+                    if args.gan_loss_type == "wgan-gp":
+                        d_obj_gp = gradient_penalty(real_crops, fake_crops, self.obj_discriminator)
 
-        if self.img_discriminator is not None:
-            imgs_fake = imgs_pred.detach()
-            with timeit('d_img forward for d', self.args.timing):
-                d_scores_fake_img = self.img_discriminator(imgs_fake)
-                d_scores_real_img = self.img_discriminator(imgs)
+            if self.img_discriminator is not None:
+                imgs_fake = imgs_pred.detach()
+                with timeit('d_img forward for d', self.args.timing):
+                    d_scores_fake_img = self.img_discriminator(imgs_fake)
+                    d_scores_real_img = self.img_discriminator(imgs)
+                    d_img_gp = gradient_penalty(imgs, imgs_fake, self.optimizer_d_img)
 
         return Result(
             imgs=imgs,
@@ -245,7 +264,9 @@ class neural_motifs_sg2im_model(nn.Module):
             d_scores_real_crop=d_scores_real_crop,
             d_obj_scores_real_crop=d_obj_scores_real_crop,
             d_scores_fake_img=d_scores_fake_img,
-            d_scores_real_img=d_scores_real_img
+            d_scores_real_img=d_scores_real_img,
+            d_obj_gp=d_obj_gp,
+            d_img_gp=d_img_gp
         )
         # return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
         #        d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img
@@ -263,6 +284,19 @@ class neural_motifs_sg2im_model(nn.Module):
             return gather_res(outputs, 0, dim=0)
         return outputs
 
+    def set_requires_grad(self, nets, requires_grad=False):
+        """Set requies_grad=Fasle for all the networks to avoid unnecessary computations
+        Parameters:
+            nets (network list)   -- a list of networks
+            requires_grad (bool)  -- whether the networks require gradients or not
+        """
+        if not isinstance(nets, list):
+            nets = [nets]
+        for net in nets:
+            if net is not None:
+                for param in net.parameters():
+                    param.requires_grad = requires_grad
+
 
 class Result(object):
     def __init__(self, imgs=None,
@@ -276,7 +310,9 @@ class Result(object):
             d_scores_real_crop=None,
             d_obj_scores_real_crop=None,
             d_scores_fake_img=None,
-            d_scores_real_img=None):
+            d_scores_real_img=None,
+            d_obj_gp=None,
+            d_img_gp=None):
         self.__dict__.update(locals())
         del self.__dict__['self']
 

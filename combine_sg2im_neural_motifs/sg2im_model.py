@@ -40,6 +40,7 @@ class Sg2ImModel(nn.Module):
                layout_noise_dim=0, args=None,
                **kwargs):
     super(Sg2ImModel, self).__init__()
+    print("i2g2i.combine_sg2im_neural_motifs.sg2im_model.Sg2ImModel")
 
     # We used to have some additional arguments: 
     # vec_noise_dim, gconv_mode, box_anchor, decouple_obj_predictions

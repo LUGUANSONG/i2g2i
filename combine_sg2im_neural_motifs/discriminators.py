@@ -27,6 +27,7 @@ class PatchDiscriminator(nn.Module):
                padding='same', pooling='avg', input_size=(128,128),
                layout_dim=0):
     super(PatchDiscriminator, self).__init__()
+    print("i2g2i.combine_sg2im_neural_motifs.discriminator.PatchDiscriminator")
     input_dim = 3 + layout_dim
     arch = 'I%d,%s' % (input_dim, arch)
     cnn_kwargs = {
@@ -49,6 +50,7 @@ class AcDiscriminator(nn.Module):
   def __init__(self, vocab, arch, normalization='none', activation='relu',
                padding='same', pooling='avg'):
     super(AcDiscriminator, self).__init__()
+    print("i2g2i.combine_sg2im_neural_motifs.discriminator.AcDiscriminator")
     self.vocab = vocab
 
     cnn_kwargs = {
@@ -80,14 +82,18 @@ class AcCropDiscriminator(nn.Module):
   def __init__(self, vocab, arch, normalization='none', activation='relu',
                object_size=64, padding='same', pooling='avg'):
     super(AcCropDiscriminator, self).__init__()
+    print("i2g2i.combine_sg2im_neural_motifs.discriminator.AcCropDiscriminator")
     self.vocab = vocab
     self.discriminator = AcDiscriminator(vocab, arch, normalization,
                                          activation, padding, pooling)
     self.object_size = object_size
 
-  def forward(self, imgs, objs, boxes, obj_to_img):
+  def forward(self, imgs, objs, boxes, obj_to_img, return_crops=False):
     crops = crop_bbox_batch(imgs, boxes, obj_to_img, self.object_size)
     # real_scores, ac_loss = self.discriminator(crops, objs)
     # return real_scores, ac_loss
     real_scores, obj_scores = self.discriminator(crops, objs)
-    return real_scores, obj_scores
+    if return_crops:
+      return real_scores, obj_scores, crops
+    else:
+      return real_scores, obj_scores

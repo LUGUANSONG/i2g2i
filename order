@@ -130,12 +130,12 @@ CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train_all_in_one_bbo
 --layout_noise_dim 0
 
 CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
---output_dir ../detector-sg2im-checkpoints/vg64_std0.00001 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
---noise_std 0.00001
+--output_dir ../detector-sg2im-checkpoints/vg64_std0.0001_not_eval --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0.0001 --eval_mode_after -1
 
 CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
---output_dir ../detector-sg2im-checkpoints/vg64_std0.0001_not_eval --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
---noise_std 0.0001
+--output_dir ../detector-sg2im-checkpoints/vg64_std0.00001 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0.00001
 
 machine
 CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
@@ -263,3 +263,13 @@ umbrella
 vase
 wing
 zebra
+
+
+machine 7
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan.py \
+-b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_wgan-gp --l1_pixel_loss_weight 0 --ac_loss_weight 0 \
+--print_every 100 --image_size 64,64 --num_val_samples 128 --gan_loss_type wgan-gp
+
+
+

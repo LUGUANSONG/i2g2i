@@ -448,6 +448,7 @@ class ModelConfig(object):
         # Generic discriminator options
         parser.add_argument('--discriminator_loss_weight', default=0.01, type=float)
         parser.add_argument('--gan_loss_type', default='gan')
+        parser.add_argument('--n_critic', type=int, default=3)
         parser.add_argument('--d_clip', default=None, type=float)
         parser.add_argument('--d_normalization', default='batch')
         parser.add_argument('--d_padding', default='valid')
@@ -458,12 +459,14 @@ class ModelConfig(object):
                             default='C4-64-2,C4-128-2,C4-256-2')
         parser.add_argument('--crop_size', default=32, type=int)
         parser.add_argument('--d_obj_weight', default=1.0, type=float)  # multiplied by d_loss_weight
+        parser.add_argument('--d_obj_gp_weight', type=float, default=10)
         parser.add_argument('--ac_loss_weight', default=0.1, type=float)
 
         # Image discriminator
         parser.add_argument('--d_img_arch',
                             default='C4-64-2,C4-128-2,C4-256-2')
         parser.add_argument('--d_img_weight', default=1.0, type=float)  # multiplied by d_loss_weight
+        parser.add_argument('--d_img_gp_weight', type=float, default=10)
 
         # Output options
         parser.add_argument('--print_every', default=10, type=int)
