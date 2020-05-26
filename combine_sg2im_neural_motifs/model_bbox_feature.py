@@ -49,7 +49,7 @@ def build_obj_discriminator(args, vocab):
     d_kwargs = {}
     d_weight = args.discriminator_loss_weight
     d_obj_weight = args.d_obj_weight
-    if d_weight == 0 or d_obj_weight == 0:
+    if (d_weight == 0 or d_obj_weight == 0) and args.ac_loss_weight == 0:
         return discriminator, d_kwargs
 
     d_kwargs = {
@@ -241,7 +241,7 @@ class neural_motifs_sg2im_model(nn.Module):
                 with timeit('d_obj forward for d', self.args.timing):
                     d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops = self.obj_discriminator(imgs_fake, objs, boxes, obj_to_img, return_crops=True)
                     d_scores_real_crop, d_obj_scores_real_crop, real_crops = self.obj_discriminator(imgs, objs, boxes, obj_to_img, return_crops=True)
-                    if args.gan_loss_type == "wgan-gp":
+                    if self.args.gan_loss_type == "wgan-gp":
                         d_obj_gp = gradient_penalty(real_crops, fake_crops, self.obj_discriminator)
 
             if self.img_discriminator is not None:
@@ -249,7 +249,8 @@ class neural_motifs_sg2im_model(nn.Module):
                 with timeit('d_img forward for d', self.args.timing):
                     d_scores_fake_img = self.img_discriminator(imgs_fake)
                     d_scores_real_img = self.img_discriminator(imgs)
-                    d_img_gp = gradient_penalty(imgs, imgs_fake, self.img_discriminator)
+                    if self.args.gan_loss_type == "wgan-gp":
+                        d_img_gp = gradient_penalty(imgs, imgs_fake, self.img_discriminator)
 
         return Result(
             imgs=imgs,
