@@ -213,6 +213,8 @@ class neural_motifs_sg2im_model(nn.Module):
         objs = gt_classes[:, 1]
 
         mask_noise_indexes = torch.randperm(imgs.shape[0])[:int(self.args.noise_mask_ratio * imgs.shape[0])].to(imgs.device)
+        if len(mask_noise_indexes) == 0:
+            mask_noise_indexes = None
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
                 imgs_pred = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
@@ -268,7 +270,7 @@ class neural_motifs_sg2im_model(nn.Module):
             d_scores_real_img=d_scores_real_img,
             d_obj_gp=d_obj_gp,
             d_img_gp=d_img_gp,
-            mask_noise_indexes=mask_noise_indexes + img_offset
+            mask_noise_indexes=(mask_noise_indexes + img_offset) if mask_noise_indexes is not None else None
         )
         # return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
         #        d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img
