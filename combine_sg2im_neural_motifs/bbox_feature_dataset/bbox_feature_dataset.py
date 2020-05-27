@@ -139,7 +139,10 @@ class VG(Dataset):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def assertion_checks(entry):
-    im_size = tuple(entry['img'].size())
+    try:
+        im_size = tuple(entry['img'].size())
+    except:
+        im_size = tuple(entry['img'].size)
     if len(im_size) != 3:
         raise ValueError("Img must be dim-3")
 
