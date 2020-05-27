@@ -89,7 +89,6 @@ def main(args):
     check_args(args)
     if not exists(args.output_dir):
         os.makedirs(args.output_dir)
-    summary_writer = SummaryWriter(args.output_dir)
 
     train, val, test = VG.splits(transform=transforms.Compose([
                                     transforms.Resize(args.image_size),
