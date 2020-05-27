@@ -280,9 +280,10 @@ class neural_motifs_sg2im_model(nn.Module):
         replicas = nn.parallel.replicate(self, devices=list(range(self.args.num_gpus)))
         outputs = nn.parallel.parallel_apply(replicas, [batch[i] for i in range(self.args.num_gpus)])
 
-        if self.training:
-            return gather_res(outputs, 0, dim=0)
-        return outputs
+        # if self.training:
+        #     return gather_res(outputs, 0, dim=0)
+        # return outputs
+        return gather_res(outputs, 0, dim=0)
 
     def set_requires_grad(self, nets, requires_grad=False):
         """Set requies_grad=Fasle for all the networks to avoid unnecessary computations

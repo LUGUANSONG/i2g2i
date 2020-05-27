@@ -154,8 +154,8 @@ def gradient_penalty(x_real, x_fake, f, gamma=1.0):
   x_hat_score = f(x_hat)
   if len(x_hat_score) == 2:
     x_hat_score = x_hat_score[0]
-  # if x_hat_score.dim() > 1:
-  #   x_hat_score = x_hat_score.view(x_hat_score.size(0), -1).mean(dim=1)
+  if x_hat_score.dim() > 1:
+    x_hat_score = x_hat_score.view(x_hat_score.size(0), -1).mean(dim=1)
   # x_hat_score = x_hat_score.sum()
   # grad_x_hat, = torch.autograd.grad(x_hat_score, x_hat, create_graph=True)
   # grad_x_hat_norm = grad_x_hat.contiguous().view(N, -1).norm(p=2, dim=1)
