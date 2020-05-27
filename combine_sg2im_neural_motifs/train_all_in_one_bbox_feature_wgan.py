@@ -65,15 +65,19 @@ def check_model(args, loader, model):
     model.eval()
     num_samples = 0
     all_losses = defaultdict(list)
+    model.forward_G = True
+    model.calc_G_D_loss = False
+    model.forward_D = False
     with torch.no_grad():
         for batch in loader:
             result = model[batch]
-            imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
-            d_scores_fake_crop, d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, \
-            d_scores_fake_img, d_scores_real_img = result.imgs, result.imgs_pred, result.objs, \
-            result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img, \
-            result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
-            result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img
+            # imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
+            # d_scores_fake_crop, d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, \
+            # d_scores_fake_img, d_scores_real_img = result.imgs, result.imgs_pred, result.objs, \
+            # result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img, \
+            # result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
+            # result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img
+            imgs, imgs_pred, objs = result.imgs, result.imgs_pred, result.objs
 
             total_loss, losses = calculate_model_losses(
                 args, imgs, imgs_pred)

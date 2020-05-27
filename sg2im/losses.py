@@ -148,18 +148,21 @@ def lsgan_d_loss(scores_real, scores_fake):
 def gradient_penalty(x_real, x_fake, f, gamma=1.0):
   N = x_real.size(0)
   device, dtype = x_real.device, x_real.dtype
-  eps = torch.randn(N, 1, 1, 1, device=device, dtype=dtype)
+  eps = torch.rand(N, 1, 1, 1, device=device, dtype=dtype)
   x_hat = eps * x_real + (1 - eps) * x_fake
   x_hat.requires_grad_(True)
   x_hat_score = f(x_hat)
   if len(x_hat_score) == 2:
     x_hat_score = x_hat_score[0]
-  if x_hat_score.dim() > 1:
-    x_hat_score = x_hat_score.view(x_hat_score.size(0), -1).mean(dim=1)
-  x_hat_score = x_hat_score.sum()
-  grad_x_hat, = torch.autograd.grad(x_hat_score, x_hat, create_graph=True)
-  grad_x_hat_norm = grad_x_hat.contiguous().view(N, -1).norm(p=2, dim=1)
-  gp_loss = (grad_x_hat_norm - gamma).pow(2).div(gamma * gamma).mean()
+  # if x_hat_score.dim() > 1:
+  #   x_hat_score = x_hat_score.view(x_hat_score.size(0), -1).mean(dim=1)
+  # x_hat_score = x_hat_score.sum()
+  # grad_x_hat, = torch.autograd.grad(x_hat_score, x_hat, create_graph=True)
+  # grad_x_hat_norm = grad_x_hat.contiguous().view(N, -1).norm(p=2, dim=1)
+  # gp_loss = (grad_x_hat_norm - gamma).pow(2).div(gamma * gamma).mean()
+  gradients = torch.autograd.grad(outputs=x_hat_score, inputs=x_hat,
+                                  grad_outputs=torch.ones(x_hat_score.size()).to(device),
+                                  create_graph=True, retain_graph=True, only_inputs=True)
+  gradients = gradients[0].view(x_real.size(0), -1)  # flat the data
+  gp_loss = (((gradients + 1e-16).norm(2, dim=1) - gamma) ** 2).mean()  # added eps
   return gp_loss
-
-
