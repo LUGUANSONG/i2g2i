@@ -24,6 +24,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from tensorboardX import SummaryWriter
+import copy
 
 # sg2im
 from sg2im.losses import get_gan_losses
@@ -61,7 +62,8 @@ def check_model(args, loader, model, output_path):
     model.calc_G_D_loss = False
     model.forward_D = False
     with torch.no_grad():
-        for batch in loader:
+        for _batch in loader:
+            batch = copy.deepcopy(_batch)
             for i in range(10):
                 result = model[batch]
                 imgs, imgs_pred, objs = result.imgs, result.imgs_pred, result.objs
