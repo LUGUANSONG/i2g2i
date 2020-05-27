@@ -1,0 +1,61 @@
+machine7
+# stopped
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_std0.1 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0.1 --restore_from_checkpoint 1 --num_val_samples 5000
+
+# stopped
+CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_std0.01 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0.01
+
+# stopped
+CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_std0.001 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0.001
+
+CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_std0.0001 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0.0001
+
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_no_noise --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--layout_noise_dim 0
+
+CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_std0.0001_not_eval --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0.0001 --eval_mode_after -1
+
+CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_std0.00001 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0.00001
+
+machine
+CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_std0 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0
+
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_std_increase --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0.0001 --noise_std_mode change --noise_std_change_iters 100000,200000,300000,400000 --noise_std_change_vals 0.001,0.01,0.1,1
+
+CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_std_increase_from0 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--noise_std 0 --noise_std_mode change --noise_std_change_iters 100000,200000,300000,400000,500000 --noise_std_change_vals 0.0001,0.001,0.01,0.1,1
+
+CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_l1_decrease --l1_pixel_loss_weight 1 --print_every 100 --image_size 64,64 --num_val_samples 128 \
+--l1_mode change --l1_change_iters 100000,200000,300000,400000,500000 --l1_change_vals 0.1,0.01,0.001,0.0001,0
+
+machine6
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_l1_0.1 --l1_pixel_loss_weight 0.1 --print_every 100 --image_size 64,64 --num_val_samples 128
+
+CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_l1_0.01 --l1_pixel_loss_weight 0.01 --print_every 100 --image_size 64,64 --num_val_samples 128
+
+CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_l1_0.001 --l1_pixel_loss_weight 0.001 --print_every 100 --image_size 64,64 --num_val_samples 128
+
+CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/vg64_l1_0.0001 --l1_pixel_loss_weight 0.0001 --print_every 100 --image_size 64,64 --num_val_samples 128

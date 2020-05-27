@@ -87,6 +87,10 @@ rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/co
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/train ubuntu@18.222.96.193	:/home/ubuntu/scene_graph/neural-motifs-data/
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/val ubuntu@18.222.96.193	:/home/ubuntu/scene_graph/neural-motifs-data/
 
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/test ubuntu@18.221.104.138:/home/ubuntu/scene_graph/neural-motifs-data/
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/test ubuntu@13.59.234.86:/home/ubuntu/scene_graph/neural-motifs-data/
+
 
 CUDA_VISIBLE_DEVICES=5,6,7 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 3 -nwork 8 \
 --output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128

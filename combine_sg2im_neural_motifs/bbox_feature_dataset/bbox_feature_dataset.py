@@ -84,8 +84,8 @@ class VG(Dataset):
         """ Helper method to generate splits of the dataset"""
         train = cls('train', *args, **kwargs)
         val = cls('val', *args, **kwargs)
-        # test = cls('test', *args, **kwargs)
-        return train, val #, test
+        test = cls('test', *args, **kwargs)
+        return train, val, test
 
     def __getitem__(self, index):
         '''

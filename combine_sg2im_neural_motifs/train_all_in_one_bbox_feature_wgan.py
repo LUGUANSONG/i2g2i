@@ -35,7 +35,7 @@ from sg2im.utils import timeit, bool_flag, LossManager
 from torchvision import transforms
 from bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
 # from config import ModelConfig
-from config import config_args
+from config_args import config_args
 
 # combine
 from model_bbox_feature import neural_motifs_sg2im_model
@@ -139,7 +139,7 @@ def main(args):
     #                                                      num_workers=args.num_workers,
     #                                                      num_gpus=args.num_gpus)
     # else:
-    train, val = VG.splits(transform=transforms.Compose([
+    train, val, _ = VG.splits(transform=transforms.Compose([
                                     transforms.Resize(args.image_size),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
