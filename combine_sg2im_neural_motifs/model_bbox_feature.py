@@ -212,7 +212,7 @@ class neural_motifs_sg2im_model(nn.Module):
         obj_fmap = gt_fmaps
         objs = gt_classes[:, 1]
 
-        mask_noise_indexes = torch.randperm(imgs.shape[0])[:int(self.args.noise_mask_ratio * imgs.shape[0])]
+        mask_noise_indexes = torch.randperm(imgs.shape[0])[:int(self.args.noise_mask_ratio * imgs.shape[0])].to(imgs.device)
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
                 imgs_pred = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
