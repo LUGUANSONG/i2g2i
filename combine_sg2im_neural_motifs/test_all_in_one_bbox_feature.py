@@ -67,15 +67,15 @@ def check_model(args, loader, model, output_path):
 
             imgs_pred = imgs_pred.cpu()
 
-            for k, image in enumerate(imgs_pred):
-                image = image * torch.tensor([0.229, 0.224, 0.225], device=image.device).reshape(1, 3, 1, 1)
-                image = image + torch.tensor([0.485, 0.456, 0.406], device=image.device).reshape(1, 3, 1, 1)
-                image_min = image.min(3)[0].min(2)[0].min(1)[0].reshape(len(image), 1, 1, 1)
-                image_max = image.max(3)[0].max(2)[0].max(1)[0].reshape(len(image), 1, 1, 1)
-                image = image - image_min
-                image = image / (image_max - image_min)
-                image = image.clamp(min=0, max=1)
+            images = imgs_pred * torch.tensor([0.229, 0.224, 0.225], device=imgs_pred.device).reshape(1, 3, 1, 1)
+            images = images + torch.tensor([0.485, 0.456, 0.406], device=images.device).reshape(1, 3, 1, 1)
+            images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
+            images_max = images.max(3)[0].max(2)[0].max(1)[0].reshape(len(images), 1, 1, 1)
+            images = images - images_min
+            images = images / (images_max - images_min)
+            imgs_pred = images.clamp(min=0, max=1)
 
+            for k, image in enumerate(imgs_pred):
                 image = transforms.ToPILImage()(image).convert("RGB")
                 image.save(join(output_path, "img_pred_%d.png" % (num_samples + k)))
 
