@@ -96,7 +96,7 @@ def _init_inception():
     softmax = tf.nn.softmax(logits)
 
 # img_dir = "../detector-sg2im-checkpoints/vg64_l1/test/"
-img_dir = sys.argv[0]
+img_dir = sys.argv[1]
 img_files = os.listdir(img_dir)
 print("test the IS score for images in %s, find %d images" % (img_dir, len(img_files)))
 img_files = [join(img_dir, file) for file in img_files]
