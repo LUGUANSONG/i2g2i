@@ -144,9 +144,9 @@ def assertion_checks(entry):
         if len(im_size) != 3:
             raise ValueError("Img must be dim-3")
 
-    c, h, w = entry['img'].size()
-    if c != 3:
-        raise ValueError("Must have 3 color channels")
+        c, h, w = entry['img'].size()
+        if c != 3:
+            raise ValueError("Must have 3 color channels")
 
     num_gt = entry['gt_boxes'].shape[0]
     if entry['gt_classes'].shape[0] != num_gt:
