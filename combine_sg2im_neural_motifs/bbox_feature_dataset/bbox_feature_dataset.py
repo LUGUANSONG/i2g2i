@@ -9,7 +9,7 @@ from os.path import join, basename, dirname, exists
 import h5py
 import numpy as np
 import torch
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from torch.utils.data import Dataset
 from torchvision import datasets, transforms, utils
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize
@@ -215,21 +215,64 @@ class VGDataLoader(torch.utils.data.DataLoader):
         )
         return train_load, val_load
 
+font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 8)
+
+def draw_box(draw, boxx, text_str):
+    box = tuple([float(b) for b in boxx])
+    if '-GT' in text_str:
+        color = (255, 128, 0, 255)
+    else:
+        color = (0, 128, 0, 255)
+
+    # color = tuple([int(x) for x in cmap(cls_ind)])
+
+    # draw the fucking box
+    draw.line([(box[0], box[1]), (box[2], box[1])], fill=color, width=2)
+    draw.line([(box[2], box[1]), (box[2], box[3])], fill=color, width=2)
+    draw.line([(box[2], box[3]), (box[0], box[3])], fill=color, width=2)
+    draw.line([(box[0], box[3]), (box[0], box[1])], fill=color, width=2)
+
+    # draw.rectangle(box, outline=color)
+    w, h = draw.textsize(text_str, font=font)
+
+    x1text = box[0]
+    y1text = max(box[1] - h, 0)
+    x2text = min(x1text + w, draw.im.size[0])
+    y2text = y1text + h
+    print("drawing {}x{} rectangle at {:.1f} {:.1f} {:.1f} {:.1f}".format(
+        h, w, x1text, y1text, x2text, y2text))
+
+    draw.rectangle((x1text, y1text, x2text, y2text), fill=color)
+    draw.text((x1text, y1text), text_str, fill='black', font=font)
+    return draw
 
 if __name__ == "__main__":
     dataset = VG(
         mode='train',
         transform=transforms.Compose(
             [
-                transforms.Resize((128, 128)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                transforms.Resize((256, 256)),
+                # transforms.ToTensor(),
+                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
     )
-    entry = dataset[0]
-    for k, v in entry.items():
-        try:
-            print(k, type(v), v.shape, v.dtype)
-        except:
-            print(k, type(v))
+
+    output_path = "../check_bbox_feature_dataset"
+    if not exists(output_path):
+        os.makedirs(output_path)
+
+    for i in range(10):
+        entry = dataset[i]
+        for k, v in entry.items():
+            try:
+                print(k, type(v), v.shape, v.dtype)
+            except:
+                print(k, type(v))
+
+        draw = ImageDraw.Draw(entry['img'])
+        for bbox, cls in zip(entry['gt_boxes'], entry['gt_classes']):
+            gt_box = bbox.numpy() * 256
+            draw = draw_box(draw, gt_box, dataset.ind_to_classes[cls])
+        entry['img'].save(join(output_path, "%d.png" % i))
+
