@@ -1,3 +1,6 @@
+vg64 pretrain model 5.31 0.09
+vg64_l1 6.20 0.21
+
 machine7
 CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_std0.1 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \

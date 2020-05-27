@@ -4,6 +4,7 @@ File that involves dataloaders for the Visual Genome dataset.
 
 import json
 import os
+import sys
 from os.path import join, basename, dirname, exists
 
 import h5py
@@ -258,7 +259,8 @@ if __name__ == "__main__":
         )
     )
 
-    output_path = "../check_bbox_feature_dataset"
+    output_path = sys.argv[1]
+    print("output to %s" % output_path)
     if not exists(output_path):
         os.makedirs(output_path)
 
