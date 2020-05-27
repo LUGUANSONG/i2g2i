@@ -103,6 +103,13 @@ def main(args):
     print(train.ind_to_classes)
 
     all_in_one_model = neural_motifs_sg2im_model(args, train.ind_to_classes)
+    restore_path = '%s_with_model.pt' % args.checkpoint_name
+    restore_path = os.path.join(args.output_dir, restore_path)
+    print('Restoring from checkpoint:')
+    print(restore_path)
+    checkpoint = torch.load(restore_path)
+    restore_path.model.load_state_dict(checkpoint['model_state'])
+
     all_in_one_model.cuda()
 
     print('checking on test')
