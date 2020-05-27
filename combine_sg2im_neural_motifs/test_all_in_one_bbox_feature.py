@@ -108,7 +108,7 @@ def main(args):
     print('Restoring from checkpoint:')
     print(restore_path)
     checkpoint = torch.load(restore_path)
-    restore_path.model.load_state_dict(checkpoint['model_state'])
+    all_in_one_model.model.load_state_dict(checkpoint['model_state'])
 
     all_in_one_model.cuda()
 
