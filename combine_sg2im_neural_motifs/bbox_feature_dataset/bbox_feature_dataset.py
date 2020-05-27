@@ -275,7 +275,7 @@ if __name__ == "__main__":
 
         draw = ImageDraw.Draw(entry['img'])
         for bbox, cls in zip(entry['gt_boxes'], entry['gt_classes']):
-            gt_box = bbox.numpy() * 256
+            gt_box = bbox * 256
             draw = draw_box(draw, gt_box, dataset.ind_to_classes[cls])
         entry['img'].save(join(output_path, "%d.png" % i))
 
