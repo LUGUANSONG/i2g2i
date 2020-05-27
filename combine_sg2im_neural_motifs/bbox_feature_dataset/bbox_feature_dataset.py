@@ -139,12 +139,10 @@ class VG(Dataset):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def assertion_checks(entry):
-    try:
+    if isinstane(entry['img'], torch.Tensor):
         im_size = tuple(entry['img'].size())
-    except:
-        im_size = tuple(entry['img'].size)
-    if len(im_size) != 3:
-        raise ValueError("Img must be dim-3")
+        if len(im_size) != 3:
+            raise ValueError("Img must be dim-3")
 
     c, h, w = entry['img'].size()
     if c != 3:
