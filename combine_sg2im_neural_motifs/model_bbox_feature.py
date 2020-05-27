@@ -212,9 +212,10 @@ class neural_motifs_sg2im_model(nn.Module):
         obj_fmap = gt_fmaps
         objs = gt_classes[:, 1]
 
+        mask_noise_indexes = torch.randperm(imgs.shape[0])[:int(self.args.noise_mask_ratio * imgs.shape[0])]
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
-                imgs_pred = self.model(obj_to_img, boxes, obj_fmap)
+                imgs_pred = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
 
         g_scores_fake_crop, g_obj_scores_fake_crop = None, None
         g_scores_fake_img = None
@@ -266,7 +267,8 @@ class neural_motifs_sg2im_model(nn.Module):
             d_scores_fake_img=d_scores_fake_img,
             d_scores_real_img=d_scores_real_img,
             d_obj_gp=d_obj_gp,
-            d_img_gp=d_img_gp
+            d_img_gp=d_img_gp,
+            mask_noise_indexes=mask_noise_indexes + img_offset
         )
         # return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
         #        d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img
@@ -313,7 +315,8 @@ class Result(object):
             d_scores_fake_img=None,
             d_scores_real_img=None,
             d_obj_gp=None,
-            d_img_gp=None):
+            d_img_gp=None,
+            mask_noise_indexes=None):
         self.__dict__.update(locals())
         del self.__dict__['self']
 

@@ -78,9 +78,10 @@ def check_model(args, loader, model):
             # result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
             # result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img
             imgs, imgs_pred, objs = result.imgs, result.imgs_pred, result.objs
+            mask_noise_indexes = result.mask_noise_indexes
 
             total_loss, losses = calculate_model_losses(
-                args, imgs, imgs_pred)
+                args, imgs, imgs_pred, mask_noise_indexes)
             for loss_name, loss_val in losses.items():
                 all_losses[loss_name].append(loss_val)
             num_samples += imgs.size(0)
@@ -108,12 +109,15 @@ def check_model(args, loader, model):
     return tuple(out)
 
 
-def calculate_model_losses(args, img, img_pred):
+def calculate_model_losses(args, img, img_pred, mask_noise_indexes=None):
     total_loss = torch.zeros(1).to(img)
     losses = {}
 
     l1_pixel_weight = args.l1_pixel_loss_weight
-    l1_pixel_loss = F.l1_loss(img_pred, img)
+    if mask_noise_indexes is not None:
+        l1_pixel_loss = F.l1_loss(img_pred[mask_noise_indexes], img[mask_noise_indexes])
+    else:
+        l1_pixel_loss = F.l1_loss(img_pred, img)
     # print("check l1_pixel_weight here, it is %.10f" % l1_pixel_weight)
     total_loss = add_loss(total_loss, l1_pixel_loss, losses, 'L1_pixel_loss',
                           l1_pixel_weight)
@@ -245,9 +249,10 @@ def main(args):
                 imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
                 = result.imgs, result.imgs_pred, result.objs, \
                 result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img
+                mask_noise_indexes = result.mask_noise_indexes
                 with timeit('loss', args.timing):
                     total_loss, losses = calculate_model_losses(
-                        args, imgs, imgs_pred)
+                        args, imgs, imgs_pred, mask_noise_indexes)
 
                     if all_in_one_model.obj_discriminator is not None:
                         total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
