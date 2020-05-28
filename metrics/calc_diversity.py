@@ -43,9 +43,9 @@ for dir in dirs:
 
 			if(opt.use_gpu):
 				img1 = img1.cuda()
-			print(img0.shape, img1.shape)
 
 			# Compute distance
+			print('(%s,%s)' % (file, file1))
 			dist01 = model.forward(img0,img1)
 			print('(%s,%s): %.3f'%(file,file1,dist01))
 
