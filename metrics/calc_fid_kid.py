@@ -1,5 +1,4 @@
 from frechet_kernel_Inception_distance import *
-from inception_score import *
 from glob import glob
 import os
 from os.path import join, dirname
