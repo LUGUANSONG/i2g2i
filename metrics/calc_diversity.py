@@ -39,13 +39,13 @@ for dir in dirs:
 			files1 = [files[ff+1],]
 
 		for file1 in files1:
+			print('(%s,%s)' % (file, file1))
 			img1 = util.im2tensor(util.load_image(os.path.join(dir,file1)))
 
 			if(opt.use_gpu):
 				img1 = img1.cuda()
 
 			# Compute distance
-			print('(%s,%s)' % (file, file1))
 			dist01 = model.forward(img0,img1)
 			print('(%s,%s): %.3f'%(file,file1,dist01))
 
