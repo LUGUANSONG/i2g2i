@@ -23,7 +23,7 @@ dirs = [join(opt.dir, d) for d in dirs]
 
 dists = []
 for dir in dirs:
-	files = os.listdir(opt.dir)
+	files = os.listdir(dir)
 	if(opt.N is not None):
 		files = files[:opt.N]
 	F = len(files)
