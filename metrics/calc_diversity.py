@@ -8,7 +8,7 @@ import numpy as np
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-d','--dir', type=str, default='./vg64/test_noise')
 parser.add_argument('-v','--version', type=str, default='0.1')
-parser.add_argument('--all-pairs', action='store_true', help='turn on to test all N(N-1)/2 pairs, leave off to just do consecutive pairs (N-1)')
+parser.add_argument('--all_pairs', action='store_true', help='turn on to test all N(N-1)/2 pairs, leave off to just do consecutive pairs (N-1)')
 parser.add_argument('-N', type=int, default=None)
 parser.add_argument('--use_gpu', action='store_true', help='turn on flag to use GPU')
 
