@@ -66,6 +66,7 @@ def check_model(args, loader, model, output_path):
             imgs, imgs_pred, objs = result.imgs, result.imgs_pred, result.objs
 
             imgs_pred = imgs_pred.cpu()
+            imgs = imgs.cpu()
 
             images = imgs_pred * torch.tensor([0.229, 0.224, 0.225], device=imgs_pred.device).reshape(1, 3, 1, 1)
             images = images + torch.tensor([0.485, 0.456, 0.406], device=images.device).reshape(1, 3, 1, 1)
@@ -75,9 +76,20 @@ def check_model(args, loader, model, output_path):
             images = images / (images_max - images_min)
             imgs_pred = images.clamp(min=0, max=1)
 
+            images = imgs * torch.tensor([0.229, 0.224, 0.225], device=imgs_pred.device).reshape(1, 3, 1, 1)
+            images = images + torch.tensor([0.485, 0.456, 0.406], device=images.device).reshape(1, 3, 1, 1)
+            images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
+            images_max = images.max(3)[0].max(2)[0].max(1)[0].reshape(len(images), 1, 1, 1)
+            images = images - images_min
+            images = images / (images_max - images_min)
+            imgs = images.clamp(min=0, max=1)
+
             for k, image in enumerate(imgs_pred):
                 image = transforms.ToPILImage()(image).convert("RGB")
                 image.save(join(output_path, "img_pred_%d.png" % (num_samples + k)))
+
+                image = transforms.ToPILImage()(imgs[k]).convert("RGB")
+                image.save(join(output_path + "_real", "img_pred_%d.png" % (num_samples + k)))
 
             num_samples += imgs.size(0)
             if num_samples >= args.num_val_samples:

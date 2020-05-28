@@ -63,7 +63,7 @@ def check_model(args, loader, model, output_path):
     model.forward_D = False
     with torch.no_grad():
         for _batch in loader:
-            for i in range(10):
+            for i in range(args.num_diff_noise):
                 batch = copy.deepcopy(_batch)
                 result = model[batch]
                 imgs, imgs_pred, objs = result.imgs, result.imgs_pred, result.objs

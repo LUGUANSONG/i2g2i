@@ -2,6 +2,7 @@ from frechet_kernel_Inception_distance import *
 from inception_score import *
 from glob import glob
 import os
+from os.path import join, dirname
 import sys
 
 def inception_score() :
@@ -23,7 +24,7 @@ def inception_score() :
     print("IS : ", IS)
 
 
-def frechet_inception_distance(real_path, fake_path) :
+def frechet_inception_distance(real_path, fake_path, file_path, BATCH_SIZE) :
     filenames = glob(os.path.join(real_path, '*.*'))
     real_images = [get_images(filename) for filename in filenames]
     real_images = np.transpose(real_images, axes=[0, 3, 1, 2])
@@ -33,7 +34,7 @@ def frechet_inception_distance(real_path, fake_path) :
     fake_images = np.transpose(fake_images, axes=[0, 3, 1, 2])
 
     # A smaller BATCH_SIZE reduces GPU memory usage, but at the cost of a slight slowdown
-    BATCH_SIZE = 1
+    # BATCH_SIZE = 1
 
     # Run images through Inception.
     inception_images = tf.placeholder(tf.float32, [BATCH_SIZE, 3, None, None])
@@ -47,8 +48,11 @@ def frechet_inception_distance(real_path, fake_path) :
 
     print()
     print("FID : ", FID / 100)
+    with open(file_path, "a") as f:
+        f.write("FID score: %f\n\n" % (FID / 100))
 
-def kernel_inception_distance(real_path, fake_path) :
+
+def kernel_inception_distance(real_path, fake_path, file_path, BATCH_SIZE) :
     filenames = glob(os.path.join(real_path, '*.*'))
     real_images = [get_images(filename) for filename in filenames]
     real_images = np.transpose(real_images, axes=[0, 3, 1, 2])
@@ -58,7 +62,7 @@ def kernel_inception_distance(real_path, fake_path) :
     fake_images = np.transpose(fake_images, axes=[0, 3, 1, 2])
 
     # A smaller BATCH_SIZE reduces GPU memory usage, but at the cost of a slight slowdown
-    BATCH_SIZE = 1
+    # BATCH_SIZE = 1
 
     # Run images through Inception.
     inception_images = tf.placeholder(tf.float32, [BATCH_SIZE, 3, None, None])
@@ -74,6 +78,9 @@ def kernel_inception_distance(real_path, fake_path) :
     print()
     print("KID_mean : ", KID_mean * 100)
     print("KID_stddev : ", KID_stddev * 100)
+    with open(file_path, "a") as f:
+        f.write("KID score: %f + %f\n\n" % (KID_mean * 100, KID_stddev * 100))
+
 
 def mean_kernel_inception_distance() :
     source_alpha = 0.98
@@ -130,8 +137,12 @@ def mean_kernel_inception_distance() :
 if __name__ == "__main__":
     real_path = sys.argv[1]
     fake_path = sys.argv[2]
+    batch_size = int(sys.argv[3])
     print("get real_path: %s, fake_path" % (real_path, fake_path))
+    print("batch_size: %d" % batch_size)
     # inception_score()
-    frechet_inception_distance(real_path, fake_path)
-    kernel_inception_distance(real_path, fake_path)
-    # mean_kernel_inception_distance()
+    if real_path[-1] == "/":
+        real_path = real_path[:-1]
+    file_path = join(dirname(real_path), "test_metrics.txt")
+    frechet_inception_distance(real_path, fake_path, file_path)
+    kernel_inception_distance(real_path, fake_path, file_path)

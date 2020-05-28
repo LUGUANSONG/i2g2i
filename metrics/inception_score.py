@@ -4,7 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os.path
-from os.path import join, exists
+from os.path import join, exists, dirname
 import sys
 import tarfile
 
@@ -106,4 +106,9 @@ imgs = [img[:, :, [2,1,0]] for img in imgs]
 if softmax is None:
   _init_inception()
 
-print(get_inception_score(imgs, splits=5))
+mean, std = get_inception_score(imgs, splits=5)
+print(mean, std)
+if img_dir[-1] == "/":
+    img_dir = imgs_dir[:-1]
+with open(join(dirname(img_dir), "test_metrics.txt"), "a") as f:
+    f.write("IS score: %f + %f\n\n" % (mean, std))
