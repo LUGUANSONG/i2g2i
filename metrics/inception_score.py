@@ -95,20 +95,22 @@ def _init_inception():
     logits = tf.matmul(tf.squeeze(pool3, [1, 2]), w)
     softmax = tf.nn.softmax(logits)
 
-# img_dir = "../detector-sg2im-checkpoints/vg64_l1/test/"
-img_dir = sys.argv[1]
-img_files = os.listdir(img_dir)
-print("test the IS score for images in %s, find %d images" % (img_dir, len(img_files)))
-img_files = [join(img_dir, file) for file in img_files]
-imgs = Parallel(n_jobs=16)(delayed(cv2.imread)(imgs_file_path) for imgs_file_path in img_files)
-imgs = [img[:, :, [2,1,0]] for img in imgs]
 
-if softmax is None:
-  _init_inception()
+if __name__ == "__main__":
+    # img_dir = "../detector-sg2im-checkpoints/vg64_l1/test/"
+    img_dir = sys.argv[1]
+    img_files = os.listdir(img_dir)
+    print("test the IS score for images in %s, find %d images" % (img_dir, len(img_files)))
+    img_files = [join(img_dir, file) for file in img_files]
+    imgs = Parallel(n_jobs=16)(delayed(cv2.imread)(imgs_file_path) for imgs_file_path in img_files)
+    imgs = [img[:, :, [2,1,0]] for img in imgs]
 
-mean, std = get_inception_score(imgs, splits=5)
-print(mean, std)
-if img_dir[-1] == "/":
-    img_dir = imgs_dir[:-1]
-with open(join(dirname(img_dir), "test_metrics.txt"), "a") as f:
-    f.write("IS score: %f + %f\n\n" % (mean, std))
+    if softmax is None:
+      _init_inception()
+
+    mean, std = get_inception_score(imgs, splits=5)
+    print(mean, std)
+    if img_dir[-1] == "/":
+        img_dir = imgs_dir[:-1]
+    with open(join(dirname(img_dir), "test_metrics.txt"), "a") as f:
+        f.write("IS score: %f + %f\n\n" % (mean, std))
