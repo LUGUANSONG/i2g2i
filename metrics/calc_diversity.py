@@ -61,5 +61,7 @@ print('Avg: %.5f +/- %.5f'%(avg_dist,stderr_dist))
 output_dir = opt.dir
 if output_dir[-1] == '/':
 	output_dir = output_dir[:-1]
-with open(join(dirname(output_dir), "test_metrics.txt"), "a") as f:
-	f.write("Diversity: %f + %f" % (avg_dist,stderr_dist))
+file_path = join(dirname(output_dir), "test_metrics.txt")
+print(file_path)
+with open(file_path, "a") as f:
+	f.write("Diversity: %f + %f" % (avg_dist, stderr_dist))
