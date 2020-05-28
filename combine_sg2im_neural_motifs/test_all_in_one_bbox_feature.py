@@ -130,6 +130,9 @@ def main(args):
     all_in_one_model.cuda()
 
     print('checking on test')
+    t = checkpoint['counters']['t']
+    epoch = checkpoint['counters']['epoch']
+    print("t: %d, epoch: %d" % (t, epoch))
     check_model(args, val_loader, all_in_one_model, join(args.output_dir, "test"))
 
 if __name__ == '__main__':
