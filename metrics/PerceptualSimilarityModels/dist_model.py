@@ -17,7 +17,7 @@ import skimage.transform
 from tqdm import tqdm
 
 from . import networks_basic as networks
-import models as util
+import PerceptualSimilarityModels as util
 
 class DistModel(BaseModel):
     def name(self):
