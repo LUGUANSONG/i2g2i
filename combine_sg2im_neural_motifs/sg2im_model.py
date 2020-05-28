@@ -79,15 +79,15 @@ class Sg2ImModel(nn.Module):
     #     'mlp_normalization': mlp_normalization,
     #   }
     #   self.gconv_net = GraphTripleConvNet(**gconv_kwargs)
+    self.obj_fmap_net = nn.Linear(4096, gconv_dim)
 
     # box_net_dim = 4
     # box_net_layers = [gconv_dim, gconv_hidden_dim, box_net_dim]
     # self.box_net = build_mlp(box_net_layers, batch_norm=mlp_normalization)
 
-    # self.mask_net = None
-    # if mask_size is not None and mask_size > 0:
-    #   self.mask_net = self._build_mask_net(num_objs, gconv_dim, mask_size)
-    self.obj_fmap_net = nn.Linear(4096, gconv_dim)
+    self.mask_net = None
+    if mask_size is not None and mask_size > 0:
+      self.mask_net = self._build_mask_net(num_objs, gconv_dim, mask_size)
 
     # rel_aux_layers = [2 * embedding_dim + 8, gconv_hidden_dim, num_preds]
     # self.rel_aux_net = build_mlp(rel_aux_layers, batch_norm=mlp_normalization)
@@ -99,19 +99,19 @@ class Sg2ImModel(nn.Module):
     }
     self.refinement_net = RefinementNetwork(**refinement_kwargs)
 
-  # def _build_mask_net(self, num_objs, dim, mask_size):
-  #   output_dim = 1
-  #   layers, cur_size = [], 1
-  #   while cur_size < mask_size:
-  #     layers.append(nn.Upsample(scale_factor=2, mode='nearest'))
-  #     layers.append(nn.BatchNorm2d(dim))
-  #     layers.append(nn.Conv2d(dim, dim, kernel_size=3, padding=1))
-  #     layers.append(nn.ReLU())
-  #     cur_size *= 2
-  #   if cur_size != mask_size:
-  #     raise ValueError('Mask size must be a power of 2')
-  #   layers.append(nn.Conv2d(dim, output_dim, kernel_size=1))
-  #   return nn.Sequential(*layers)
+  def _build_mask_net(self, num_objs, dim, mask_size):
+    output_dim = 1
+    layers, cur_size = [], 1
+    while cur_size < mask_size:
+      layers.append(nn.Upsample(scale_factor=2, mode='nearest'))
+      layers.append(nn.BatchNorm2d(dim))
+      layers.append(nn.Conv2d(dim, dim, kernel_size=3, padding=1))
+      layers.append(nn.ReLU())
+      cur_size *= 2
+    if cur_size != mask_size:
+      raise ValueError('Mask size must be a power of 2')
+    layers.append(nn.Conv2d(dim, output_dim, kernel_size=1))
+    return nn.Sequential(*layers)
 
   # def forward(self, objs, triples, obj_to_img=None,
   #             boxes_gt=None, masks_gt=None):
@@ -148,13 +148,14 @@ class Sg2ImModel(nn.Module):
     #   obj_vecs, pred_vecs = self.gconv(obj_vecs, pred_vecs, edges)
     # if self.gconv_net is not None:
     #   obj_vecs, pred_vecs = self.gconv_net(obj_vecs, pred_vecs, edges)
+    obj_vecs = self.obj_fmap_net(obj_fmap)
 
     # boxes_pred = self.box_net(obj_vecs)
 
-    # masks_pred = None
-    # if self.mask_net is not None:
-    #   mask_scores = self.mask_net(obj_vecs.view(O, -1, 1, 1))
-    #   masks_pred = mask_scores.squeeze(1).sigmoid()
+    masks_pred = None
+    if self.mask_net is not None:
+      mask_scores = self.mask_net(obj_vecs.view(O, -1, 1, 1))
+      masks_pred = mask_scores.squeeze(1).sigmoid()
 
     # s_boxes, o_boxes = boxes_pred[s], boxes_pred[o]
     # s_vecs, o_vecs = obj_vecs_orig[s], obj_vecs_orig[o]
@@ -165,15 +166,14 @@ class Sg2ImModel(nn.Module):
     # layout_boxes = boxes_pred if boxes_gt is None else boxes_gt
     layout_boxes = boxes_gt
 
-    obj_vecs = self.obj_fmap_net(obj_fmap)
-    layout = boxes_to_layout(obj_vecs, layout_boxes, obj_to_img, H, W)
+    # layout = boxes_to_layout(obj_vecs, layout_boxes, obj_to_img, H, W)
 
-    # if masks_pred is None:
-    #   layout = boxes_to_layout(obj_vecs, layout_boxes, obj_to_img, H, W)
-    # else:
-    #   layout_masks = masks_pred if masks_gt is None else masks_gt
-    #   layout = masks_to_layout(obj_vecs, layout_boxes, layout_masks,
-    #                            obj_to_img, H, W)
+    if masks_pred is None:
+      layout = boxes_to_layout(obj_vecs, layout_boxes, obj_to_img, H, W)
+    else:
+      layout_masks = masks_pred if masks_gt is None else masks_gt
+      layout = masks_to_layout(obj_vecs, layout_boxes, layout_masks,
+                               obj_to_img, H, W)
 
     if self.layout_noise_dim > 0:
       N, C, H, W = layout.size()

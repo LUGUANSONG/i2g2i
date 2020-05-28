@@ -91,6 +91,8 @@ rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/ne
 
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/test ubuntu@13.59.234.86:/home/ubuntu/scene_graph/neural-motifs-data/
 
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@18.189.195.183:/home/ubuntu/scene_graph/code/check_bbox_feature ./
+
 
 CUDA_VISIBLE_DEVICES=5,6,7 python combine_sg2im_neural_motifs/train.py -b 8 -ckpt vg-faster-rcnn.tar -ngpu 3 -nwork 8 \
 --output_dir ../detector-sg2im-checkpoints/vg64 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128
@@ -295,9 +297,9 @@ CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/train_all_in_one_bbo
 --print_every 100 --image_size 64,64 --num_val_samples 128 --gan_loss_type wgan-gp
 
 machine 6
-# OOM
+# OOM 32x4 -> 16x4
 CUDA_VISIBLE_DEVICES=0,1,2,3 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan.py \
--b 32 -ngpu 4 -nwork 16 \
+-b 16 -ngpu 4 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_l1_0_wgan-gp10_dis1_cls0_obj0_bs128 \
 --l1_pixel_loss_weight 0 --ac_loss_weight 0 --discriminator_loss_weight 1 --d_obj_weight 0 \
 --print_every 100 --image_size 64,64 --num_val_samples 128 --gan_loss_type wgan-gp
@@ -325,6 +327,6 @@ CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train_all_in_one_bbo
 
 CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan.py \
 -b 16 -ngpu 2 -nwork 16 \
---output_dir ../detector-sg2im-checkpoints/vg64_l1_0_wgan-gp10_dis1_cls0_obj1_img0 \
---l1_pixel_loss_weight 0 --ac_loss_weight 0 --discriminator_loss_weight 1 --d_obj_weight 1 --d_img_weight 0 \
+--output_dir ../detector-sg2im-checkpoints/vg64_l1_0_wgan-gp10_dis0_cls0.1_obj0_img0 \
+--l1_pixel_loss_weight 0 --ac_loss_weight 0.1 --discriminator_loss_weight 0 --d_obj_weight 0 --d_img_weight 0 \
 --print_every 100 --image_size 64,64 --num_val_samples 128 --gan_loss_type wgan-gp

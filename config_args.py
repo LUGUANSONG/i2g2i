@@ -132,7 +132,8 @@ parser.add_argument('--loader_num_workers', default=4, type=int)
 parser.add_argument('--include_relationships', default=True, type=bool_flag)
 
 # # Generator options
-parser.add_argument('--mask_size', default=16, type=int)  # Set this to 0 to use no masks
+# parser.add_argument('--mask_size', default=16, type=int)  # Set this to 0 to use no masks
+parser.add_argument('--mask_size', default=0, type=int)  # Set this to 0 to use no masks
 parser.add_argument('--embedding_dim', default=128, type=int)
 parser.add_argument('--gconv_dim', default=128, type=int)
 parser.add_argument('--gconv_hidden_dim', default=512, type=int)
