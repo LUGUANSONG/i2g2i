@@ -74,11 +74,11 @@ CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoi
 
 2.59 0.03
 CUDA_VISIBLE_DEVICES=6 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_std_increase_from0/test
-CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_std_increase_from0/test 32
+CUDA_VISIBLE_DEVICES=5 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_std_increase_from0/test 32
 
 2.71 0.02
 CUDA_VISIBLE_DEVICES=7 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_l1_decrease/test
-CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_l1_decrease/test 32
+CUDA_VISIBLE_DEVICES=6 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_l1_decrease/test 32
 
 
 CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature_same_img.py -b 16 -ngpu 2 -nwork 16 \
@@ -128,7 +128,7 @@ rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@18.189.195.183:/home
 machine6
 CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_l1_0.1 --l1_pixel_loss_weight 0.1 --print_every 100 --image_size 64,64 --num_val_samples 128 \
---num_val_samples 5000
+--num_val_samples 5000 --save_gt
 
 CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_l1_0.01 --l1_pixel_loss_weight 0.01 --print_every 100 --image_size 64,64 --num_val_samples 128 \

@@ -140,8 +140,8 @@ if __name__ == "__main__":
     print("get real_path: %s, fake_path: %s" % (real_path, fake_path))
     print("batch_size: %d" % batch_size)
     # inception_score()
-    if real_path[-1] == "/":
-        real_path = real_path[:-1]
+    if fake_path[-1] == "/":
+        fake_path = fake_path[:-1]
     file_path = join(dirname(real_path), "test_metrics.txt")
     frechet_inception_distance(real_path, fake_path, file_path, batch_size)
     kernel_inception_distance(real_path, fake_path, file_path, batch_size)
