@@ -27,6 +27,8 @@ for dir in dirs:
 	if(opt.N is not None):
 		files = files[:opt.N]
 	F = len(files)
+	print(dir)
+	print(files)
 
 	for (ff,file) in enumerate(files[:-1]):
 		img0 = util.im2tensor(util.load_image(os.path.join(dir,file))) # RGB image from [-1,1]
