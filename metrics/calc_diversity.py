@@ -64,4 +64,4 @@ if output_dir[-1] == '/':
 file_path = join(dirname(output_dir), "test_metrics.txt")
 print(file_path)
 with open(file_path, "a") as f:
-	f.write("Diversity: %f + %f" % (avg_dist, stderr_dist))
+	f.write("Diversity: %f + %f\n\n" % (avg_dist, stderr_dist))
