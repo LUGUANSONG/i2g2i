@@ -48,7 +48,7 @@ CUDA_VISIBLE_DEVICES=2 python combine_sg2im_neural_motifs/inception_score.py ../
 machine
 CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_std0 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
---noise_std 0 --num_val_samples 5000
+--noise_std 0 --num_val_samples 5000 --save_gt
 
 CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_std_increase --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \

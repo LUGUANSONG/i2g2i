@@ -37,7 +37,7 @@ class Sg2ImModel(nn.Module):
   def __init__(self, image_size=(64, 64), gconv_dim=128,
                refinement_dims=(1024, 512, 256, 128, 64),
                normalization='batch', activation='leakyrelu-0.2',
-               layout_noise_dim=0, args=None,
+               mask_size=None, layout_noise_dim=0, args=None,
                **kwargs):
     super(Sg2ImModel, self).__init__()
     print("i2g2i.combine_sg2im_neural_motifs.sg2im_model.Sg2ImModel")
@@ -87,7 +87,7 @@ class Sg2ImModel(nn.Module):
 
     self.mask_net = None
     if mask_size is not None and mask_size > 0:
-      self.mask_net = self._build_mask_net(num_objs, gconv_dim, mask_size)
+      self.mask_net = self._build_mask_net(gconv_dim, mask_size)
 
     # rel_aux_layers = [2 * embedding_dim + 8, gconv_hidden_dim, num_preds]
     # self.rel_aux_net = build_mlp(rel_aux_layers, batch_norm=mlp_normalization)
@@ -99,7 +99,7 @@ class Sg2ImModel(nn.Module):
     }
     self.refinement_net = RefinementNetwork(**refinement_kwargs)
 
-  def _build_mask_net(self, num_objs, dim, mask_size):
+  def _build_mask_net(self, dim, mask_size):
     output_dim = 1
     layers, cur_size = [], 1
     while cur_size < mask_size:
