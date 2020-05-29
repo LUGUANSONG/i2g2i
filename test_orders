@@ -1,5 +1,23 @@
-vg64 pretrain model 5.31 0.09
-vg64_l1 6.20 0.21
+test_real vs. test_real:
+IS: 15.33 0.58
+FID: 0
+KID: -8.62 0.04
+CUDA_VISIBLE_DEVICES=6 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_std0/test_real
+CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_std0/test_real 32
+CUDA_VISIBLE_DEVICES=5 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_std0/test_real --use_gpu -N 100 --all_pairs
+
+
+vg64 pretrain model IS 5.31 0.09
+CUDA_VISIBLE_DEVICES=6 python metrics/inception_score.py ../sg2im/output/images
+CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../sg2im/output/images 32
+CUDA_VISIBLE_DEVICES=5 python metrics/calc_diversity.py -d ../sg2im/output/test_noise --use_gpu --all_pairs
+
+
+vg64_l1 IS 6.20 0.21
+CUDA_VISIBLE_DEVICES=6 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_l1/test
+CUDA_VISIBLE_DEVICES=5 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_l1/test 32
+CUDA_VISIBLE_DEVICES=5 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_l1/test_noise --use_gpu --all_pairs
+
 
 machine7
 CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
@@ -50,7 +68,7 @@ CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/test_all_in_one_bbox
 --output_dir ../detector-sg2im-checkpoints/vg64_std0 --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
 --noise_std 0 --num_val_samples 5000 --save_gt
 
-CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_std_increase --l1_pixel_loss_weight 0 --print_every 100 --image_size 64,64 --num_val_samples 128 \
 --noise_std 0.0001 --noise_std_mode change --noise_std_change_iters 100000,200000,300000,400000 --noise_std_change_vals 0.001,0.01,0.1,1 \
 --num_val_samples 5000
@@ -64,21 +82,6 @@ CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/test_all_in_one_bbox
 --output_dir ../detector-sg2im-checkpoints/vg64_l1_decrease --l1_pixel_loss_weight 1 --print_every 100 --image_size 64,64 --num_val_samples 128 \
 --l1_mode change --l1_change_iters 100000,200000,300000,400000,500000 --l1_change_vals 0.1,0.01,0.001,0.0001,0 \
 --num_val_samples 5000
-2.56 0.04
-CUDA_VISIBLE_DEVICES=4 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_std0/test
-CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_std0/test 32
-
-2.35 0.02
-CUDA_VISIBLE_DEVICES=5 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_std_increase/test
-CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_std_increase/test 32
-
-2.59 0.03
-CUDA_VISIBLE_DEVICES=6 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_std_increase_from0/test
-CUDA_VISIBLE_DEVICES=5 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_std_increase_from0/test 32
-
-2.71 0.02
-CUDA_VISIBLE_DEVICES=7 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_l1_decrease/test
-CUDA_VISIBLE_DEVICES=6 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_l1_decrease/test 32
 
 
 CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature_same_img.py -b 16 -ngpu 2 -nwork 16 \
@@ -100,13 +103,29 @@ CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/test_all_in_one_bbox
 --l1_mode change --l1_change_iters 100000,200000,300000,400000,500000 --l1_change_vals 0.1,0.01,0.001,0.0001,0 \
 --num_val_samples 100
 
-CUDA_VISIBLE_DEVICES=4 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_std0/test_noise --use_gpu --all-pairs
+2.56 0.04
+2.03 18.25 0.11
+CUDA_VISIBLE_DEVICES=4 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_std0/test
+CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_std0/test 32
+CUDA_VISIBLE_DEVICES=4 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_std0/test_noise --use_gpu --all_pairs
 
-CUDA_VISIBLE_DEVICES=5 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_std_increase/test_noise --use_gpu --all-pairs
+2.35 0.02
+2.43 21.3 0.17
+CUDA_VISIBLE_DEVICES=5 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_std_increase/test
+CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_std_increase/test 32
+CUDA_VISIBLE_DEVICES=5 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_std_increase/test_noise --use_gpu --all_pairs
 
-CUDA_VISIBLE_DEVICES=6 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_std_increase_from0/test_noise --use_gpu --all-pairs
+2.59 0.03
+1.93 19.04 0.11
+CUDA_VISIBLE_DEVICES=6 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_std_increase_from0/test
+CUDA_VISIBLE_DEVICES=5 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_std_increase_from0/test 32
+CUDA_VISIBLE_DEVICES=6 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_std_increase_from0/test_noise --use_gpu --all_pairs
 
-CUDA_VISIBLE_DEVICES=7 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_l1_decrease/test_noise --use_gpu --all-pairs
+2.71 0.02
+2.74 30.70 0.18
+CUDA_VISIBLE_DEVICES=7 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_l1_decrease/test
+CUDA_VISIBLE_DEVICES=6 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_l1_decrease/test 32
+CUDA_VISIBLE_DEVICES=7 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_l1_decrease/test_noise --use_gpu --all_pairs
 
 mkdir -p /Users/guansong/detector-sg2im-checkpoints/vg64_std0/
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@18.189.195.183:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/vg64_std0/test_noise \
@@ -126,7 +145,7 @@ rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@18.189.195.183:/home
 
 
 machine6
-CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
+CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py -b 16 -ngpu 2 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/vg64_l1_0.1 --l1_pixel_loss_weight 0.1 --print_every 100 --image_size 64,64 --num_val_samples 128 \
 --num_val_samples 5000 --save_gt
 

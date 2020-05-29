@@ -217,38 +217,40 @@ class VGDataLoader(torch.utils.data.DataLoader):
         )
         return train_load, val_load
 
-font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 8)
-
-def draw_box(draw, boxx, text_str):
-    box = tuple([float(b) for b in boxx])
-    if '-GT' in text_str:
-        color = (255, 128, 0, 255)
-    else:
-        color = (0, 128, 0, 255)
-
-    # color = tuple([int(x) for x in cmap(cls_ind)])
-
-    # draw the fucking box
-    draw.line([(box[0], box[1]), (box[2], box[1])], fill=color, width=2)
-    draw.line([(box[2], box[1]), (box[2], box[3])], fill=color, width=2)
-    draw.line([(box[2], box[3]), (box[0], box[3])], fill=color, width=2)
-    draw.line([(box[0], box[3]), (box[0], box[1])], fill=color, width=2)
-
-    # draw.rectangle(box, outline=color)
-    w, h = draw.textsize(text_str, font=font)
-
-    x1text = box[0]
-    y1text = max(box[1] - h, 0)
-    x2text = min(x1text + w, draw.im.size[0])
-    y2text = y1text + h
-    print("drawing {}x{} rectangle at {:.1f} {:.1f} {:.1f} {:.1f}".format(
-        h, w, x1text, y1text, x2text, y2text))
-
-    draw.rectangle((x1text, y1text, x2text, y2text), fill=color)
-    draw.text((x1text, y1text), text_str, fill='black', font=font)
-    return draw
-
 if __name__ == "__main__":
+
+    font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 8)
+
+    def draw_box(draw, boxx, text_str):
+        box = tuple([float(b) for b in boxx])
+        if '-GT' in text_str:
+            color = (255, 128, 0, 255)
+        else:
+            color = (0, 128, 0, 255)
+
+        # color = tuple([int(x) for x in cmap(cls_ind)])
+
+        # draw the fucking box
+        draw.line([(box[0], box[1]), (box[2], box[1])], fill=color, width=2)
+        draw.line([(box[2], box[1]), (box[2], box[3])], fill=color, width=2)
+        draw.line([(box[2], box[3]), (box[0], box[3])], fill=color, width=2)
+        draw.line([(box[0], box[3]), (box[0], box[1])], fill=color, width=2)
+
+        # draw.rectangle(box, outline=color)
+        w, h = draw.textsize(text_str, font=font)
+
+        x1text = box[0]
+        y1text = max(box[1] - h, 0)
+        x2text = min(x1text + w, draw.im.size[0])
+        y2text = y1text + h
+        print("drawing {}x{} rectangle at {:.1f} {:.1f} {:.1f} {:.1f}".format(
+            h, w, x1text, y1text, x2text, y2text))
+
+        draw.rectangle((x1text, y1text, x2text, y2text), fill=color)
+        draw.text((x1text, y1text), text_str, fill='black', font=font)
+        return draw
+
+
     dataset = VG(
         mode='train',
         transform=transforms.Compose(
