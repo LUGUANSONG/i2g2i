@@ -143,5 +143,6 @@ if __name__ == "__main__":
     if fake_path[-1] == "/":
         fake_path = fake_path[:-1]
     file_path = join(dirname(real_path), "test_metrics.txt")
+    print(file_path)
     frechet_inception_distance(real_path, fake_path, file_path, batch_size)
     kernel_inception_distance(real_path, fake_path, file_path, batch_size)
