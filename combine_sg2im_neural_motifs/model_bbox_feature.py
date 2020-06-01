@@ -280,7 +280,8 @@ class neural_motifs_sg2im_model(nn.Module):
 
     def __getitem__(self, batch):
         """ Hack to do multi-GPU training"""
-        batch.scatter()
+        if self.forward_G:
+            batch.scatter()
         if self.args.num_gpus == 1:
             return self(*batch[0])
 
