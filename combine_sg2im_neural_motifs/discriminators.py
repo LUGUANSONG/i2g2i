@@ -62,7 +62,7 @@ class AcDiscriminator(nn.Module):
     }
     cnn, D = build_cnn(**cnn_kwargs)
     self.cnn = nn.Sequential(cnn, GlobalAvgPool(), nn.Linear(D, 1024))
-    num_objects = len(vocab['object_idx_to_name'])
+    num_objects = len(vocab['object_idx_to_name']) - 1
 
     self.real_classifier = nn.Linear(1024, 1)
     self.obj_classifier = nn.Linear(1024, num_objects)

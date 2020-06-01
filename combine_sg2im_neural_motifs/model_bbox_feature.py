@@ -217,7 +217,8 @@ class neural_motifs_sg2im_model(nn.Module):
             mask_noise_indexes = None
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
-                imgs_pred = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
+                self.imgs_pred = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
+        imgs_pred = self.imgs_pred
 
         g_scores_fake_crop, g_obj_scores_fake_crop = None, None
         g_scores_fake_img = None

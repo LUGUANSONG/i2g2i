@@ -111,7 +111,7 @@ class VG(Dataset):
         entry = {
             'img': self.transform(image_unpadded),
             'gt_boxes': gt_boxes,
-            'gt_classes': pickle_file['objs'].numpy(),
+            'gt_classes': pickle_file['objs'].numpy() - 1,
             'index': index,
             'flipped': flipped,
             'fn': fn,
@@ -130,7 +130,7 @@ class VG(Dataset):
 
     @property
     def num_classes(self):
-        return len(self.ind_to_classes)
+        return len(self.ind_to_classes) - 1
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
