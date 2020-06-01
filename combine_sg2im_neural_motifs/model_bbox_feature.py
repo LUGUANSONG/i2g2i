@@ -258,6 +258,9 @@ class neural_motifs_sg2im_model(nn.Module):
                     if self.args.gan_loss_type == "wgan-gp":
                         d_img_gp = gradient_penalty(imgs, imgs_fake, self.img_discriminator)
 
+        print("check at the end of forward, get self.imgs_pred")
+        print(imgs_pred.shape, self.imgs_pred.shape)
+
         return Result(
             imgs=imgs,
             imgs_pred=imgs_pred,
