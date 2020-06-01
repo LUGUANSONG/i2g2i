@@ -267,6 +267,7 @@ def main(args):
                         print("Change %s from %10.f to %.10f at iteration %d" % (attr, old_value, getattr(args, attr), t))
 
             t += 1
+            print(args.l1_pixel_loss_weight, args.noise_std, args.d_obj_weight, args.d_img_weight, args.ac_loss_weight)
 
             if args.gan_loss_type in ["wgan", "wgan-gp"]:
                 # train discriminator (critic) for n_critic iterations
