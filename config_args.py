@@ -164,7 +164,7 @@ parser.add_argument('--predicate_pred_loss_weight', default=0, type=float)  # DE
 # Generic discriminator options
 parser.add_argument('--discriminator_loss_weight', default=0.01, type=float)
 parser.add_argument('--gan_loss_type', choices=['gan', 'lsgan', 'wgan-gp'], default='gan')
-parser.add_argument('--n_critic', type=int, default=3)
+parser.add_argument('--n_critic', type=int, default=0)
 parser.add_argument('--d_clip', default=None, type=float)
 parser.add_argument('--d_normalization', default='batch')
 parser.add_argument('--d_padding', default='valid')

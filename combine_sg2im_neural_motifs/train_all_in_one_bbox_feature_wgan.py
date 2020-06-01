@@ -161,6 +161,80 @@ def main(args):
     gan_g_loss, gan_d_loss = get_gan_losses(args.gan_loss_type)
 
     t, epoch, checkpoint = all_in_one_model.t, all_in_one_model.epoch, all_in_one_model.checkpoint
+
+    def D_step(result):
+        imgs, imgs_pred, objs, \
+        d_scores_fake_crop, d_obj_scores_fake_crop, d_scores_real_crop, \
+        d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img, \
+        d_obj_gp, d_img_gp \
+        = result.imgs, result.imgs_pred, result.objs, \
+          result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
+          result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img, \
+          result.d_obj_gp, result.d_img_gp
+
+        if all_in_one_model.obj_discriminator is not None:
+            with timeit('d_obj loss', args.timing):
+                d_obj_losses = LossManager()
+                if args.d_obj_weight > 0:
+                    d_obj_gan_loss = gan_d_loss(d_obj_scores_real_crop, d_obj_scores_fake_crop)
+                    d_obj_losses.add_loss(d_obj_gan_loss, 'd_obj_gan_loss')
+                    if args.gan_loss_type == 'wgan-gp':
+                        d_obj_losses.add_loss(d_obj_gp.mean(), 'd_obj_gp', args.d_obj_gp_weight)
+                if args.ac_loss_weight > 0:
+                    d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_real_crop, objs), 'd_ac_loss_real')
+                    d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_fake_crop, objs), 'd_ac_loss_fake')
+
+            with timeit('d_obj backward', args.timing):
+                all_in_one_model.optimizer_d_obj.zero_grad()
+                d_obj_losses.total_loss.backward()
+                all_in_one_model.optimizer_d_obj.step()
+
+        if all_in_one_model.img_discriminator is not None:
+            with timeit('d_img loss', args.timing):
+                d_img_losses = LossManager()
+                d_img_gan_loss = gan_d_loss(d_scores_real_img, d_scores_fake_img)
+                d_img_losses.add_loss(d_img_gan_loss, 'd_img_gan_loss')
+                if args.gan_loss_type == 'wgan-gp':
+                    d_img_losses.add_loss(d_img_gp.mean(), 'd_img_gp', args.d_img_gp_weight)
+
+            with timeit('d_img backward', args.timing):
+                all_in_one_model.optimizer_d_img.zero_grad()
+                d_img_losses.total_loss.backward()
+                all_in_one_model.optimizer_d_img.step()
+
+        return d_obj_losses, d_img_losses
+
+    def G_step(result):
+        imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
+        = result.imgs, result.imgs_pred, result.objs, \
+          result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img
+        mask_noise_indexes = result.mask_noise_indexes
+        with timeit('loss', args.timing):
+            total_loss, losses = calculate_model_losses(
+                args, imgs, imgs_pred, mask_noise_indexes)
+
+            if all_in_one_model.obj_discriminator is not None:
+                total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
+                                      args.ac_loss_weight)
+                weight = args.discriminator_loss_weight * args.d_obj_weight
+                total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_crop), losses,
+                                      'g_gan_obj_loss', weight)
+
+            if all_in_one_model.img_discriminator is not None:
+                weight = args.discriminator_loss_weight * args.d_img_weight
+                total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_img), losses,
+                                      'g_gan_img_loss', weight)
+
+        losses['total_loss'] = total_loss.item()
+
+        if math.isfinite(losses['total_loss']):
+            with timeit('backward', args.timing):
+                all_in_one_model.optimizer.zero_grad()
+                total_loss.backward()
+                all_in_one_model.optimizer.step()
+
+        return losses
+
     while True:
         if t >= args.num_iterations * (args.n_critic + 1):
             break
@@ -195,93 +269,44 @@ def main(args):
 
             t += 1
 
-            # train discriminator (critic) for n_critic iterations
-            if t % (args.n_critic + 1) != 0:
-                all_in_one_model.forward_G = True
-                all_in_one_model.calc_G_D_loss = False
-                all_in_one_model.forward_D = True
-                all_in_one_model.set_requires_grad(
-                    [all_in_one_model.obj_discriminator, all_in_one_model.img_discriminator],
-                    True)
-                with timeit('forward', args.timing):
+            if args.gan_loss_type in ["wgan", "wgan-gp"]:
+                # train discriminator (critic) for n_critic iterations
+                if t % (args.n_critic + 1) != 0:
+                    all_in_one_model.forward_G = True
+                    all_in_one_model.calc_G_D_loss = False
+                    all_in_one_model.forward_D = True
+                    all_in_one_model.set_requires_grad(
+                        [all_in_one_model.obj_discriminator, all_in_one_model.img_discriminator],
+                        True)
+                    with timeit('forward', args.timing):
+                        result = all_in_one_model[batch]
+                    d_obj_losses, d_img_losses = D_step(result)
+
+                # train generator for 1 iteration after n_critic iterations
+                if t % (args.n_critic + 1) == 0:
+                    all_in_one_model.forward_G = True
+                    all_in_one_model.calc_G_D_loss = True
+                    all_in_one_model.forward_D = False
+                    all_in_one_model.set_requires_grad(
+                        [all_in_one_model.obj_discriminator, all_in_one_model.img_discriminator],
+                        False)
                     result = all_in_one_model[batch]
-                    imgs, imgs_pred, objs, \
-                    d_scores_fake_crop, d_obj_scores_fake_crop, d_scores_real_crop, \
-                    d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img, \
-                    d_obj_gp, d_img_gp \
-                    = result.imgs, result.imgs_pred, result.objs, \
-                    result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
-                    result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img, \
-                    result.d_obj_gp, result.d_img_gp
 
-                if all_in_one_model.obj_discriminator is not None:
-                    with timeit('d_obj loss', args.timing):
-                        d_obj_losses = LossManager()
-                        if args.d_obj_weight > 0:
-                            d_obj_gan_loss = gan_d_loss(d_obj_scores_real_crop, d_obj_scores_fake_crop)
-                            d_obj_losses.add_loss(d_obj_gan_loss, 'd_obj_gan_loss')
-                            if args.gan_loss_type == 'wgan-gp':
-                                d_obj_losses.add_loss(d_obj_gp.mean(), 'd_obj_gp', args.d_obj_gp_weight)
-                        if args.ac_loss_weight > 0:
-                            d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_real_crop, objs), 'd_ac_loss_real')
-                            d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_fake_crop, objs), 'd_ac_loss_fake')
-
-                    with timeit('d_obj backward', args.timing):
-                        all_in_one_model.optimizer_d_obj.zero_grad()
-                        d_obj_losses.total_loss.backward()
-                        all_in_one_model.optimizer_d_obj.step()
-
-                if all_in_one_model.img_discriminator is not None:
-                    with timeit('d_img loss', args.timing):
-                        d_img_losses = LossManager()
-                        d_img_gan_loss = gan_d_loss(d_scores_real_img, d_scores_fake_img)
-                        d_img_losses.add_loss(d_img_gan_loss, 'd_img_gan_loss')
-                        if args.gan_loss_type == 'wgan-gp':
-                            d_img_losses.add_loss(d_img_gp.mean(), 'd_img_gp', args.d_img_gp_weight)
-
-                    with timeit('d_img backward', args.timing):
-                        all_in_one_model.optimizer_d_img.zero_grad()
-                        d_img_losses.total_loss.backward()
-                        all_in_one_model.optimizer_d_img.step()
-
-            # train generator for 1 iteration after n_critic iterations
-            if t % (args.n_critic + 1) == 0:
+                    losses = G_step(result)
+                    if not math.isfinite(losses['total_loss']):
+                        print('WARNING: Got loss = NaN, not backpropping')
+                        continue
+            else: # vanilla gan or lsgan
                 all_in_one_model.forward_G = True
                 all_in_one_model.calc_G_D_loss = True
-                all_in_one_model.forward_D = False
-                all_in_one_model.set_requires_grad(
-                    [all_in_one_model.obj_discriminator, all_in_one_model.img_discriminator],
-                    False)
-                result = all_in_one_model[batch]
-                imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
-                = result.imgs, result.imgs_pred, result.objs, \
-                result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img
-                mask_noise_indexes = result.mask_noise_indexes
-                with timeit('loss', args.timing):
-                    total_loss, losses = calculate_model_losses(
-                        args, imgs, imgs_pred, mask_noise_indexes)
-
-                    if all_in_one_model.obj_discriminator is not None:
-                        total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
-                                              args.ac_loss_weight)
-                        weight = args.discriminator_loss_weight * args.d_obj_weight
-                        total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_crop), losses,
-                                              'g_gan_obj_loss', weight)
-
-                    if all_in_one_model.img_discriminator is not None:
-                        weight = args.discriminator_loss_weight * args.d_img_weight
-                        total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_img), losses,
-                                              'g_gan_img_loss', weight)
-
-                losses['total_loss'] = total_loss.item()
+                all_in_one_model.forward_D = True
+                with timeit('forward', args.timing):
+                    result = all_in_one_model[batch]
+                losses = G_step(result)
                 if not math.isfinite(losses['total_loss']):
                     print('WARNING: Got loss = NaN, not backpropping')
                     continue
-
-                with timeit('backward', args.timing):
-                    all_in_one_model.optimizer.zero_grad()
-                    total_loss.backward()
-                    all_in_one_model.optimizer.step()
+                d_obj_losses, d_img_losses = D_step(result)
 
             if t % (args.print_every * (args.n_critic + 1)) == 0:
                 print('t = %d / %d' % (t, args.num_iterations))
