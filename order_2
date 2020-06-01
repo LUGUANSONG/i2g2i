@@ -21,5 +21,5 @@ CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/train_all_in_one_bbo
 --print_every 100 --checkpoint_every 10000 --num_val_samples 128 \
 --l1_mode change_linear --l1_change_iters 5,10 --l1_change_vals 1,0 \
 --ac_loss_mode change_linear --ac_loss_change_iters 5,10 --ac_loss_change_vals 0.1,0 \
---d_img_mode change_linear --d_img_change_iters 5,10 --d_img_change_vals 1,0 \
+--d_img_mode change_linear --d_img_change_iters 5,10 --d_img_change_vals 1,0
 

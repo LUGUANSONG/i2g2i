@@ -259,11 +259,12 @@ def main(args):
                 elif getattr(args, "%s_mode" % mode) == "change_linear":
                     start_step = getattr(args, "%s_change_iters" % mode)[0]
                     end_step = getattr(args, "%s_change_iters" % mode)[1]
-                    start_val = getattr(args, "%s_change_vals" % mode)[0]
-                    end_val = getattr(args, "%s_change_vals" % mode)[1]
-                    new_value = start_val + (end_val - start_val) * (t - start_step) / (end_step - start_step)
-                    setattr(args, attr, new_value)
-                    print("Change %s from %10.f to %.10f at iteration %d" % (attr, old_value, getattr(args, attr), t))
+                    if start_step <= t <= end_step:
+                        start_val = getattr(args, "%s_change_vals" % mode)[0]
+                        end_val = getattr(args, "%s_change_vals" % mode)[1]
+                        new_value = start_val + (end_val - start_val) * (t - start_step) / (end_step - start_step)
+                        setattr(args, attr, new_value)
+                        print("Change %s from %10.f to %.10f at iteration %d" % (attr, old_value, getattr(args, attr), t))
 
             t += 1
 
