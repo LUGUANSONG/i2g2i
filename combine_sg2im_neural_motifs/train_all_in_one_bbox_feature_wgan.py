@@ -172,6 +172,7 @@ def main(args):
           result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img, \
           result.d_obj_gp, result.d_img_gp
 
+        d_obj_losses, d_img_losses = None, None
         if all_in_one_model.obj_discriminator is not None:
             with timeit('d_obj loss', args.timing):
                 d_obj_losses = LossManager()
