@@ -247,25 +247,23 @@ def main(args):
             #     all_in_one_model.model.eval()
             #     all_in_one_model.optimizer = optim.Adam(all_in_one_model.parameters(), lr=args.learning_rate)
             all_in_one_model.train()
-            if args.l1_mode == "change" and t in args.l1_change_iters:
-                    old_l1_weight = args.l1_pixel_loss_weight
-                    args.l1_pixel_loss_weight = args.l1_change_vals[args.l1_change_iters.index(t)]
-                    print("Change l1_pixel_loss_weight from %10.f to %.10f at iteration %d" % (
-                    old_l1_weight, args.l1_pixel_loss_weight, t))
-            elif args.l1_mode == "change_linear":
-                old_l1_weight = args.l1_pixel_loss_weight
-                args.l1_pixel_loss_weight = args.l1_change_vals[0] + (args.l1_change_vals[1] - args.l1_change_vals[0]) * t / args.num_iterations
-                print("Change l1_pixel_loss_weight from %10.f to %.10f at iteration %d" % (
-                    old_l1_weight, args.l1_pixel_loss_weight, t))
-
-            if args.noise_std_mode == "change" and t in args.noise_std_change_iters:
-                    old_noise_std = args.noise_std
-                    args.noise_std = args.noise_std_change_vals[args.noise_std_change_iters.index(t)]
-                    print("Change noise_std from %.10f to %.10f at iteration %d" % (old_noise_std, args.noise_std, t))
-            elif args.noise_std_mode == "change_linear":
-                old_noise_std = args.noise_std
-                args.noise_std = args.noise_std_change_vals[0] + (args.noise_std_change_vals[1] - args.noise_std_change_vals[0]) * t / args.num_iterations
-                print("Change noise_std from %.10f to %.10f at iteration %d" % (old_noise_std, args.noise_std, t))
+            modes = ['l1', 'noise_std', 'd_obj', 'd_img', 'ac_loss']
+            attrs = ['l1_pixel_loss_weight', 'noise_std', 'd_obj_weight', 'd_img_weight', 'ac_loss_weight']
+            for mode, attr in zip(modes, attrs):
+                old_value = getattr(args, attr)
+                if getattr(args, "%s_mode" % mode) == "change" and t in getattr(args, "%s_change_iters" % mode):
+                    step_index = getattr(args, "%s_change_iters" % mode).index(t)
+                    new_value = getattr(args, "%s_change_vals" % mode)[step_index]
+                    setattr(args, attr, new_value)
+                    print("Change %s from %10.f to %.10f at iteration %d" % (attr, old_value, getattr(args, attr), t))
+                elif getattr(args, "%s_mode" % mode) == "change_linear":
+                    start_step = getattr(args, "%s_change_iters" % mode)[0]
+                    end_step = getattr(args, "%s_change_iters" % mode)[1]
+                    start_val = getattr(args, "%s_change_vals" % mode)[0]
+                    end_val = getattr(args, "%s_change_vals" % mode)[1]
+                    new_value = start_val + (end_val - start_val) * (t - start_step) / (end_step - start_step)
+                    setattr(args, attr, new_value)
+                    print("Change %s from %10.f to %.10f at iteration %d" % (attr, old_value, getattr(args, attr), t))
 
             t += 1
 

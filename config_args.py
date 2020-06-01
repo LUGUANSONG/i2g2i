@@ -175,13 +175,23 @@ parser.add_argument('--d_obj_arch',
                     default='C4-64-2,C4-128-2,C4-256-2')
 parser.add_argument('--crop_size', default=32, type=int)
 parser.add_argument('--d_obj_weight', default=1.0, type=float) # multiplied by d_loss_weight
+parser.add_argument('--d_obj_mode', type=str, default='fix', help='can be fix, change, change_linear')
+parser.add_argument('--d_obj_change_iters', type=str, default="-1")
+parser.add_argument('--d_obj_change_vals', type=str, default="")
 parser.add_argument('--d_obj_gp_weight', type=float, default=10) # multiplied by d_loss_weight
+
 parser.add_argument('--ac_loss_weight', default=0.1, type=float)
+parser.add_argument('--ac_loss_mode', type=str, default='fix', help='can be fix, change, change_linear')
+parser.add_argument('--ac_loss_change_iters', type=str, default="-1")
+parser.add_argument('--ac_loss_change_vals', type=str, default="")
 
 # Image discriminator
 parser.add_argument('--d_img_arch',
                     default='C4-64-2,C4-128-2,C4-256-2')
 parser.add_argument('--d_img_weight', default=1.0, type=float)  # multiplied by d_loss_weight
+parser.add_argument('--d_img_mode', type=str, default='fix', help='can be fix, change, change_linear')
+parser.add_argument('--d_img_change_iters', type=str, default="-1")
+parser.add_argument('--d_img_change_vals', type=str, default="")
 parser.add_argument('--d_img_gp_weight', type=float, default=10) # multiplied by d_loss_weight
 
 # Output options
@@ -203,6 +213,15 @@ if config_args.l1_mode in ["change", "change_linear"]:
 if config_args.noise_std_mode in ["change", "change_linear"]:
     config_args.noise_std_change_iters = [int(x) for x in config_args.noise_std_change_iters.split(",")]
     config_args.noise_std_change_vals = [float(x) for x in config_args.noise_std_change_vals.split(",")]
+if config_args.d_obj_mode in ["change", "change_linear"]:
+    config_args.d_obj_change_iters = [int(x) for x in config_args.d_obj_change_iters.split(",")]
+    config_args.d_obj_change_vals = [float(x) for x in config_args.d_obj_change_vals.split(",")]
+if config_args.ac_loss_mode in ["change", "change_linear"]:
+    config_args.ac_loss_change_iters = [int(x) for x in config_args.ac_loss_change_iters.split(",")]
+    config_args.ac_loss_change_vals = [float(x) for x in config_args.ac_loss_change_vals.split(",")]
+if config_args.d_img_mode in ["change", "change_linear"]:
+    config_args.d_img_change_iters = [int(x) for x in config_args.d_img_change_iters.split(",")]
+    config_args.d_img_change_vals = [float(x) for x in config_args.d_img_change_vals.split(",")]
 
 if len(config_args.ckpt) != 0:
     config_args.ckpt = os.path.join(ROOT_PATH, config_args.ckpt)
