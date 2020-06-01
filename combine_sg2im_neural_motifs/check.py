@@ -41,5 +41,5 @@ args = parser.parse_args()
 
 print(getattr(args, 'l1'))
 
-setattr(args, 'l1', 9)
-print(getattr(args, 'l1'))
+setattr(args, 'l1', 9.)
+print(type(getattr(args, 'l1')))
