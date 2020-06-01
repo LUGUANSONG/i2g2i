@@ -244,6 +244,9 @@ def main(args):
                     d_img_losses.total_loss.backward()
                     all_in_one_model.optimizer_d_img.step()
 
+            print("check after D backward, get all_in_one_model.imgs_pred")
+            print(all_in_one_model.imgs_pred.shape)
+
             # train generator for 1 iteration after n_critic iterations
             if t % args.n_critic == 0:
                 all_in_one_model.forward_G = False
