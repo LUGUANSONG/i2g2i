@@ -217,10 +217,7 @@ class neural_motifs_sg2im_model(nn.Module):
             mask_noise_indexes = None
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
-                self.imgs_pred = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
-        imgs_pred = self.imgs_pred
-        print("forward, get self.imgs_pred")
-        print(imgs_pred.shape)
+                imgs_pred = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
 
         g_scores_fake_crop, g_obj_scores_fake_crop = None, None
         g_scores_fake_img = None
@@ -257,9 +254,6 @@ class neural_motifs_sg2im_model(nn.Module):
                     d_scores_real_img = self.img_discriminator(imgs)
                     if self.args.gan_loss_type == "wgan-gp":
                         d_img_gp = gradient_penalty(imgs, imgs_fake, self.img_discriminator)
-
-        print("check at the end of forward, get self.imgs_pred")
-        print(imgs_pred.shape, self.imgs_pred.shape)
 
         return Result(
             imgs=imgs,
