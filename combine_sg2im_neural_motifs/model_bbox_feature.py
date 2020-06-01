@@ -231,8 +231,8 @@ class neural_motifs_sg2im_model(nn.Module):
                 with timeit('d_img forward for g', self.args.timing):
                     g_scores_fake_img = self.img_discriminator(imgs_pred)
 
-        d_scores_fake_crop, d_obj_scores_fake_crop = None, None
-        d_scores_real_crop, d_obj_scores_real_crop = None, None
+        d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops = None, None, None
+        d_scores_real_crop, d_obj_scores_real_crop, real_crops = None, None, None
         d_obj_gp = None
         d_scores_fake_img = None
         d_scores_real_img = None
@@ -270,6 +270,8 @@ class neural_motifs_sg2im_model(nn.Module):
             d_scores_real_img=d_scores_real_img,
             d_obj_gp=d_obj_gp,
             d_img_gp=d_img_gp,
+            fake_crops=fake_crops,
+            real_crops=real_crops,
             mask_noise_indexes=(mask_noise_indexes + img_offset) if mask_noise_indexes is not None else None
         )
         # return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
@@ -318,6 +320,8 @@ class Result(object):
             d_scores_real_img=None,
             d_obj_gp=None,
             d_img_gp=None,
+            fake_crops=None,
+            real_crops=None,
             mask_noise_indexes=None):
         self.__dict__.update(locals())
         del self.__dict__['self']

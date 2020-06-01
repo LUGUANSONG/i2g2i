@@ -1,16 +1,33 @@
-import argparse
+import torch
+import torch.nn as nn
 
 
-parser = argparse.ArgumentParser(description='training code')
-parser.add_argument("--a", type=int, default=0)
-args = parser.parse_known_args()
+class net(nn.Module):
+    def __init__(self, dimension):
+        super(net, self).__init__()
+
+        self.w = nn.Parameter(torch.ones(dimension))
+
+    def forward(self, x, y=None):
+        x = x * self.w
+        return x ** 2, x
 
 
-parser_2 = argparse.ArgumentParser(description='training code')
-parser_2.add_argument("--a", type=int, default=0)
-parser_2.add_argument("--b", type=int, default=0)
-args_2 = parser.parse_args()
+x_hat = torch.Tensor([0,1,2,3])
+x_hat.requires_grad_(True)
+f = net(x_hat.size(0))
 
+x_hat_score = f(x_hat)
+if len(x_hat_score) == 2:
+    x_hat_score = x_hat_score[0]
+if x_hat_score.dim() > 1:
+    x_hat_score = x_hat_score.view(x_hat_score.size(0), -1).mean(dim=1)
+gradients = torch.autograd.grad(outputs=x_hat_score, inputs=x_hat,
+                                grad_outputs=torch.ones(x_hat_score.size()),
+                                create_graph=True, retain_graph=True, only_inputs=True)
+print(gradients)
 
-print(args)
-print(args_2)
+gradients = gradients[0].view(x_hat.size(0), -1)  # flat the data
+
+print(gradients)
+

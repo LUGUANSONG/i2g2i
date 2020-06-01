@@ -67,7 +67,7 @@ def check_model(args, loader, model):
     all_losses = defaultdict(list)
     model.forward_G = True
     model.calc_G_D_loss = False
-    model.forward_D = False
+    model.forward_D = True
     with torch.no_grad():
         for batch in loader:
             result = model[batch]
@@ -79,6 +79,7 @@ def check_model(args, loader, model):
             # result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img
             imgs, imgs_pred, objs = result.imgs, result.imgs_pred, result.objs
             mask_noise_indexes = result.mask_noise_indexes
+            real_crops, fake_crops = result.real_crops, result.fake_crops
 
             total_loss, losses = calculate_model_losses(
                 args, imgs, imgs_pred, mask_noise_indexes)
@@ -91,6 +92,8 @@ def check_model(args, loader, model):
         samples = {}
         samples['gt_img'] = imgs
         samples['pred_img'] = imgs_pred
+        samples['real_crops'] = real_crops
+        samples['fake_crops'] = fake_crops
 
         for k, images in samples.items():
             images = images * torch.tensor([0.229, 0.224, 0.225], device=images.device).reshape(1, 3, 1, 1)
