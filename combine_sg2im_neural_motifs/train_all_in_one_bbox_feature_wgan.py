@@ -154,6 +154,7 @@ def main(args):
     print(train.ind_to_classes)
 
     all_in_one_model = neural_motifs_sg2im_model(args, train.ind_to_classes)
+    print(all_in_one_model)
     # Freeze the detector
     # for n, param in all_in_one_model.detector.named_parameters():
     #     param.requires_grad = False
