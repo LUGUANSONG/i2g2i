@@ -26,7 +26,7 @@ import torch.nn.functional as F
 from tensorboardX import SummaryWriter
 
 # sg2im
-from sg2im.losses import get_gan_losses
+from sg2im.losses import get_gan_losses, VGGLoss
 from sg2im.utils import timeit, bool_flag, LossManager
 
 # neural motifs
