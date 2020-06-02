@@ -77,6 +77,7 @@ def build_img_discriminator(args):
         'normalization': args.d_normalization,
         'activation': args.d_activation,
         'padding': args.d_padding,
+        'layout_dim': args.gconv_dim if args.condition_d_img else 0
     }
     discriminator = PatchDiscriminator(**d_kwargs).cuda()
     return discriminator, d_kwargs
@@ -217,7 +218,8 @@ class neural_motifs_sg2im_model(nn.Module):
             mask_noise_indexes = None
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
-                imgs_pred = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
+                imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
+        layout = layout.detach()
 
         g_scores_fake_crop, g_obj_scores_fake_crop = None, None
         g_scores_fake_img = None
@@ -229,7 +231,10 @@ class neural_motifs_sg2im_model(nn.Module):
 
             if self.img_discriminator is not None:
                 with timeit('d_img forward for g', self.args.timing):
-                    g_scores_fake_img = self.img_discriminator(imgs_pred)
+                    if self.args.condition_d_img:
+                        g_scores_fake_img = self.img_discriminator(imgs_pred, layout)
+                    else:
+                        g_scores_fake_img = self.img_discriminator(imgs_pred)
 
         d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops = None, None, None
         d_scores_real_crop, d_obj_scores_real_crop, real_crops = None, None, None
@@ -250,10 +255,17 @@ class neural_motifs_sg2im_model(nn.Module):
             if self.img_discriminator is not None:
                 imgs_fake = imgs_pred.detach()
                 with timeit('d_img forward for d', self.args.timing):
-                    d_scores_fake_img = self.img_discriminator(imgs_fake)
-                    d_scores_real_img = self.img_discriminator(imgs)
+                    if self.args.condition_d_img:
+                        d_scores_fake_img = self.img_discriminator(imgs_fake, layout)
+                        d_scores_real_img = self.img_discriminator(imgs, layout)
+                    else:
+                        d_scores_fake_img = self.img_discriminator(imgs_fake)
+                        d_scores_real_img = self.img_discriminator(imgs)
                     if self.args.gan_loss_type == "wgan-gp" and self.training:
-                        d_img_gp = gradient_penalty(imgs, imgs_fake, self.img_discriminator)
+                        if self.args.condition_d_img:
+                            d_img_gp = gradient_penalty(torch.cat([imgs, layout], dim=1), torch.cat([imgs_fake, layout], dim=1), self.img_discriminator)
+                        else:
+                            d_img_gp = gradient_penalty(imgs, imgs_fake, self.img_discriminator)
 
         return Result(
             imgs=imgs,

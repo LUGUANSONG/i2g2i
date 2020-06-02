@@ -160,6 +160,7 @@ def main(args):
     #     param.requires_grad = False
     all_in_one_model.cuda()
     gan_g_loss, gan_d_loss = get_gan_losses(args.gan_loss_type)
+    criterionVGG = VGGLoss() if args.perceptual_loss_weight > 0 else None
 
     t, epoch, checkpoint = all_in_one_model.t, all_in_one_model.epoch, all_in_one_model.checkpoint
 
@@ -214,6 +215,10 @@ def main(args):
         with timeit('loss', args.timing):
             total_loss, losses = calculate_model_losses(
                 args, imgs, imgs_pred, mask_noise_indexes)
+
+            if criterionVGG is not None:
+                total_loss = add_loss(total_loss, criterionVGG(imgs_pred, imgs), losses, 'perceptual_loss',
+                                      args.perceptual_loss_weight)
 
             if all_in_one_model.obj_discriminator is not None:
                 total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',

@@ -174,6 +174,7 @@ class Sg2ImModel(nn.Module):
       layout_masks = masks_pred if masks_gt is None else masks_gt
       layout = masks_to_layout(obj_vecs, layout_boxes, layout_masks,
                                obj_to_img, H, W)
+    ret_layout = layout
 
     if self.layout_noise_dim > 0:
       N, C, H, W = layout.size()
@@ -188,7 +189,7 @@ class Sg2ImModel(nn.Module):
       #                            device=layout.device)
       layout = torch.cat([layout, layout_noise], dim=1)
     img = self.refinement_net(layout)
-    return img
+    return img, ret_layout
 
   # def encode_scene_graphs(self, scene_graphs):
   #   """

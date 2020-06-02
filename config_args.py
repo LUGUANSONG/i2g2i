@@ -161,6 +161,9 @@ parser.add_argument('--l1_change_vals', type=str, default="")
 parser.add_argument('--bbox_pred_loss_weight', default=10, type=float)
 parser.add_argument('--predicate_pred_loss_weight', default=0, type=float)  # DEPRECATED
 
+# Perceptual loss
+parser.add_argument('--perceptual_loss_weight', default=0.0, type=float)
+
 # Generic discriminator options
 parser.add_argument('--discriminator_loss_weight', default=0.01, type=float)
 parser.add_argument('--gan_loss_type', choices=['gan', 'lsgan', 'wgan-gp'], default='gan')
@@ -169,6 +172,7 @@ parser.add_argument('--d_clip', default=None, type=float)
 parser.add_argument('--d_normalization', default='batch')
 parser.add_argument('--d_padding', default='valid')
 parser.add_argument('--d_activation', default='leakyrelu-0.2')
+parser.add_argument('--condition_d_img', action='store_true', help='image gan conditioned on layout?')
 
 # Object discriminator
 parser.add_argument('--d_obj_arch',
