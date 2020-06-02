@@ -84,10 +84,11 @@ rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/py
 
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/code/neural-motifs-sg2im/vg-faster-rcnn.tar ubuntu@13.59.141.231:/home/ubuntu/scene_graph/code/i2g2i/
 
-rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/train ubuntu@18.222.96.193	:/home/ubuntu/scene_graph/neural-motifs-data/
-rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/val ubuntu@18.222.96.193	:/home/ubuntu/scene_graph/neural-motifs-data/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/train ubuntu@3.14.68.45:/home/ubuntu/scene_graph/neural-motifs-data/
 
-rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/test ubuntu@18.221.104.138:/home/ubuntu/scene_graph/neural-motifs-data/
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/val ubuntu@3.14.68.45:/home/ubuntu/scene_graph/neural-motifs-data/
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/test ubuntu@3.14.68.45:/home/ubuntu/scene_graph/neural-motifs-data/
 
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' /home/ubuntu/scene_graph/neural-motifs-data/test ubuntu@13.59.234.86:/home/ubuntu/scene_graph/neural-motifs-data/
 

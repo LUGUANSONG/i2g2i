@@ -154,7 +154,7 @@ class Sg2ImModel(nn.Module):
 
     masks_pred = None
     if self.mask_net is not None:
-      mask_scores = self.mask_net(obj_vecs.view(O, -1, 1, 1))
+      mask_scores = self.mask_net(obj_vecs.view(obj_vecs.shape[0], -1, 1, 1))
       masks_pred = mask_scores.squeeze(1).sigmoid()
 
     # s_boxes, o_boxes = boxes_pred[s], boxes_pred[o]
