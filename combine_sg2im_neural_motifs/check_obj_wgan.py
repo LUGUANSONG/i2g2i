@@ -107,7 +107,7 @@ while True:
         t += 1
 
         zs = torch.randn(args.batch_size, 100)
-        imgs_pred = generator[0](zs).view(args.batch_size, 256, 2, 2)
+        imgs_pred = generator[0](zs).view(args.batch_size, 64, 2, 2)
         for i in range(1, len(generator)):
             imgs_pred = generator[i](imgs_pred)
 
