@@ -86,6 +86,7 @@ def check_model(args, loader, model, inception_score, use_gt):
     total_iou = 0
     total_boxes = 0
     inception_score.clean()
+    model.forward_D = False
     with torch.no_grad():
         for batch in loader:
             result = model[batch]
@@ -194,7 +195,7 @@ def main(args):
             json.dump(vars(args), outfile)
 
     inception_score = InceptionScore(cuda=True, batch_size=args.batch_size, resize=True)
-    train_results = check_model(args, val_loader, trainer.model, inception_score, use_gt=True)
+    train_results = check_model(args, val_loader, trainer, inception_score, use_gt=True)
     t_avg_iou, t_inception_mean, t_inception_std, _ = train_results
     index = int(t / args.print_every)
     trainer.writer.add_scalar('checkpoint/{}'.format('train_iou'), t_avg_iou, index)
@@ -207,6 +208,7 @@ def main(args):
         print('Starting epoch %d' % epoch)
 
         for batch in train_loader:
+            model.forward_D = True
             t += 1
             result = Trainer[batch]
             imgs, imgs_pred = result.imgs, result.imgs_pred
@@ -249,9 +251,9 @@ def main(args):
 
             if t % args.checkpoint_every == 0:
                 print('begin check model train')
-                train_results = check_model(args, val_loader, trainer.model, inception_score, use_gt=True)
+                train_results = check_model(args, val_loader, trainer, inception_score, use_gt=True)
                 print('begin check model val')
-                val_results = check_model(args, val_loader, trainer.model, inception_score, use_gt=False)
+                val_results = check_model(args, val_loader, trainer, inception_score, use_gt=False)
                 trainer.save_checkpoint(checkpoint, t, args, epoch, train_results, val_results)
 
 
