@@ -165,15 +165,15 @@ while True:
                     d_obj_losses.total_loss.backward()
                     optimizer_d_obj.step()
 
-            if self.img_discriminator is not None:
+            if img_discriminator is not None:
                 imgs_fake = imgs_pred.detach()
-                with timeit('d_img forward for d', self.args.timing):
+                with timeit('d_img forward for d', args.timing):
                     if args.condition_d_img:
                         d_scores_fake_img = img_discriminator(imgs_fake, layout)
                         d_scores_real_img = img_discriminator(imgs, layout)
                     else:
-                        d_scores_fake_img = self.img_discriminator(imgs_fake)
-                        d_scores_real_img = self.img_discriminator(imgs)
+                        d_scores_fake_img = img_discriminator(imgs_fake)
+                        d_scores_real_img = img_discriminator(imgs)
 
                     if args.gan_loss_type == "wgan-gp":
                         if args.condition_d_img:
@@ -199,7 +199,7 @@ while True:
             losses = {}
 
             if obj_discriminator is not None:
-                with timeit('d_obj forward for g', self.args.timing):
+                with timeit('d_obj forward for g', args.timing):
                     g_scores_fake_crop, g_obj_scores_fake_crop, _, g_rec_feature_fake_crop = \
                         obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
 
@@ -210,7 +210,7 @@ while True:
                                       'g_gan_obj_loss', weight)
 
             if img_discriminator is not None:
-                with timeit('d_img forward for g', self.args.timing):
+                with timeit('d_img forward for g', args.timing):
                     if args.condition_d_img:
                         g_scores_fake_img = img_discriminator(imgs_pred, layout)
                     else:
