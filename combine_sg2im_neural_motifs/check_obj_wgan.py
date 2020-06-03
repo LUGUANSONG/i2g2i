@@ -107,15 +107,16 @@ while True:
         t += 1
 
         zs = torch.randn(args.batch_size, 100)
+        imgs, objs = batch
+        zs[:, 50:] = objs.view(-1, 1).repeat(1, 50)
+        boxes = torch.Tensor([0, 0, 1, 1]).view(1, -1).repeat(args.batch_size, 1)
+        obj_to_img = torch.nrange(args.batch_size)
+
         imgs_pred = generator[0](zs).view(args.batch_size, 64, 2, 2)
         for i in range(1, len(generator)):
             imgs_pred = generator[i](imgs_pred)
 
         if t % (args.n_critic + 1) != 0:
-            imgs, objs = batch
-            boxes = torch.Tensor([0, 0, 1, 1]).view(1, -1).repeat(args.batch_size, 1)
-            obj_to_img = torch.nrange(args.batch_size)
-
             imgs_fake = imgs_pred.detach()
             with timeit('d_obj forward for d', args.timing):
                 d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops, d_rec_feature_fake_crop = \
@@ -151,8 +152,9 @@ while True:
 
             total_loss = torch.zeros(1).to(imgs)
             losses = {}
-            total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
-                                  args.ac_loss_weight)
+            if args.ac_loss_weight > 0:
+                total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
+                                      args.ac_loss_weight)
             weight = args.discriminator_loss_weight * args.d_obj_weight
             total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_crop), losses,
                                   'g_gan_obj_loss', weight)
