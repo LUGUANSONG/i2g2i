@@ -115,7 +115,7 @@ class Sg2ImModel(nn.Module):
 
   # def forward(self, objs, triples, obj_to_img=None,
   #             boxes_gt=None, masks_gt=None):
-  def forward(self, obj_to_img, boxes_gt, obj_fmap, mask_noise_indexes=None, masks_gt=None):
+  def forward(self, obj_to_img, boxes_gt, obj_fmaps, mask_noise_indexes=None, masks_gt=None):
     """
     Required Inputs:
     - objs: LongTensor of shape (O,) giving categories for all objects
@@ -148,7 +148,7 @@ class Sg2ImModel(nn.Module):
     #   obj_vecs, pred_vecs = self.gconv(obj_vecs, pred_vecs, edges)
     # if self.gconv_net is not None:
     #   obj_vecs, pred_vecs = self.gconv_net(obj_vecs, pred_vecs, edges)
-    obj_vecs = self.obj_fmap_net(obj_fmap)
+    obj_vecs = self.obj_fmap_net(obj_fmaps)
 
     # boxes_pred = self.box_net(obj_vecs)
 

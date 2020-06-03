@@ -211,7 +211,7 @@ class neural_motifs_sg2im_model(nn.Module):
         assert obj_to_img.min() >= 0 and obj_to_img.max() < len(imgs), \
             "obj_to_img.min() >= 0 and obj_to_img.max() < len(imgs) is not satidfied: {} {} {}".format(obj_to_img.min(), obj_to_img.max(), len(imgs))
         boxes = gt_boxes
-        obj_fmap = gt_fmaps
+        obj_fmaps = gt_fmaps
         objs = gt_classes[:, 1]
 
         mask_noise_indexes = torch.randperm(imgs.shape[0])[:int(self.args.noise_mask_ratio * imgs.shape[0])].to(imgs.device)
@@ -219,11 +219,11 @@ class neural_motifs_sg2im_model(nn.Module):
             mask_noise_indexes = None
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
-                imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmap, mask_noise_indexes)
+                imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmaps, mask_noise_indexes)
         layout = layout.detach()
 
         g_scores_fake_crop, g_obj_scores_fake_crop = None, None
-        g_scores_fake_img = None
+        g_scores_fake_img, g_rec_feature_fake_img = None, None
         if self.calc_G_D_loss:
             # forward discriminators to train generator
             if self.obj_discriminator is not None:
@@ -236,12 +236,14 @@ class neural_motifs_sg2im_model(nn.Module):
                         g_scores_fake_img = self.img_discriminator(imgs_pred, layout)
                     else:
                         g_scores_fake_img = self.img_discriminator(imgs_pred)
+                    if isinstance(g_scores_fake_img, tuple):
+                        g_scores_fake_img, g_rec_feature_fake_img = g_scores_fake_img
 
         d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops = None, None, None
         d_scores_real_crop, d_obj_scores_real_crop, real_crops = None, None, None
         d_obj_gp = None
-        d_scores_fake_img = None
-        d_scores_real_img = None
+        d_scores_fake_img, d_rec_feature_fake_img = None, None
+        d_scores_real_img, d_rec_feature_real_img = None, None
         d_img_gp = None
         if self.forward_D:
             # forward discriminators to train discriminators
@@ -262,6 +264,11 @@ class neural_motifs_sg2im_model(nn.Module):
                     else:
                         d_scores_fake_img = self.img_discriminator(imgs_fake)
                         d_scores_real_img = self.img_discriminator(imgs)
+                    if isinstance(d_scores_fake_img, tuple):
+                        d_scores_fake_img, d_rec_feature_fake_img = d_scores_fake_img
+                    if isinstance(d_scores_real_img, tuple):
+                        d_scores_real_img, d_rec_feature_real_img = d_scores_real_img
+
                     if self.args.gan_loss_type == "wgan-gp" and self.training:
                         if self.args.condition_d_img:
                             d_img_gp = gradient_penalty(torch.cat([imgs, layout], dim=1), torch.cat([imgs_fake, layout], dim=1), self.img_discriminator)
@@ -272,6 +279,7 @@ class neural_motifs_sg2im_model(nn.Module):
             imgs=imgs,
             imgs_pred=imgs_pred,
             objs=objs,
+            obj_fmaps=obj_fmaps,
             g_scores_fake_crop=g_scores_fake_crop,
             g_obj_scores_fake_crop=g_obj_scores_fake_crop,
             g_scores_fake_img=g_scores_fake_img,
@@ -285,7 +293,10 @@ class neural_motifs_sg2im_model(nn.Module):
             d_img_gp=d_img_gp,
             fake_crops=fake_crops,
             real_crops=real_crops,
-            mask_noise_indexes=(mask_noise_indexes + img_offset) if mask_noise_indexes is not None else None
+            mask_noise_indexes=(mask_noise_indexes + img_offset) if mask_noise_indexes is not None else None,
+            g_rec_feature_fake_img=g_rec_feature_fake_img,
+            d_rec_feature_fake_img=d_rec_feature_fake_img,
+            d_rec_feature_real_img=d_rec_feature_real_img,
         )
         # return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
         #        d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img
@@ -323,6 +334,7 @@ class Result(object):
     def __init__(self, imgs=None,
             imgs_pred=None,
             objs=None,
+            obj_fmaps=None,
             g_scores_fake_crop=None,
             g_obj_scores_fake_crop=None,
             g_scores_fake_img=None,
@@ -336,7 +348,11 @@ class Result(object):
             d_img_gp=None,
             fake_crops=None,
             real_crops=None,
-            mask_noise_indexes=None):
+            mask_noise_indexes=None,
+            g_rec_feature_fake_img=None,
+            d_rec_feature_fake_img=None,
+            d_rec_feature_real_img=None,
+            ):
         self.__dict__.update(locals())
         del self.__dict__['self']
 

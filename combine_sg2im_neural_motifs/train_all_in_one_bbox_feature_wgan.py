@@ -173,6 +173,8 @@ def main(args):
           result.d_scores_fake_crop, result.d_obj_scores_fake_crop, result.d_scores_real_crop, \
           result.d_obj_scores_real_crop, result.d_scores_fake_img, result.d_scores_real_img, \
           result.d_obj_gp, result.d_img_gp
+        d_rec_feature_fake_img, d_rec_feature_real_img = result.d_rec_feature_fake_img, result.d_rec_feature_real_img
+        obj_fmaps=result.obj_fmaps
 
         d_obj_losses, d_img_losses = None, None
         if all_in_one_model.obj_discriminator is not None:
@@ -199,6 +201,9 @@ def main(args):
                 d_img_losses.add_loss(d_img_gan_loss, 'd_img_gan_loss')
                 if args.gan_loss_type == 'wgan-gp':
                     d_img_losses.add_loss(d_img_gp.mean(), 'd_img_gp', args.d_img_gp_weight)
+                if args.d_img_rec_feat_weight > 0:
+                    d_img_losses.add_loss(F.l1_loss(d_rec_feature_fake_img, obj_fmaps), 'd_img_fea_rec_loss_fake')
+                    d_img_losses.add_loss(F.l1_loss(d_rec_feature_real_img, obj_fmaps), 'd_img_fea_rec_loss_real')
 
             with timeit('d_img backward', args.timing):
                 all_in_one_model.optimizer_d_img.zero_grad()
@@ -212,6 +217,9 @@ def main(args):
         = result.imgs, result.imgs_pred, result.objs, \
           result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img
         mask_noise_indexes = result.mask_noise_indexes
+        g_rec_feature_fake_img = result.g_rec_feature_fake_img
+        obj_fmaps = result.obj_fmaps
+        
         with timeit('loss', args.timing):
             total_loss, losses = calculate_model_losses(
                 args, imgs, imgs_pred, mask_noise_indexes)
@@ -231,6 +239,9 @@ def main(args):
                 weight = args.discriminator_loss_weight * args.d_img_weight
                 total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_img), losses,
                                       'g_gan_img_loss', weight)
+                if args.d_img_rec_feat_weight > 0:
+                    total_loss = add_loss(total_loss, F.l1_loss(g_rec_feature_fake_img, obj_fmaps), losses,
+                                          'img_fea_rec_loss', args.d_img_rec_feat_weight)
 
         losses['total_loss'] = total_loss.item()
 
