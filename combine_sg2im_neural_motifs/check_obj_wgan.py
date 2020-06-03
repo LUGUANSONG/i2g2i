@@ -110,7 +110,7 @@ while True:
         imgs, objs = batch
         zs[:, 50:] = objs.view(-1, 1).repeat(1, 50)
         boxes = torch.Tensor([0, 0, 1, 1]).view(1, -1).repeat(args.batch_size, 1)
-        obj_to_img = torch.range(args.batch_size)
+        obj_to_img = torch.arange(args.batch_size)
 
         imgs_pred = generator[0](zs).view(args.batch_size, 64, 2, 2)
         for i in range(1, len(generator)):
