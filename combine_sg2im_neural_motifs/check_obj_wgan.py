@@ -136,6 +136,7 @@ while True:
         for i in range(1, len(generator)):
             imgs_pred = generator[i](imgs_pred)
 
+        print(zs.shape, imgs.shape, objs.shape, boxes.shape, obj_to_img.shape, imgs_pred.shape)
         if t % (args.n_critic + 1) != 0:
             if obj_discriminator is not None:
                 imgs_fake = imgs_pred.detach()
