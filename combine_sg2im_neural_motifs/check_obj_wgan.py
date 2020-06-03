@@ -37,6 +37,15 @@ from model_bbox_feature import build_obj_discriminator
 
 torch.backends.cudnn.benchmark = True
 
+def add_loss(total_loss, curr_loss, loss_dict, loss_name, weight=1):
+    curr_loss = curr_loss * weight
+    loss_dict[loss_name] = curr_loss.item()
+    if total_loss is not None:
+        total_loss += curr_loss
+    else:
+        total_loss = curr_loss
+    return total_loss
+
 args = config_args
 
 print(args)
