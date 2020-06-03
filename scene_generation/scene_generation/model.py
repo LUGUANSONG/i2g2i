@@ -123,7 +123,7 @@ class Model(nn.Module):
         else:
             # gt_layout = masks_to_layout(scene_layout_vecs, boxes_gt, masks_gt, obj_to_img, H, W, test_mode=False)
             gt_layout = None
-            pred_layout = masks_to_layout(scene_layout_vecs.contiguous(), boxes_gt.contiguous(), masks_pred.contiguous(), obj_to_img, H, W, test_mode=False)
+            pred_layout = masks_to_layout(scene_layout_vecs, boxes_gt, masks_pred, obj_to_img, H, W, test_mode=False)
             # wrong_layout = masks_to_layout(wrong_layout_vecs, boxes_gt, masks_gt, obj_to_img, H, W, test_mode=False)
             wrong_layout = masks_to_layout(wrong_layout_vecs, boxes_gt, masks_pred, obj_to_img, H, W, test_mode=False)
 
