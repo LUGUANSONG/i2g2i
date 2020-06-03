@@ -1,4 +1,5 @@
-CUDA_VISIBLE_DEVICES=0 python scene_generation/train.py --d_mask_weight 0
+CUDA_VISIBLE_DEVICES=0 python scene_generation/train.py --d_mask_weight 0 --gconv_num_layers 0 --embedding_dim 4096
+
 
 
 

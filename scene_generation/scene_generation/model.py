@@ -108,7 +108,7 @@ class Model(nn.Module):
         boxes_pred = self.box_net(box_vecs) if self.box_net is not None else None
 
         # Generate Masks
-        mask_scores = self.mask_net(mask_vecs.view(O, -1, 1, 1))
+        mask_scores = self.mask_net(mask_vecs.view(objs.size(0), -1, 1, 1))
         masks_pred = mask_scores.squeeze(1).sigmoid()
 
         H, W = self.image_size
