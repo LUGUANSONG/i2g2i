@@ -236,11 +236,19 @@ while True:
                 summary_writer.add_scalar("G_%s" % name, val, t)
             print("G: %s" % ", ".join(G_loss_list))
 
-            D_obj_loss_list = []
-            for name, val in d_obj_losses.items():
-                D_obj_loss_list.append('[%s]: %.4f' % (name, val))
-                summary_writer.add_scalar("D_obj_%s" % name, val, t)
-            print("D_obj: %s" % ", ".join(D_obj_loss_list))
+            if obj_discriminator is not None:
+                D_obj_loss_list = []
+                for name, val in d_obj_losses.items():
+                    D_obj_loss_list.append('[%s]: %.4f' % (name, val))
+                    summary_writer.add_scalar("D_obj_%s" % name, val, t)
+                print("D_obj: %s" % ", ".join(D_obj_loss_list))
+
+            if img_discriminator is not None:
+                D_img_loss_list = []
+                for name, val in d_img_losses.items():
+                    D_img_loss_list.append('[%s]: %.4f' % (name, val))
+                    summary_writer.add_scalar("D_img_%s" % name, val, t)
+                print("D_img: %s" % ", ".join(D_img_loss_list))
 
             samples = {}
             samples['gt_img'] = imgs
