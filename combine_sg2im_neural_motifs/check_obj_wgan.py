@@ -89,7 +89,7 @@ generator = nn.ModuleList([
     nn.BatchNorm2d(3),
     nn.ReLU(True),
     nn.Conv2d(3, 3, kernel_size=1, stride=1, padding=0)
-])
+]).cuda()
 generator.train()
 optimizer = torch.optim.Adam(generator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
@@ -106,11 +106,12 @@ while True:
     for step, batch in enumerate(tqdm(train_loader, desc='Training Epoch %d' % epoch, total=len(train_loader))):
         t += 1
 
-        zs = torch.randn(args.batch_size, 100)
+        zs = torch.randn(args.batch_size, 100).cuda()
         imgs, objs = batch
+        imgs, objs = imgs.cuda(), objs.cuda()
         zs[:, 50:] = objs.view(-1, 1).repeat(1, 50)
-        boxes = torch.Tensor([0, 0, 1, 1]).view(1, -1).repeat(args.batch_size, 1)
-        obj_to_img = torch.arange(args.batch_size)
+        boxes = torch.Tensor([0, 0, 1, 1]).view(1, -1).repeat(args.batch_size, 1).cuda()
+        obj_to_img = torch.arange(args.batch_size).cuda()
 
         imgs_pred = generator[0](zs).view(args.batch_size, 64, 2, 2)
         for i in range(1, len(generator)):
