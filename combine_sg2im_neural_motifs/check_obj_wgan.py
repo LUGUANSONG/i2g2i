@@ -192,7 +192,7 @@ while True:
                 with timeit('d_img backward', args.timing):
                     optimizer_d_img.zero_grad()
                     d_img_losses.total_loss.backward()
-                    all_in_one_model.optimizer_d_img.step()
+                    optimizer_d_img.step()
 
         if t % (args.n_critic + 1) == 0:
             ## train g
