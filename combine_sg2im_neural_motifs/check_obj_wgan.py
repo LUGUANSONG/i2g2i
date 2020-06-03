@@ -245,9 +245,10 @@ while True:
             samples = {}
             samples['gt_img'] = imgs
             samples['pred_img'] = imgs_pred
-            real_crops, fake_crops = real_crops, fake_crops
-            samples['real_crops'] = real_crops
-            samples['fake_crops'] = fake_crops
+            if obj_discriminator is not None:
+                real_crops, fake_crops = real_crops, fake_crops
+                samples['real_crops'] = real_crops
+                samples['fake_crops'] = fake_crops
 
             for k, images in samples.items():
                 images = images * torch.tensor([0.229, 0.224, 0.225], device=images.device).reshape(1, 3, 1, 1)
