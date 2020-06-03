@@ -117,7 +117,7 @@ while True:
             obj_to_img = torch.nrange(args.batch_size)
 
             imgs_fake = imgs_pred.detach()
-            with timeit('d_obj forward for d', self.args.timing):
+            with timeit('d_obj forward for d', args.timing):
                 d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops, d_rec_feature_fake_crop = \
                     obj_discriminator(imgs_fake, objs, boxes, obj_to_img)
                 d_scores_real_crop, d_obj_scores_real_crop, real_crops, d_rec_feature_real_crop = \
@@ -145,7 +145,7 @@ while True:
 
         if t % (args.n_critic + 1) == 0:
             ## train g
-            with timeit('d_obj forward for g', self.args.timing):
+            with timeit('d_obj forward for g', args.timing):
                 g_scores_fake_crop, g_obj_scores_fake_crop, _, g_rec_feature_fake_crop = \
                     obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
 
