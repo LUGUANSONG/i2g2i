@@ -102,6 +102,8 @@ generator = nn.ModuleList([
 generator.train()
 optimizer = torch.optim.Adam(generator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
+print(obj_discriminator)
+print(generator)
 gan_g_loss, gan_d_loss = get_gan_losses(args.gan_loss_type)
 
 t = 0
