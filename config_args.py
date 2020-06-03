@@ -183,6 +183,7 @@ parser.add_argument('--d_obj_mode', type=str, default='fix', help='can be fix, c
 parser.add_argument('--d_obj_change_iters', type=str, default="-1")
 parser.add_argument('--d_obj_change_vals', type=str, default="")
 parser.add_argument('--d_obj_gp_weight', type=float, default=10) # multiplied by d_loss_weight
+parser.add_argument('--d_obj_rec_feat_weight', default=0.0, type=float)
 
 parser.add_argument('--ac_loss_weight', default=0.1, type=float)
 parser.add_argument('--ac_loss_mode', type=str, default='fix', help='can be fix, change, change_linear')
@@ -198,7 +199,6 @@ parser.add_argument('--d_img_change_iters', type=str, default="-1")
 parser.add_argument('--d_img_change_vals', type=str, default="")
 parser.add_argument('--d_img_gp_weight', type=float, default=10) # multiplied by d_loss_weight
 parser.add_argument('--down_to_1channel', default=False, type=bool_flag)
-parser.add_argument('--d_img_rec_feat_weight', default=0.0, type=float)
 
 # Output options
 parser.add_argument('--print_every', default=10, type=int)

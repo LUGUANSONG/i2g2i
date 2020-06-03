@@ -7,11 +7,11 @@ CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train_all_in_one_bbo
 --print_every 100 --checkpoint_every 10000 --num_val_samples 128
 
 CUDA_VISIBLE_DEVICES=2,3,4,5 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan.py \
--b 8 -ngpu 4 -nwork 16 \
+-b 6 -ngpu 4 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/v2/vg128_gan_img0.01_l1_1_on_noise_cls0.1_obj0.01 \
 --image_size 128,128 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
 --l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
---print_every 100 --checkpoint_every 10000 --num_val_samples 128
+--print_every 100 --checkpoint_every 10000 --num_val_samples 128 --restore_from_checkpoint 1
 
 CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan.py \
 -b 16 -ngpu 2 -nwork 16 \
@@ -72,6 +72,13 @@ CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/train_all_in_one_bbo
 --image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
 --l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
 --print_every 100 --checkpoint_every 10000 --num_val_samples 128 --down_to_1channel 1
+
+CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan.py \
+-b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v2/vg64_gan_img0.01_l1_1_on_noise_cls0.1_obj0.01_feature_rec0.1 \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
+--l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 128 --d_obj_rec_feat_weight 0.1
 
 machine
 CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan.py \

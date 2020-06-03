@@ -59,6 +59,7 @@ def build_obj_discriminator(args, vocab):
         'activation': args.d_activation,
         'padding': args.d_padding,
         'object_size': args.crop_size,
+        'args': args
     }
     discriminator = AcCropDiscriminator(**d_kwargs).cuda()
     return discriminator, d_kwargs
@@ -222,13 +223,14 @@ class neural_motifs_sg2im_model(nn.Module):
                 imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmaps, mask_noise_indexes)
         layout = layout.detach()
 
-        g_scores_fake_crop, g_obj_scores_fake_crop = None, None
-        g_scores_fake_img, g_rec_feature_fake_img = None, None
+        g_scores_fake_crop, g_obj_scores_fake_crop, g_rec_feature_fake_crop = None, None, None
+        g_scores_fake_img = None
         if self.calc_G_D_loss:
             # forward discriminators to train generator
             if self.obj_discriminator is not None:
                 with timeit('d_obj forward for g', self.args.timing):
-                    g_scores_fake_crop, g_obj_scores_fake_crop = self.obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
+                    g_scores_fake_crop, g_obj_scores_fake_crop, _, g_rec_feature_fake_crop = \
+                        self.obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
 
             if self.img_discriminator is not None:
                 with timeit('d_img forward for g', self.args.timing):
@@ -236,22 +238,22 @@ class neural_motifs_sg2im_model(nn.Module):
                         g_scores_fake_img = self.img_discriminator(imgs_pred, layout)
                     else:
                         g_scores_fake_img = self.img_discriminator(imgs_pred)
-                    if isinstance(g_scores_fake_img, tuple):
-                        g_scores_fake_img, g_rec_feature_fake_img = g_scores_fake_img
 
-        d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops = None, None, None
-        d_scores_real_crop, d_obj_scores_real_crop, real_crops = None, None, None
+        d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops, d_rec_feature_fake_crop = None, None, None, None
+        d_scores_real_crop, d_obj_scores_real_crop, real_crops, d_rec_feature_real_crop = None, None, None, None
         d_obj_gp = None
-        d_scores_fake_img, d_rec_feature_fake_img = None, None
-        d_scores_real_img, d_rec_feature_real_img = None, None
+        d_scores_fake_img = None
+        d_scores_real_img = None
         d_img_gp = None
         if self.forward_D:
             # forward discriminators to train discriminators
             if self.obj_discriminator is not None:
                 imgs_fake = imgs_pred.detach()
                 with timeit('d_obj forward for d', self.args.timing):
-                    d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops = self.obj_discriminator(imgs_fake, objs, boxes, obj_to_img, return_crops=True)
-                    d_scores_real_crop, d_obj_scores_real_crop, real_crops = self.obj_discriminator(imgs, objs, boxes, obj_to_img, return_crops=True)
+                    d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops, d_rec_feature_fake_crop = \
+                        self.obj_discriminator(imgs_fake, objs, boxes, obj_to_img)
+                    d_scores_real_crop, d_obj_scores_real_crop, real_crops, d_rec_feature_real_crop = \
+                        self.obj_discriminator(imgs, objs, boxes, obj_to_img)
                     if self.args.gan_loss_type == "wgan-gp" and self.training:
                         d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(), self.obj_discriminator.discriminator)
 
@@ -264,10 +266,6 @@ class neural_motifs_sg2im_model(nn.Module):
                     else:
                         d_scores_fake_img = self.img_discriminator(imgs_fake)
                         d_scores_real_img = self.img_discriminator(imgs)
-                    if isinstance(d_scores_fake_img, tuple):
-                        d_scores_fake_img, d_rec_feature_fake_img = d_scores_fake_img
-                    if isinstance(d_scores_real_img, tuple):
-                        d_scores_real_img, d_rec_feature_real_img = d_scores_real_img
 
                     if self.args.gan_loss_type == "wgan-gp" and self.training:
                         if self.args.condition_d_img:
@@ -294,9 +292,9 @@ class neural_motifs_sg2im_model(nn.Module):
             fake_crops=fake_crops,
             real_crops=real_crops,
             mask_noise_indexes=(mask_noise_indexes + img_offset) if mask_noise_indexes is not None else None,
-            g_rec_feature_fake_img=g_rec_feature_fake_img,
-            d_rec_feature_fake_img=d_rec_feature_fake_img,
-            d_rec_feature_real_img=d_rec_feature_real_img,
+            g_rec_feature_fake_crop=g_rec_feature_fake_crop,
+            d_rec_feature_fake_crop=d_rec_feature_fake_crop,
+            d_rec_feature_real_crop=d_rec_feature_real_crop,
         )
         # return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
         #        d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img
@@ -349,9 +347,9 @@ class Result(object):
             fake_crops=None,
             real_crops=None,
             mask_noise_indexes=None,
-            g_rec_feature_fake_img=None,
-            d_rec_feature_fake_img=None,
-            d_rec_feature_real_img=None,
+            g_rec_feature_fake_crop=None,
+            d_rec_feature_fake_crop=None,
+            d_rec_feature_real_crop=None,
             ):
         self.__dict__.update(locals())
         del self.__dict__['self']
