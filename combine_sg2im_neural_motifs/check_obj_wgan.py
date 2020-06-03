@@ -40,7 +40,6 @@ torch.backends.cudnn.benchmark = True
 args = config_args
 
 print(args)
-check_args(args)
 if not exists(args.output_dir):
     os.makedirs(args.output_dir)
 summary_writer = SummaryWriter(args.output_dir)
