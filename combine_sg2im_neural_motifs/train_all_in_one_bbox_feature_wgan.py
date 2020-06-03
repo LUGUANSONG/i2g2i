@@ -189,8 +189,8 @@ def main(args):
                     d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_real_crop, objs), 'd_ac_loss_real')
                     d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_fake_crop, objs), 'd_ac_loss_fake')
                 if args.d_obj_rec_feat_weight > 0:
-                    d_img_losses.add_loss(F.l1_loss(d_rec_feature_fake_crop, obj_fmaps), 'd_obj_fea_rec_loss_fake')
-                    d_img_losses.add_loss(F.l1_loss(d_rec_feature_real_crop, obj_fmaps), 'd_obj_fea_rec_loss_real')
+                    d_obj_losses.add_loss(F.l1_loss(d_rec_feature_fake_crop, obj_fmaps), 'd_obj_fea_rec_loss_fake')
+                    d_obj_losses.add_loss(F.l1_loss(d_rec_feature_real_crop, obj_fmaps), 'd_obj_fea_rec_loss_real')
 
             with timeit('d_obj backward', args.timing):
                 all_in_one_model.optimizer_d_obj.zero_grad()
