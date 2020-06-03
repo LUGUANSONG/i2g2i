@@ -197,6 +197,7 @@ parser.add_argument('--d_img_mode', type=str, default='fix', help='can be fix, c
 parser.add_argument('--d_img_change_iters', type=str, default="-1")
 parser.add_argument('--d_img_change_vals', type=str, default="")
 parser.add_argument('--d_img_gp_weight', type=float, default=10) # multiplied by d_loss_weight
+parser.add_argument('--reconstruct_feature', default=False, type=bool_flag)
 
 # Output options
 parser.add_argument('--print_every', default=10, type=int)
