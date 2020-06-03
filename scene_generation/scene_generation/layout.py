@@ -83,7 +83,7 @@ def masks_to_layout(vecs, boxes, masks, obj_to_img, H, W=None, pooling='sum', te
     grid = _boxes_to_grid(boxes, H, W)
 
     img_in = vecs.view(O, D, 1, 1) * masks.float().view(O, 1, M, M)
-    sampled = F.grid_sample(img_in, grid)
+    sampled = F.grid_sample(img_in.contiguous(), grid.contiguous())
     if test_mode:
         clean_mask_sampled = F.grid_sample(masks.float().view(O, 1, M, M), grid)
     else:
