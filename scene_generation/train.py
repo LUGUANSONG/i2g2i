@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from scene_generation.args import get_args
 # from scene_generation.data.coco import CocoSceneGraphDataset, coco_collate_fn
 # from scene_generation.data.coco_panoptic import CocoPanopticSceneGraphDataset, coco_panoptic_collate_fn
-from bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
+from combine_sg2im_neural_motifs.bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
 from scene_generation.metrics import jaccard
 from scene_generation.trainer import Trainer
 
