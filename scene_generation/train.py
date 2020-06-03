@@ -188,6 +188,7 @@ def main(args):
 
     t, epoch, checkpoint = get_checkpoint(args, vocab)
     trainer = Trainer(args, vocab, checkpoint)
+    print(trainer)
     if args.restore_from_checkpoint:
         trainer.restore_checkpoint(checkpoint)
     else:

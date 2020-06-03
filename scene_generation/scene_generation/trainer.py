@@ -1,6 +1,7 @@
 import os
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 from tensorboardX import SummaryWriter
@@ -13,8 +14,9 @@ from scene_generation.utils import LossManager, Result
 from lib.object_detector import gather_res
 
 
-class Trainer:
+class Trainer(nn.Module):
     def __init__(self, args, vocab, checkpoint):
+        super(Trainer, self).__init__()
         self.vocab = vocab
         self.args = args
         self.num_obj = len(vocab['object_to_idx'])
@@ -311,7 +313,6 @@ class Trainer:
         outputs = nn.parallel.parallel_apply(replicas, [batch[i] for i in range(self.args.num_gpus)])
 
         return gather_res(outputs, 0, dim=0)
-
 
     # def train_generator(self, imgs, imgs_pred, masks, masks_pred, layout,
     #                     objs, boxes, boxes_pred, obj_to_img, use_gt):
