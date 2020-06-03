@@ -21,6 +21,7 @@ parser.add_argument('--num_train_samples', default=None, type=int)
 parser.add_argument('--num_val_samples', default=1024, type=int)
 parser.add_argument('--shuffle_val', default=True, type=bool_flag)
 parser.add_argument('--loader_num_workers', default=4, type=int)
+parser.add_argument('--num_gpus', default=2, type=int)
 parser.add_argument('--coco_train_image_dir',
                     default=os.path.join(COCO_DIR, 'images/train2017'))
 parser.add_argument('--coco_val_image_dir',

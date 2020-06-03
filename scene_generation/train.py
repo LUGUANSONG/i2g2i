@@ -7,8 +7,9 @@ import torch
 from torch.utils.data import DataLoader
 
 from scene_generation.args import get_args
-from scene_generation.data.coco import CocoSceneGraphDataset, coco_collate_fn
-from scene_generation.data.coco_panoptic import CocoPanopticSceneGraphDataset, coco_panoptic_collate_fn
+# from scene_generation.data.coco import CocoSceneGraphDataset, coco_collate_fn
+# from scene_generation.data.coco_panoptic import CocoPanopticSceneGraphDataset, coco_panoptic_collate_fn
+from bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
 from scene_generation.metrics import jaccard
 from scene_generation.trainer import Trainer
 
@@ -165,7 +166,20 @@ def get_checkpoint(args, vocab):
 
 def main(args):
     print(args)
-    vocab, train_loader, val_loader = build_loaders(args)
+    # vocab, train_loader, val_loader = build_loaders(args)
+    train, val, _ = VG.splits(transform=transforms.Compose([
+        transforms.Resize(args.image_size),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ]))
+    vocab = {
+        'object_to_idx': {train.ind_to_classes[i]: (i - 1) for i in range(1, len(train.ind_to_classes))},
+    }
+    train_loader, val_loader = VGDataLoader.splits(train, val, batch_size=args.batch_size,
+                                                   num_workers=args.loader_num_workers,
+                                                   num_gpus=args.num_gpus)
+    print(train.ind_to_classes)
+
     t, epoch, checkpoint = get_checkpoint(args, vocab)
     trainer = Trainer(args, vocab, checkpoint)
     if args.restore_from_checkpoint:
