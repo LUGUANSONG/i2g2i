@@ -47,7 +47,6 @@ class PatchDiscriminator(nn.Module):
       x = torch.cat([x, layout], dim=1)
     feature = self.cnn(x)
     real_scores = self.classifier(feature) if self.down_to_1channel else feature
-    print(real_scores.shape)
     if self.rec_feature is not None:
       return real_scores, self.rec_feature(feature)
     else:
