@@ -40,7 +40,7 @@ class PatchDiscriminator(nn.Module):
     self.down_to_1channel = args.down_to_1channel
     self.cnn, output_dim = build_cnn(**cnn_kwargs)
     self.classifier = nn.Conv2d(output_dim, 1, kernel_size=1, stride=1)
-    self.rec_feature = nn.Sequential(GlobalAvgPool(), nn.Linear(output_dim, 1024)) if args.reconstruct_feature else None
+    self.rec_feature = nn.Sequential(GlobalAvgPool(), nn.Linear(output_dim, 4096)) if args.reconstruct_feature else None
 
   def forward(self, x, layout=None):
     if layout is not None:
@@ -50,7 +50,7 @@ class PatchDiscriminator(nn.Module):
     if self.rec_feature is not None:
       return real_scores, self.rec_feature(feature)
     else:
-      return feature
+      return real_scores
 
 
 class AcDiscriminator(nn.Module):
