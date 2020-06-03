@@ -211,9 +211,9 @@ class Trainer(nn.Module):
         objs = gt_classes[:, 1]
         obj_to_img = gt_classes[:, 0] - img_offset
         # print("obj_to_img.min(), obj_to_img.max(), len(imgs) {} {} {}".format(obj_to_img.min(), obj_to_img.max(), len(imgs)))
-        assert obj_to_img.min() >= 0 and obj_to_img.max() < len(imgs), \
-            "obj_to_img.min() >= 0 and obj_to_img.max() < len(imgs) is not satidfied: {} {} {}" \
-                .format(obj_to_img.min(), obj_to_img.max(), len(imgs))
+        assert obj_to_img.min() >= 0 and obj_to_img.max() < len(gt_imgs), \
+            "obj_to_img.min() >= 0 and obj_to_img.max() < len(gt_imgs) is not satidfied: {} {} {}" \
+                .format(obj_to_img.min(), obj_to_img.max(), len(gt_imgs))
 
         imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong = self.model(gt_imgs, objs, gt_fmaps, obj_to_img, boxes_gt=boxes_gt)
 
