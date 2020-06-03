@@ -72,24 +72,24 @@ obj_discriminator, _ = build_obj_discriminator(args, vocab)
 obj_discriminator.train()
 optimizer_d_obj = torch.optim.Adam(obj_discriminator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
-generator = nn.ModuleList(
+generator = nn.ModuleList([
     nn.Linear(100, 256),
     nn.BatchNorm2d(64),
     nn.ReLU(True),
-    nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=0),
+    nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1),
     nn.BatchNorm2d(32),
     nn.ReLU(True),
-    nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=0),
+    nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1),
     nn.BatchNorm2d(16),
     nn.ReLU(True),
-    nn.ConvTranspose2d(16, 8, kernel_size=3, stride=2, padding=0),
+    nn.ConvTranspose2d(16, 8, kernel_size=3, stride=2, padding=1),
     nn.BatchNorm2d(8),
     nn.ReLU(True),
-    nn.ConvTranspose2d(8, 3, kernel_size=3, stride=2, padding=0),
-    nn.BatchNorm2d(32),
+    nn.ConvTranspose2d(8, 3, kernel_size=3, stride=2, padding=1),
+    nn.BatchNorm2d(3),
     nn.ReLU(True),
     nn.Conv2d(3, 3, kernel_size=1, stride=1, padding=0)
-)
+])
 generator.train()
 optimizer = torch.optim.Adam(generator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
