@@ -25,7 +25,7 @@ from sg2im.layers import GlobalAvgPool, Flatten, get_activation, build_cnn
 class PatchDiscriminator(nn.Module):
   def __init__(self, arch, normalization='batch', activation='leakyrelu-0.2',
                padding='same', pooling='avg', input_size=(128,128),
-               layout_dim=0, reconstruct_feature=False):
+               layout_dim=0, args=None):
     super(PatchDiscriminator, self).__init__()
     print("i2g2i.combine_sg2im_neural_motifs.discriminator.PatchDiscriminator")
     input_dim = 3 + layout_dim
@@ -37,16 +37,20 @@ class PatchDiscriminator(nn.Module):
       'pooling': pooling,
       'padding': padding,
     }
+    self.down_to_1channel = args.down_to_1channel
     self.cnn, output_dim = build_cnn(**cnn_kwargs)
     self.classifier = nn.Conv2d(output_dim, 1, kernel_size=1, stride=1)
-    self.rec_feature = nn.Linear(D, 4096) if reconstruct_feature else None
+    self.rec_feature = nn.Sequential(GlobalAvgPool(), nn.Linear(output_dim, 1024)) if args.reconstruct_feature else None
 
   def forward(self, x, layout=None):
     if layout is not None:
       x = torch.cat([x, layout], dim=1)
     feature = self.cnn(x)
-    print(feature.shape)
-    return feature
+    real_scores = self.classifier(feature) if self.down_to_1channel else feature
+    if self.rec_feature is not None:
+      return real_scores, self.rec_feature(feature)
+    else:
+      return feature
 
 
 class AcDiscriminator(nn.Module):

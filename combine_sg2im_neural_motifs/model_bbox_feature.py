@@ -78,7 +78,7 @@ def build_img_discriminator(args):
         'activation': args.d_activation,
         'padding': args.d_padding,
         'layout_dim': args.gconv_dim if args.condition_d_img else 0,
-        'reconstruct_feature': args.reconstruct_feature
+        'args': args
     }
     discriminator = PatchDiscriminator(**d_kwargs).cuda()
     return discriminator, d_kwargs
