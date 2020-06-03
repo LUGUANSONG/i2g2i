@@ -28,9 +28,9 @@ class Model(nn.Module):
         self.fake_pool = VectorPool(pool_size)
 
         self.num_objs = len(vocab['object_to_idx'])
-        self.num_preds = len(vocab['pred_idx_to_name'])
-        self.obj_embeddings = nn.Embedding(self.num_objs, embedding_dim)
-        self.pred_embeddings = nn.Embedding(self.num_preds, embedding_dim)
+        # self.num_preds = len(vocab['pred_idx_to_name'])
+        # self.obj_embeddings = nn.Embedding(self.num_objs, embedding_dim)
+        # self.pred_embeddings = nn.Embedding(self.num_preds, embedding_dim)
 
         if use_attributes:
             attributes_dim = vocab['num_attributes']
@@ -60,10 +60,11 @@ class Model(nn.Module):
             }
             self.gconv_net = GraphTripleConvNet(**gconv_kwargs)
 
-        box_net_dim = 4
-        self.box_dim = box_dim
-        box_net_layers = [self.box_dim, gconv_hidden_dim, box_net_dim]
-        self.box_net = build_mlp(box_net_layers, batch_norm=mlp_normalization)
+        # box_net_dim = 4
+        # self.box_dim = box_dim
+        # box_net_layers = [self.box_dim, gconv_hidden_dim, box_net_dim]
+        # self.box_net = build_mlp(box_net_layers, batch_norm=mlp_normalization)
+        self.box_net = None
 
         self.g_mask_dim = gconv_dim + mask_noise_dim
         self.mask_net = mask_net(self.g_mask_dim, mask_size)
@@ -91,16 +92,20 @@ class Model(nn.Module):
         norm = 'instance'
         self.layout_to_image = define_G(netG_input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm)
 
-    def forward(self, gt_imgs, objs, triples, obj_to_img, boxes_gt=None, masks_gt=None, attributes=None,
+    # def forward(self, gt_imgs, objs, triples, obj_to_img, boxes_gt=None, masks_gt=None, attributes=None,
+    #             test_mode=False, use_gt_box=False, features=None):
+    def forward(self, gt_imgs, objs, gt_fmaps, obj_to_img, boxes_gt=None, masks_gt=None, attributes=None,
                 test_mode=False, use_gt_box=False, features=None):
-        O, T = objs.size(0), triples.size(0)
-        obj_vecs, pred_vecs = self.scene_graph_to_vectors(objs, triples, attributes)
+        # O, T = objs.size(0), triples.size(0)
+        # obj_vecs, pred_vecs = self.scene_graph_to_vectors(objs, triples, attributes)
+        assert isinstance(self.gconv, nn.Linear), "self.gconv is not Linear, but currently we do not input scene graph"
+        obj_vecs = self.gconv(gt_fmaps)
 
         box_vecs, mask_vecs, scene_layout_vecs, wrong_layout_vecs = \
             self.create_components_vecs(gt_imgs, boxes_gt, obj_to_img, objs, obj_vecs, features)
 
         # Generate Boxes
-        boxes_pred = self.box_net(box_vecs)
+        boxes_pred = self.box_net(box_vecs) if self.box_net is not None else None
 
         # Generate Masks
         mask_scores = self.mask_net(mask_vecs.view(O, -1, 1, 1))
@@ -116,11 +121,14 @@ class Model(nn.Module):
             wrong_layout = None
             imgs_pred = self.layout_to_image(pred_layout)
         else:
-            gt_layout = masks_to_layout(scene_layout_vecs, boxes_gt, masks_gt, obj_to_img, H, W, test_mode=False)
+            # gt_layout = masks_to_layout(scene_layout_vecs, boxes_gt, masks_gt, obj_to_img, H, W, test_mode=False)
+            gt_layout = None
             pred_layout = masks_to_layout(scene_layout_vecs, boxes_gt, masks_pred, obj_to_img, H, W, test_mode=False)
-            wrong_layout = masks_to_layout(wrong_layout_vecs, boxes_gt, masks_gt, obj_to_img, H, W, test_mode=False)
+            # wrong_layout = masks_to_layout(wrong_layout_vecs, boxes_gt, masks_gt, obj_to_img, H, W, test_mode=False)
+            wrong_layout = masks_to_layout(wrong_layout_vecs, boxes_gt, masks_pred, obj_to_img, H, W, test_mode=False)
 
-            imgs_pred = self.layout_to_image(gt_layout)
+            # imgs_pred = self.layout_to_image(gt_layout)
+            imgs_pred = self.layout_to_image(pred_layout)
         return imgs_pred, boxes_pred, masks_pred, gt_layout, pred_layout, wrong_layout
 
     def scene_graph_to_vectors(self, objs, triples, attributes):

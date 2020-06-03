@@ -9,7 +9,8 @@ from scene_generation.data import imagenet_deprocess_batch
 from scene_generation.discriminators import AcCropDiscriminator, define_mask_D, define_D
 from scene_generation.losses import get_gan_losses, GANLoss, VGGLoss
 from scene_generation.model import Model
-from scene_generation.utils import LossManager
+from scene_generation.utils import LossManager, Result
+from lib.object_detector import gather_res
 
 
 class Trainer:
@@ -26,6 +27,8 @@ class Trainer:
         self.init_image_discriminator(args, checkpoint)
         self.init_obj_discriminator(args, checkpoint)
         self.init_mask_discriminator(args, checkpoint)
+
+        self.forward_D = True
 
     def init_generator(self, args, checkpoint):
         if args.restore_from_checkpoint:
@@ -202,29 +205,23 @@ class Trainer:
         print('Saving checkpoint to ', checkpoint_path)
         torch.save(checkpoint, checkpoint_path)
 
-    def train_generator(self, imgs, imgs_pred, masks, masks_pred, layout,
-                        objs, boxes, boxes_pred, obj_to_img, use_gt):
-        args = self.args
-        self.generator_losses = LossManager()
+    def forward(self, gt_imgs, img_offset, boxes_gt, gt_classes, gt_fmaps):
+        objs = gt_classes[:, 1]
+        obj_to_img = gt_classes[:, 0] - img_offset
+        # print("obj_to_img.min(), obj_to_img.max(), len(imgs) {} {} {}".format(obj_to_img.min(), obj_to_img.max(), len(imgs)))
+        assert obj_to_img.min() >= 0 and obj_to_img.max() < len(imgs), \
+            "obj_to_img.min() >= 0 and obj_to_img.max() < len(imgs) is not satidfied: {} {} {}" \
+                .format(obj_to_img.min(), obj_to_img.max(), len(imgs))
 
-        if use_gt:
-            if args.l1_pixel_loss_weight > 0:
-                l1_pixel_loss = F.l1_loss(imgs_pred, imgs)
-                self.generator_losses.add_loss(l1_pixel_loss, 'L1_pixel_loss', args.l1_pixel_loss_weight)
+        imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong = self.model(gt_imgs, objs, gt_fmaps, obj_to_img, boxes_gt=boxes_gt)
 
-            loss_bbox = F.mse_loss(boxes_pred, boxes)
-            self.generator_losses.add_loss(loss_bbox, 'bbox_pred', args.bbox_pred_loss_weight)
+        if not self.forward_D:
+            return Result(
+                imgs=gt_imgs, imgs_pred=imgs_pred
+            )
 
-        # VGG feature matching loss
-        if self.criterionVGG is not None:
-            loss_G_VGG = self.criterionVGG(imgs_pred, imgs)
-            self.generator_losses.add_loss(loss_G_VGG, 'g_vgg', args.vgg_features_weight)
-
-        scores_fake, ac_loss, g_fake_crops = self.obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
-        self.generator_losses.add_loss(ac_loss, 'ac_loss', args.ac_loss_weight)
-        weight = args.d_obj_weight
-        self.generator_losses.add_loss(self.gan_g_loss(scores_fake), 'g_gan_obj_loss', weight)
-
+        scores_fake, ac_loss, g_fake_crops = self.obj_discriminator(imgs_pred, objs, boxes_gt, obj_to_img)
+        mask_loss, loss_mask_feat = None, None
         if self.mask_discriminator is not None:
             O, _, mask_size = masks_pred.shape
             one_hot_size = (O, self.num_obj)
@@ -233,27 +230,143 @@ class Trainer:
 
             scores_fake = self.mask_discriminator(masks_pred.unsqueeze(1), one_hot_obj)
             mask_loss = self.criterionGAN(scores_fake, True)
-            self.generator_losses.add_loss(mask_loss, 'g_gan_mask_obj_loss', args.d_mask_weight)
 
-            # GAN feature matching loss
             if args.d_mask_features_weight > 0:
                 scores_real = self.mask_discriminator(masks.float().unsqueeze(1), one_hot_obj)
                 loss_mask_feat = self.calculate_features_loss(scores_fake, scores_real)
-                self.generator_losses.add_loss(loss_mask_feat, 'g_mask_features_loss', args.d_mask_features_weight)
 
+        g_gan_img_loss, loss_g_gan_feat_img = None, None
         if self.netD is not None:
             # Train textures
-            pred_real = self.netD.forward(torch.cat((layout, imgs), dim=1))
+            pred_real = self.netD.forward(torch.cat((layout_pred, gt_imgs), dim=1))
 
             # Train image generation
-            match_layout = layout.detach()
+            match_layout = layout_pred.detach()
             img_pred_fake = self.netD.forward(torch.cat((match_layout, imgs_pred), dim=1))
             g_gan_img_loss = self.criterionGAN(img_pred_fake, True)
-            self.generator_losses.add_loss(g_gan_img_loss, 'g_gan_img_loss', args.d_img_weight)
 
             if args.d_img_features_weight > 0:
                 loss_g_gan_feat_img = self.calculate_features_loss(img_pred_fake, pred_real)
-                self.generator_losses.add_loss(loss_g_gan_feat_img,
+
+        imgs_pred_detach = imgs_pred.detach()
+        # masks_pred_detach = masks_pred.detach()
+        # boxes_pred_detach = boxes.detach()
+        layout_pred_detach = layout_pred.detach()
+        layout_wrong_detach = layout_wrong.detach()
+
+        # trainer.train_mask_discriminator(masks, masks_pred_detach, objs)
+        fake_loss, real_loss = None, None
+        assert self.mask_discriminator is None, "self.mask_discriminator is not None, check please"
+        # if self.mask_discriminator is not None:
+        #     O, _, mask_size = masks_pred.shape
+        #     one_hot_size = (O, self.num_obj)
+        #     one_hot_obj = torch.zeros(one_hot_size, dtype=masks_pred.dtype, device=masks_pred.device)
+        #     one_hot_obj = one_hot_obj.scatter_(1, objs.view(-1, 1).long(), 1.0)
+        #
+        #     scores_fake = self.mask_discriminator(masks_pred.unsqueeze(1), one_hot_obj)
+        #     scores_real = self.mask_discriminator(masks.float().unsqueeze(1), one_hot_obj)
+        #
+        #     fake_loss = self.criterionGAN(scores_fake, False)
+        #     real_loss = self.criterionGAN(scores_real, True)
+
+        # trainer.train_obj_discriminator(imgs, imgs_pred_detach, objs, boxes, boxes_pred_detach, obj_to_img)
+        d_obj_gan_loss, ac_loss_fake, ac_loss_real = None, None, None
+        if self.obj_discriminator is not None:
+            scores_fake, ac_loss_fake, self.d_fake_crops = self.obj_discriminator(imgs_pred_detach, objs, boxes_gt,
+                                                                                  obj_to_img)
+            scores_real, ac_loss_real, self.d_real_crops = self.obj_discriminator(gt_imgs, objs, boxes_gt, obj_to_img)
+
+            d_obj_gan_loss = self.gan_d_loss(scores_real, scores_fake)
+
+        # trainer.train_image_discriminator(imgs, imgs_pred_detach, layout_detach, layout_wrong_detach)
+        loss_d_fake_img, loss_d_wrong_texture, loss_D_real = None, None, None
+        if self.netD is not None:
+            # Fake images, Real layout
+            pred_fake_pool_img = self.discriminate(layout_pred_detach, imgs_pred_detach)
+            loss_d_fake_img = self.criterionGAN(pred_fake_pool_img, False)
+
+            # Real images, Right layout Wrong textures
+            pred_wrong_pool_img = self.discriminate(layout_wrong_detach, gt_imgs)
+            loss_d_wrong_texture = self.criterionGAN(pred_wrong_pool_img, False)
+
+            # Real Detection and Loss
+            pred_real = self.discriminate(layout_pred_detach, gt_imgs)
+            loss_D_real = self.criterionGAN(pred_real, True)
+
+        return Result(
+            imgs=gt_imgs, imgs_pred=imgs_pred, layout_pred=layout_pred,
+            scores_fake=scores_fake, ac_loss=ac_loss, mask_loss=mask_loss, loss_mask_feat=loss_mask_feat,
+            g_gan_img_loss=g_gan_img_loss, loss_g_gan_feat_img=loss_g_gan_feat_img, d_obj_gan_loss=d_obj_gan_loss,
+            ac_loss_real=ac_loss_real, ac_loss_fake=ac_loss_fake, fake_loss=fake_loss, real_loss=real_loss,
+            loss_d_fake_img=loss_d_fake_img, loss_d_wrong_texture=loss_d_wrong_texture, loss_D_real=loss_D_real
+        )
+
+    def __getitem__(self, batch):
+        """ Hack to do multi-GPU training"""
+        batch.scatter()
+        if self.args.num_gpus == 1:
+            return self(*batch[0])
+
+        replicas = nn.parallel.replicate(self, devices=list(range(self.args.num_gpus)))
+        outputs = nn.parallel.parallel_apply(replicas, [batch[i] for i in range(self.args.num_gpus)])
+
+        return gather_res(outputs, 0, dim=0)
+
+
+    # def train_generator(self, imgs, imgs_pred, masks, masks_pred, layout,
+    #                     objs, boxes, boxes_pred, obj_to_img, use_gt):
+    def train_generator(self, imgs, imgs_pred, use_gt, scores_fake, ac_loss, mask_loss, loss_mask_feat, g_gan_img_loss,
+                        loss_g_gan_feat_img):
+        args = self.args
+        self.generator_losses = LossManager()
+
+        if use_gt:
+            if args.l1_pixel_loss_weight > 0:
+                l1_pixel_loss = F.l1_loss(imgs_pred, imgs)
+                self.generator_losses.add_loss(l1_pixel_loss, 'L1_pixel_loss', args.l1_pixel_loss_weight)
+
+            # loss_bbox = F.mse_loss(boxes_pred, boxes)
+            # self.generator_losses.add_loss(loss_bbox, 'bbox_pred', args.bbox_pred_loss_weight)
+
+        # VGG feature matching loss
+        if self.criterionVGG is not None:
+            loss_G_VGG = self.criterionVGG(imgs_pred, imgs)
+            self.generator_losses.add_loss(loss_G_VGG, 'g_vgg', args.vgg_features_weight)
+
+        # scores_fake, ac_loss, g_fake_crops = self.obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
+        self.generator_losses.add_loss(ac_loss.mean(), 'ac_loss', args.ac_loss_weight)
+        weight = args.d_obj_weight
+        self.generator_losses.add_loss(self.gan_g_loss(scores_fake), 'g_gan_obj_loss', weight)
+
+        if self.mask_discriminator is not None:
+            # O, _, mask_size = masks_pred.shape
+            # one_hot_size = (O, self.num_obj)
+            # one_hot_obj = torch.zeros(one_hot_size, dtype=masks_pred.dtype, device=masks_pred.device)
+            # one_hot_obj = one_hot_obj.scatter_(1, objs.view(-1, 1).long(), 1.0)
+            #
+            # scores_fake = self.mask_discriminator(masks_pred.unsqueeze(1), one_hot_obj)
+            # mask_loss = self.criterionGAN(scores_fake, True)
+            self.generator_losses.add_loss(mask_loss.mean(), 'g_gan_mask_obj_loss', args.d_mask_weight)
+
+            # GAN feature matching loss
+            if args.d_mask_features_weight > 0:
+                # scores_real = self.mask_discriminator(masks.float().unsqueeze(1), one_hot_obj)
+                # loss_mask_feat = self.calculate_features_loss(scores_fake, scores_real)
+                self.generator_losses.add_loss(loss_mask_feat.mean(), 'g_mask_features_loss', args.d_mask_features_weight)
+
+        if self.netD is not None:
+            # # Train textures
+            # pred_real = self.netD.forward(torch.cat((layout, imgs), dim=1))
+            #
+            # # Train image generation
+            # match_layout = layout.detach()
+            # img_pred_fake = self.netD.forward(torch.cat((match_layout, imgs_pred), dim=1))
+            # g_gan_img_loss = self.criterionGAN(img_pred_fake, True)
+            self.generator_losses.add_loss(g_gan_img_loss.mean(), 'g_gan_img_loss', args.d_img_weight)
+
+            if args.d_img_features_weight > 0:
+                # loss_g_gan_feat_img = self.calculate_features_loss(img_pred_fake, pred_real)
+                self.generator_losses.add_loss(loss_g_gan_feat_img.mean(),
                                                'g_gan_features_loss_img', args.d_img_features_weight)
 
         self.generator_losses.all_losses['total_loss'] = self.generator_losses.total_loss.item()
@@ -262,63 +375,66 @@ class Trainer:
         self.generator_losses.total_loss.backward()
         self.optimizer.step()
 
-    def train_obj_discriminator(self, imgs, imgs_pred, objs, boxes, boxes_pred, obj_to_img):
+    # def train_obj_discriminator(self, imgs, imgs_pred, objs, boxes, boxes_pred, obj_to_img):
+    def train_obj_discriminator(self, d_obj_gan_loss, ac_loss_real, ac_loss_fake):
         if self.obj_discriminator is not None:
             self.d_obj_losses = d_obj_losses = LossManager()
-            scores_fake, ac_loss_fake, self.d_fake_crops = self.obj_discriminator(imgs_pred, objs, boxes_pred,
-                                                                                  obj_to_img)
-            scores_real, ac_loss_real, self.d_real_crops = self.obj_discriminator(imgs, objs, boxes, obj_to_img)
-
-            d_obj_gan_loss = self.gan_d_loss(scores_real, scores_fake)
-            d_obj_losses.add_loss(d_obj_gan_loss, 'd_obj_gan_loss', 0.5)
-            d_obj_losses.add_loss(ac_loss_real, 'd_ac_loss_real')
-            d_obj_losses.add_loss(ac_loss_fake, 'd_ac_loss_fake')
+            # scores_fake, ac_loss_fake, self.d_fake_crops = self.obj_discriminator(imgs_pred, objs, boxes_pred,
+            #                                                                       obj_to_img)
+            # scores_real, ac_loss_real, self.d_real_crops = self.obj_discriminator(imgs, objs, boxes, obj_to_img)
+            #
+            # d_obj_gan_loss = self.gan_d_loss(scores_real, scores_fake)
+            d_obj_losses.add_loss(d_obj_gan_loss.mean(), 'd_obj_gan_loss', 0.5)
+            d_obj_losses.add_loss(ac_loss_real.mean(), 'd_ac_loss_real')
+            d_obj_losses.add_loss(ac_loss_fake.mean(), 'd_ac_loss_fake')
 
             self.optimizer_d_obj.zero_grad()
             d_obj_losses.total_loss.backward()
             self.optimizer_d_obj.step()
 
-    def train_mask_discriminator(self, masks, masks_pred, objs):
+    # def train_mask_discriminator(self, masks, masks_pred, objs):
+    def train_mask_discriminator(self, fake_loss, real_loss):
         if self.mask_discriminator is not None:
             self.d_mask_losses = d_mask_losses = LossManager()
 
-            O, _, mask_size = masks_pred.shape
-            one_hot_size = (O, self.num_obj)
-            one_hot_obj = torch.zeros(one_hot_size, dtype=masks_pred.dtype, device=masks_pred.device)
-            one_hot_obj = one_hot_obj.scatter_(1, objs.view(-1, 1).long(), 1.0)
-
-            scores_fake = self.mask_discriminator(masks_pred.unsqueeze(1), one_hot_obj)
-            scores_real = self.mask_discriminator(masks.float().unsqueeze(1), one_hot_obj)
-
-            fake_loss = self.criterionGAN(scores_fake, False)
-            real_loss = self.criterionGAN(scores_real, True)
-            d_mask_losses.add_loss(fake_loss, 'fake_loss', 0.5)
-            d_mask_losses.add_loss(real_loss, 'real_loss', 0.5)
+            # O, _, mask_size = masks_pred.shape
+            # one_hot_size = (O, self.num_obj)
+            # one_hot_obj = torch.zeros(one_hot_size, dtype=masks_pred.dtype, device=masks_pred.device)
+            # one_hot_obj = one_hot_obj.scatter_(1, objs.view(-1, 1).long(), 1.0)
+            #
+            # scores_fake = self.mask_discriminator(masks_pred.unsqueeze(1), one_hot_obj)
+            # scores_real = self.mask_discriminator(masks.float().unsqueeze(1), one_hot_obj)
+            #
+            # fake_loss = self.criterionGAN(scores_fake, False)
+            # real_loss = self.criterionGAN(scores_real, True)
+            d_mask_losses.add_loss(fake_loss.mean(), 'fake_loss', 0.5)
+            d_mask_losses.add_loss(real_loss.mean(), 'real_loss', 0.5)
 
             self.optimizer_d_mask.zero_grad()
             d_mask_losses.total_loss.backward()
             self.optimizer_d_mask.step()
 
-    def train_image_discriminator(self, imgs, imgs_pred, layout, layout_wrong):
+    # def train_image_discriminator(self, imgs, imgs_pred, layout, layout_wrong):
+    def train_image_discriminator(self, loss_d_fake_img, loss_d_wrong_texture, loss_D_real):
         if self.netD is not None:
             self.d_img_losses = d_img_losses = LossManager()
             # Fake Detection and Loss
             alpha = (1 / 2) * (.5)
 
             # Fake images, Real layout
-            pred_fake_pool_img = self.discriminate(layout, imgs_pred)
-            loss_d_fake_img = self.criterionGAN(pred_fake_pool_img, False)
-            d_img_losses.add_loss(loss_d_fake_img, 'fake_image_loss', alpha)
+            # pred_fake_pool_img = self.discriminate(layout, imgs_pred)
+            # loss_d_fake_img = self.criterionGAN(pred_fake_pool_img, False)
+            d_img_losses.add_loss(loss_d_fake_img.mean(), 'fake_image_loss', alpha)
 
             # Real images, Right layout Wrong textures
-            pred_wrong_pool_img = self.discriminate(layout_wrong, imgs)
-            loss_d_wrong_texture = self.criterionGAN(pred_wrong_pool_img, False)
-            d_img_losses.add_loss(loss_d_wrong_texture, 'wrong_texture_loss', alpha)
+            # pred_wrong_pool_img = self.discriminate(layout_wrong, imgs)
+            # loss_d_wrong_texture = self.criterionGAN(pred_wrong_pool_img, False)
+            d_img_losses.add_loss(loss_d_wrong_texture.mean(), 'wrong_texture_loss', alpha)
 
             # Real Detection and Loss
-            pred_real = self.discriminate(layout, imgs)
-            loss_D_real = self.criterionGAN(pred_real, True)
-            d_img_losses.add_loss(loss_D_real, 'd_img_gan_real_loss', 0.5)
+            # pred_real = self.discriminate(layout, imgs)
+            # loss_D_real = self.criterionGAN(pred_real, True)
+            d_img_losses.add_loss(loss_D_real.mean(), 'd_img_gan_real_loss', 0.5)
 
             self.optimizer_d_img.zero_grad()
             d_img_losses.total_loss.backward()

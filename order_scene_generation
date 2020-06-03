@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 python scene_generation/train.py --d_mask_weight 0

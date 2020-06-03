@@ -80,28 +80,32 @@ def build_loaders(args):
 
 def check_model(args, loader, model, inception_score, use_gt):
     fid = None
+    avg_iou = None
     num_samples = 0
     total_iou = 0
     total_boxes = 0
     inception_score.clean()
     with torch.no_grad():
         for batch in loader:
-            batch = [tensor.cuda() for tensor in batch]
-            imgs, objs, boxes, masks, triples, obj_to_img, triple_to_img, attributes = batch
+            result = model[batch]
 
-            # Run the model as it has been run during training
-            if use_gt:
-                model_out = model(imgs, objs, triples, obj_to_img, boxes_gt=boxes, masks_gt=masks, attributes=attributes,
-                                  test_mode=True, use_gt_box=True)
-            else:
-                attributes = torch.zeros_like(attributes)
-                model_out = model(imgs, objs, triples, obj_to_img, boxes_gt=boxes, masks_gt=None, attributes=attributes,
-                                  test_mode=True, use_gt_box=False)
-            imgs_pred, boxes_pred, masks_pred, _, pred_layout, _ = model_out
 
-            iou, _, _ = jaccard(boxes_pred, boxes)
-            total_iou += iou
-            total_boxes += boxes_pred.size(0)
+            # batch = [tensor.cuda() for tensor in batch]
+            # imgs, objs, boxes, masks, triples, obj_to_img, triple_to_img, attributes = batch
+            #
+            # # Run the model as it has been run during training
+            # if use_gt:
+            #     model_out = model(imgs, objs, triples, obj_to_img, boxes_gt=boxes, masks_gt=masks, attributes=attributes,
+            #                       test_mode=True, use_gt_box=True)
+            # else:
+            #     attributes = torch.zeros_like(attributes)
+            #     model_out = model(imgs, objs, triples, obj_to_img, boxes_gt=boxes, masks_gt=None, attributes=attributes,
+            #                       test_mode=True, use_gt_box=False)
+            # imgs_pred, boxes_pred, masks_pred, _, pred_layout, _ = model_out
+            #
+            # iou, _, _ = jaccard(boxes_pred, boxes)
+            # total_iou += iou
+            # total_boxes += boxes_pred.size(0)
             inception_score(imgs_pred)
 
             num_samples += imgs.size(0)
@@ -110,7 +114,7 @@ def check_model(args, loader, model, inception_score, use_gt):
 
         inception_mean, inception_std = inception_score.compute_score(splits=5)
 
-        avg_iou = total_iou / total_boxes
+        # avg_iou = total_iou / total_boxes
 
     out = [avg_iou, inception_mean, inception_std, fid]
 
@@ -203,34 +207,44 @@ def main(args):
 
         for batch in train_loader:
             t += 1
-            batch = [tensor.cuda() for tensor in batch]
-            imgs, objs, boxes, masks, triples, obj_to_img, triple_to_img, attributes = batch
+            result = Trainer[batch]
+            imgs, imgs_pred = result.imgs, result.imgs_pred
 
-            use_gt = random.randint(0, 1) != 0
-            if not use_gt:
-                attributes = torch.zeros_like(attributes)
-            model_out = trainer.model(imgs, objs, triples, obj_to_img,
-                                      boxes_gt=boxes, masks_gt=masks, attributes=attributes)
-            imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong = model_out
+            # batch = [tensor.cuda() for tensor in batch]
+            # imgs, objs, boxes, masks, triples, obj_to_img, triple_to_img, attributes = batch
 
-            layout_one_hot = layout[:, :trainer.num_obj, :, :]
-            layout_pred_one_hot = layout_pred[:, :trainer.num_obj, :, :]
+            use_gt = True
+            # use_gt = random.randint(0, 1) != 0
+            # if not use_gt:
+            #     attributes = torch.zeros_like(attributes)
+            # model_out = trainer.model(imgs, objs, triples, obj_to_img,
+            #                           boxes_gt=boxes, masks_gt=masks, attributes=attributes)
+            # imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong = model_out
 
-            trainer.train_generator(imgs, imgs_pred, masks, masks_pred, layout,
-                                    objs, boxes, boxes_pred, obj_to_img, use_gt)
+            # layout_one_hot = layout[:, :trainer.num_obj, :, :]
+            layout_pred_one_hot = result.layout_pred[:, :trainer.num_obj, :, :]
 
-            imgs_pred_detach = imgs_pred.detach()
-            masks_pred_detach = masks_pred.detach()
-            boxes_pred_detach = boxes.detach()
-            layout_detach = layout.detach()
-            layout_wrong_detach = layout_wrong.detach()
-            trainer.train_mask_discriminator(masks, masks_pred_detach, objs)
-            trainer.train_obj_discriminator(imgs, imgs_pred_detach, objs, boxes, boxes_pred_detach, obj_to_img)
-            trainer.train_image_discriminator(imgs, imgs_pred_detach, layout_detach, layout_wrong_detach)
+            # trainer.train_generator(imgs, imgs_pred, masks, masks_pred, layout,
+            #                         objs, boxes, boxes_pred, obj_to_img, use_gt)
+            #
+            # imgs_pred_detach = imgs_pred.detach()
+            # masks_pred_detach = masks_pred.detach()
+            # boxes_pred_detach = boxes.detach()
+            # layout_detach = layout.detach()
+            # layout_wrong_detach = layout_wrong.detach()
+            # trainer.train_mask_discriminator(masks, masks_pred_detach, objs)
+            # trainer.train_obj_discriminator(imgs, imgs_pred_detach, objs, boxes, boxes_pred_detach, obj_to_img)
+            # trainer.train_image_discriminator(imgs, imgs_pred_detach, layout_detach, layout_wrong_detach)
+
+            trainer.train_generator(imgs, imgs_pred, use_gt, result.scores_fake, result.ac_loss, result.mask_loss,
+                                    result.loss_mask_feat, result.g_gan_img_loss, result.loss_g_gan_feat_img)
+            trainer.train_mask_discriminator(result.fake_loss, result.real_loss)
+            trainer.train_obj_discriminator(result.d_obj_gan_loss, result.ac_loss_real, result.ac_loss_fake)
+            trainer.train_image_discriminator(result.loss_d_fake_img, result.loss_d_wrong_texture, result.loss_D_real)
 
             if t % args.print_every == 0 or t == 1:
                 trainer.write_losses(checkpoint, t)
-                trainer.write_images(t, imgs, imgs_pred, layout_one_hot, layout_pred_one_hot)
+                trainer.write_images(t, imgs, imgs_pred, layout_pred_one_hot, layout_pred_one_hot)
 
             if t % args.checkpoint_every == 0:
                 print('begin check model train')

@@ -88,3 +88,17 @@ class VectorPool:
                 return_vectors.append(tmp)
         return_vectors = torch.stack(return_vectors).to(vectors.device)
         return return_vectors
+
+
+class Result(object):
+    def __init__(self,
+                 imgs=None, imgs_pred=None, layout_pred=None,
+                 scores_fake=None, ac_loss=None, mask_loss=None, loss_mask_feat=None, g_gan_img_loss=None,
+                 loss_g_gan_feat_img=None, d_obj_gan_loss=None, ac_loss_real=None, ac_loss_fake=None, fake_loss=None,
+                 real_loss=None, loss_d_fake_img=None, loss_d_wrong_texture=None, loss_D_real=None
+                 ):
+        self.__dict__.update(locals())
+        del self.__dict__['self']
+
+    def is_none(self):
+        return all([v is None for k, v in self.__dict__.items() if k != 'self'])
