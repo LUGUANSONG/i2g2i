@@ -96,6 +96,7 @@ optimizer = torch.optim.Adam(generator.parameters(), lr=args.learning_rate, beta
 gan_g_loss, gan_d_loss = get_gan_losses(args.gan_loss_type)
 
 t = 0
+epoch = 0
 while True:
     if t >= args.num_iterations * (args.n_critic + 1):
         break
