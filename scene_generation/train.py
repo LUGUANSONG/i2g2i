@@ -90,7 +90,7 @@ def check_model(args, loader, model, inception_score, use_gt):
     with torch.no_grad():
         for batch in loader:
             result = model[batch]
-
+            imgs, imgs_pred = result.imgs, result.imgs_pred
 
             # batch = [tensor.cuda() for tensor in batch]
             # imgs, objs, boxes, masks, triples, obj_to_img, triple_to_img, attributes = batch
