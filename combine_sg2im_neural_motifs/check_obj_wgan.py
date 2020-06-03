@@ -44,7 +44,7 @@ if not exists(args.output_dir):
     os.makedirs(args.output_dir)
 summary_writer = SummaryWriter(args.output_dir)
 
-train_dataset = CIFAR10("/home/ubuntu/scene_graph/datasets/CIFAR10", train=True, transforms=transforms.Compose([
+train_dataset = CIFAR10("/home/ubuntu/scene_graph/datasets/CIFAR10", train=True, transform=transforms.Compose([
                                     transforms.Resize(args.image_size),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
