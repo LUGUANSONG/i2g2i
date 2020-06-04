@@ -147,8 +147,9 @@ while True:
                     d_scores_real_crop, d_obj_scores_real_crop, real_crops, d_rec_feature_real_crop = \
                         obj_discriminator(imgs, objs, boxes, obj_to_img)
                     if args.gan_loss_type == "wgan-gp":
-                        d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(),
-                                                    obj_discriminator.discriminator)
+                        # d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(),
+                        #                             obj_discriminator.discriminator)
+                        d_obj_gp = gradient_penalty(imgs, imgs_fake, obj_discriminator)
 
                 ## train d
                 with timeit('d_obj loss', args.timing):
