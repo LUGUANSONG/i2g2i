@@ -66,7 +66,8 @@ val_dataset = CIFAR10("/home/ubuntu/scene_graph/datasets/CIFAR10", train=False, 
 loader_kwargs = {
         'batch_size': args.batch_size,
         'num_workers': args.loader_num_workers,
-        'shuffle': True
+        'shuffle': True,
+        'drop_last': True
     }
 train_loader = DataLoader(train_dataset, **loader_kwargs)
 loader_kwargs['shuffle'] = False
