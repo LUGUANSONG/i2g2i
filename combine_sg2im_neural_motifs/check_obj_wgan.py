@@ -317,10 +317,11 @@ while True:
             for k, images in samples.items():
                 images = images * torch.tensor(preprocess_std, device=images.device).reshape(1, 3, 1, 1)
                 images = images + torch.tensor(preprocess_mean, device=images.device).reshape(1, 3, 1, 1)
-                images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
-                images_max = images.max(3)[0].max(2)[0].max(1)[0].reshape(len(images), 1, 1, 1)
-                images = images - images_min
-                images = images / (images_max - images_min)
+                if not args.no_rescale:
+                    images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
+                    images_max = images.max(3)[0].max(2)[0].max(1)[0].reshape(len(images), 1, 1, 1)
+                    images = images - images_min
+                    images = images / (images_max - images_min)
                 images = images.clamp(min=0, max=1)
                 samples[k] = images
 

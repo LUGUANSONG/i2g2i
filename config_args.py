@@ -118,6 +118,7 @@ from sg2im.utils import int_tuple, float_tuple, str_tuple, bool_flag
 # Optimization hyperparameters
 parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--not_imagenet_preprocess', default=False, type=bool_flag)
+parser.add_argument('--no_rescale', default=False, type=bool_flag)
 parser.add_argument('--num_iterations', default=1000000, type=int)
 parser.add_argument('--learning_rate', default=1e-4, type=float)
 
