@@ -36,6 +36,7 @@ from torchvision import transforms
 from bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
 # from config import ModelConfig
 from config_args import config_args
+from copy import deepcopy
 
 # combine
 from model_bbox_feature import neural_motifs_sg2im_model
@@ -70,7 +71,8 @@ def check_model(args, loader, model):
     model.forward_D = True
     with torch.no_grad():
         for batch in loader:
-            result = model[batch]
+            _batch = deepcopy(batch)
+            result = model[_batch]
             # imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
             # d_scores_fake_crop, d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, \
             # d_scores_fake_img, d_scores_real_img = result.imgs, result.imgs_pred, result.objs, \
@@ -88,9 +90,19 @@ def check_model(args, loader, model):
             if num_samples >= args.num_val_samples:
                 break
 
+        same_input_different_noise = []
+        for i in range(args.num_diff_noise):
+            _batch = deepcopy(batch)
+            result = model[_batch]
+            imgs, imgs_pred = result.imgs, result.imgs_pred
+            same_input_different_noise.append(imgs_pred)
+        different_same_input = [torch.cat([batch[i:i+1] for i in range(args.num_diff_noise)], dim=0) for batch in same_input_different_noise]
+        different_same_input = torch.cat(different_same_input, dim=0)
+
         samples = {}
         samples['gt_img'] = imgs
         samples['pred_img'] = imgs_pred
+        samples['diff_noise_img'] = different_same_input
         if model.obj_discriminator is not None:
             real_crops, fake_crops = result.real_crops, result.fake_crops
             samples['real_crops'] = real_crops
