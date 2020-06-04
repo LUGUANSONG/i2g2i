@@ -195,7 +195,7 @@ def main(args):
             if all_in_one_model.obj_discriminator is not None:
                 with timeit('d_obj loss', args.timing):
                     d_obj_losses = LossManager()
-                    d_obj_gan_loss = gan_d_loss(d_obj_scores_real_crop, d_obj_scores_fake_crop)
+                    d_obj_gan_loss = gan_d_loss(d_scores_real_crop, d_scores_fake_crop)
                     d_obj_losses.add_loss(d_obj_gan_loss, 'd_obj_gan_loss')
                     d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_real_crop, objs), 'd_ac_loss_real')
                     d_obj_losses.add_loss(F.cross_entropy(d_obj_scores_fake_crop, objs), 'd_ac_loss_fake')

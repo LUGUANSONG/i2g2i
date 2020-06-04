@@ -213,7 +213,8 @@ def main(args):
         return d_obj_losses, d_img_losses
 
     def G_step(result):
-        imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
+        imgs, imgs_pred, objs, \
+        g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, \
         = result.imgs, result.imgs_pred, result.objs, \
           result.g_scores_fake_crop, result.g_obj_scores_fake_crop, result.g_scores_fake_img
         mask_noise_indexes = result.mask_noise_indexes

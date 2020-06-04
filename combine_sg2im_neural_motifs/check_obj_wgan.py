@@ -23,8 +23,6 @@ from torch.utils.data import DataLoader
 # sg2im
 from sg2im.losses import get_gan_losses, VGGLoss, gradient_penalty
 from sg2im.utils import timeit, bool_flag, LossManager
-from sg2im.bilinear import crop_bbox_batch
-from sg2im.layers import GlobalAvgPool, Flatten, get_activation, build_cnn
 
 # neural motifs
 # from dataloaders.visual_genome import VGDataLoader, VG
@@ -86,54 +84,7 @@ vocab = {
     'object_idx_to_name': [None] * (num_class + 1)
 }
 
-
-class AcDiscriminator(nn.Module):
-  def __init__(self, vocab, arch, normalization='none', activation='relu',
-               padding='same', pooling='avg', args=None):
-    super(AcDiscriminator, self).__init__()
-    print("i2g2i.combine_sg2im_neural_motifs.discriminator.AcDiscriminator")
-    self.vocab = vocab
-
-    cnn_kwargs = {
-      'arch': arch,
-      'normalization': normalization,
-      'activation': activation,
-      'pooling': pooling,
-      'padding': padding,
-    }
-    cnn, D = build_cnn(**cnn_kwargs)
-    self.cnn = nn.Sequential(cnn, GlobalAvgPool(), nn.Linear(D, 1024))
-
-    num_objects = len(vocab['object_idx_to_name']) - 1
-    self.real_classifier = nn.Linear(1024, 1)
-    self.obj_classifier = nn.Linear(1024, num_objects) if not args.no_cls else None
-
-  def forward(self, x, y=None):
-    if x.dim() == 3:
-      x = x[:, None]
-
-    vecs = self.cnn(x)
-    real_scores = self.real_classifier(vecs)
-    if self.obj_classifier is not None:
-        obj_scores = self.obj_classifier(vecs)
-        return real_scores, obj_scores, None
-    else:
-        return real_scores
-
-obj_discriminator = None
-d_kwargs = {}
-d_weight = args.discriminator_loss_weight
-d_obj_weight = args.d_obj_weight
-if not ((d_weight == 0 or d_obj_weight == 0) and args.ac_loss_weight == 0):
-    d_kwargs = {
-            'vocab': vocab,
-            'arch': args.d_obj_arch,
-            'normalization': args.d_normalization,
-            'activation': args.d_activation,
-            'padding': args.d_padding,
-            'args': args
-        }
-    obj_discriminator = AcDiscriminator(**d_kwargs).cuda()
+obj_discriminator, _ = build_obj_discriminator(args, vocab)
 if obj_discriminator is not None:
     print(obj_discriminator)
     obj_discriminator.train()
@@ -145,7 +96,8 @@ if img_discriminator is not None:
     img_discriminator.train()
     optimizer_d_img = torch.optim.Adam(img_discriminator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
-layers = [
+
+generator = nn.ModuleList([
     nn.Linear(100, 256),
     nn.BatchNorm2d(64),
     nn.ReLU(True),
@@ -162,10 +114,7 @@ layers = [
     nn.BatchNorm2d(3),
     nn.ReLU(True),
     nn.Conv2d(3, 3, kernel_size=1, stride=1, padding=0)
-]
-if args.not_imagenet_preprocess:
-    layers.append(nn.Tanh())
-generator = nn.ModuleList(layers).cuda()
+]).cuda()
 generator.train()
 optimizer = torch.optim.Adam(generator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
@@ -199,32 +148,19 @@ while True:
             if obj_discriminator is not None:
                 imgs_fake = imgs_pred.detach()
                 with timeit('d_obj forward for d', args.timing):
-                    if args.not_crop:
-                        fake_crops = imgs_fake
-                    else:
-                        fake_crops = crop_bbox_batch(imgs_fake, boxes, obj_to_img, args.crop_size)
-                    if args.no_cls:
-                        d_scores_fake_crop = obj_discriminator(fake_crops)
-                    else:
-                        d_scores_fake_crop, d_obj_scores_fake_crop, d_rec_feature_fake_crop = obj_discriminator(fake_crops)
-
-                    if args.not_crop:
-                        real_crops = imgs
-                    else:
-                        real_crops = crop_bbox_batch(imgs, boxes, obj_to_img, args.crop_size)
-                    if args.no_cls:
-                        d_scores_real_crop = obj_discriminator(real_crops)
-                    else:
-                        d_scores_real_crop, d_obj_scores_real_crop, d_rec_feature_real_crop = obj_discriminator(real_crops)
+                    d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops, d_rec_feature_fake_crop = \
+                        obj_discriminator(imgs_fake, objs, boxes, obj_to_img)
+                    d_scores_real_crop, d_obj_scores_real_crop, real_crops, d_rec_feature_real_crop = \
+                        obj_discriminator(imgs, objs, boxes, obj_to_img)
                     if args.gan_loss_type == "wgan-gp":
-                        d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(), obj_discriminator)
-                        # d_obj_gp = gradient_penalty_obj(imgs, imgs_fake, objs, boxes, obj_to_img, obj_discriminator)
+                        d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(),
+                                                    obj_discriminator.discriminator)
 
                 ## train d
                 with timeit('d_obj loss', args.timing):
                     d_obj_losses = LossManager()
                     if args.d_obj_weight > 0:
-                        d_obj_gan_loss = gan_d_loss(d_scores_real_crop, d_scores_fake_crop)
+                        d_obj_gan_loss = gan_d_loss(d_obj_scores_real_crop, d_obj_scores_fake_crop)
                         d_obj_losses.add_loss(d_obj_gan_loss, 'd_obj_gan_loss')
                         if args.gan_loss_type == 'wgan-gp':
                             d_obj_losses.add_loss(d_obj_gp.mean(), 'd_obj_gp', args.d_obj_gp_weight)
@@ -272,18 +208,11 @@ while True:
 
             if obj_discriminator is not None:
                 with timeit('d_obj forward for g', args.timing):
-                    if args.not_crop:
-                        crops = imgs_pred
-                    else:
-                        crops = crop_bbox_batch(imgs_pred, boxes, obj_to_img, args.crop_size)
-                    if args.no_cls:
-                        g_scores_fake_crop = obj_discriminator(crops)
-                    else:
-                        g_scores_fake_crop, g_obj_scores_fake_crop, g_rec_feature_fake_crop = obj_discriminator(crops)
+                    g_scores_fake_crop, g_obj_scores_fake_crop, _, g_rec_feature_fake_crop = \
+                        obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
 
-                if args.ac_loss_weight > 0:
-                    total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
-                                        args.ac_loss_weight)
+                total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
+                                      args.ac_loss_weight)
                 weight = args.discriminator_loss_weight * args.d_obj_weight
                 total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_crop), losses,
                                       'g_gan_obj_loss', weight)
