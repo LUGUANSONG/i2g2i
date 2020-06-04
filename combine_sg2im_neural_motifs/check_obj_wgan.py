@@ -55,15 +55,21 @@ if not exists(args.output_dir):
     os.makedirs(args.output_dir)
 summary_writer = SummaryWriter(args.output_dir)
 
+if args.not_imagenet_preprocess:
+    preprocess_mean = [0.5, 0.5, 0.5]
+    preprocess_std = [0.5, 0.5, 0.5]
+else:
+    preprocess_mean = [0.485, 0.456, 0.406]
+    preprocess_std = [0.229, 0.224, 0.225]
 train_dataset = CIFAR10("/home/ubuntu/scene_graph/datasets/CIFAR10", train=True, transform=transforms.Compose([
                                     transforms.Resize(args.image_size),
                                     transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                                    transforms.Normalize(mean=preprocess_mean, std=preprocess_std),
                               ]), download=True)
 val_dataset = CIFAR10("/home/ubuntu/scene_graph/datasets/CIFAR10", train=False, transform=transforms.Compose([
                                     transforms.Resize(args.image_size),
                                     transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                                    transforms.Normalize(mean=preprocess_mean, std=preprocess_std),
                               ]), download=True)
 loader_kwargs = {
         'batch_size': args.batch_size,
@@ -136,8 +142,7 @@ if img_discriminator is not None:
     img_discriminator.train()
     optimizer_d_img = torch.optim.Adam(img_discriminator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
-
-generator = nn.ModuleList([
+layers = [
     nn.Linear(100, 256),
     nn.BatchNorm2d(64),
     nn.ReLU(True),
@@ -154,7 +159,10 @@ generator = nn.ModuleList([
     nn.BatchNorm2d(3),
     nn.ReLU(True),
     nn.Conv2d(3, 3, kernel_size=1, stride=1, padding=0)
-]).cuda()
+]
+if args.not_imagenet_preprocess:
+    layers.append(nn.Tanh())
+generator = nn.ModuleList(layers).cuda()
 generator.train()
 optimizer = torch.optim.Adam(generator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
@@ -307,8 +315,8 @@ while True:
                 samples['fake_crops'] = fake_crops
 
             for k, images in samples.items():
-                images = images * torch.tensor([0.229, 0.224, 0.225], device=images.device).reshape(1, 3, 1, 1)
-                images = images + torch.tensor([0.485, 0.456, 0.406], device=images.device).reshape(1, 3, 1, 1)
+                images = images * torch.tensor(preprocess_std, device=images.device).reshape(1, 3, 1, 1)
+                images = images + torch.tensor(preprocess_mean, device=images.device).reshape(1, 3, 1, 1)
                 images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
                 images_max = images.max(3)[0].max(2)[0].max(1)[0].reshape(len(images), 1, 1, 1)
                 images = images - images_min
