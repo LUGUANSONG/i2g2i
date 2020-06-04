@@ -252,7 +252,7 @@ while True:
                 total_loss.backward()
                 optimizer.step()
 
-        if t % (args.print_every * (args.n_critic + 1)) == 0:
+        if t % (args.n_critic + 1) != 0 and t % args.print_every == 0:
             print('t = %d / %d' % (t, args.num_iterations))
             G_loss_list = []
             for name, val in losses.items():
