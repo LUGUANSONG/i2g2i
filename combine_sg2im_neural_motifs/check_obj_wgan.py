@@ -121,7 +121,6 @@ if not ((d_weight == 0 or d_obj_weight == 0) and args.ac_loss_weight == 0):
             'normalization': args.d_normalization,
             'activation': args.d_activation,
             'padding': args.d_padding,
-            'object_size': args.crop_size,
             'args': args
         }
     obj_discriminator = AcDiscriminator(**d_kwargs).cuda()
