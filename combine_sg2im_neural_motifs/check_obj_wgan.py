@@ -46,6 +46,28 @@ def add_loss(total_loss, curr_loss, loss_dict, loss_name, weight=1):
         total_loss = curr_loss
     return total_loss
 
+def gradient_penalty_obj(x_real, x_fake, objs, boxes, obj_to_img, f, gamma=1.0):
+  N = x_real.size(0)
+  device, dtype = x_real.device, x_real.dtype
+  eps = torch.rand(N, 1, 1, 1, device=device, dtype=dtype)
+  x_hat = eps * x_real + (1 - eps) * x_fake
+  x_hat.requires_grad_(True)
+  x_hat_score = f(x_hat, objs, boxes, obj_to_img)
+  if isinstance(x_hat_score, tuple):
+    x_hat_score = x_hat_score[0]
+  if x_hat_score.dim() > 1:
+    x_hat_score = x_hat_score.view(x_hat_score.size(0), -1).mean(dim=1)
+  # x_hat_score = x_hat_score.sum()
+  # grad_x_hat, = torch.autograd.grad(x_hat_score, x_hat, create_graph=True)
+  # grad_x_hat_norm = grad_x_hat.contiguous().view(N, -1).norm(p=2, dim=1)
+  # gp_loss = (grad_x_hat_norm - gamma).pow(2).div(gamma * gamma).mean()
+  gradients = torch.autograd.grad(outputs=x_hat_score, inputs=x_hat,
+                                  grad_outputs=torch.ones(x_hat_score.size()).to(device),
+                                  create_graph=True, retain_graph=True, only_inputs=True)
+  gradients = gradients[0].view(x_real.size(0), -1)  # flat the data
+  gp_loss = (((gradients + 1e-16).norm(2, dim=1) - gamma) ** 2).mean()  # added eps
+  return gp_loss
+
 args = config_args
 
 print(args)
@@ -149,7 +171,7 @@ while True:
                     if args.gan_loss_type == "wgan-gp":
                         # d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(),
                         #                             obj_discriminator.discriminator)
-                        d_obj_gp = gradient_penalty(imgs, imgs_fake, obj_discriminator)
+                        d_obj_gp = gradient_penalty(imgs, imgs_fake, obj_discriminator, objs, boxes, obj_to_img)
 
                 ## train d
                 with timeit('d_obj loss', args.timing):
