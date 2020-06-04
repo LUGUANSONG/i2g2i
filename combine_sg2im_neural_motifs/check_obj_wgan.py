@@ -106,7 +106,7 @@ class AcDiscriminator(nn.Module):
 
     num_objects = len(vocab['object_idx_to_name']) - 1
     self.real_classifier = nn.Linear(1024, 1)
-    self.obj_classifier = nn.Linear(1024, num_objects)
+    self.obj_classifier = nn.Linear(1024, num_objects) if not args.no_cls else None
 
   def forward(self, x, y=None):
     if x.dim() == 3:
@@ -114,8 +114,11 @@ class AcDiscriminator(nn.Module):
 
     vecs = self.cnn(x)
     real_scores = self.real_classifier(vecs)
-    obj_scores = self.obj_classifier(vecs)
-    return real_scores, obj_scores, None
+    if self.obj_classifier is not None:
+        obj_scores = self.obj_classifier(vecs)
+        return real_scores, obj_scores, None
+    else:
+        return real_scores
 
 obj_discriminator = None
 d_kwargs = {}
@@ -200,13 +203,19 @@ while True:
                         fake_crops = imgs_fake
                     else:
                         fake_crops = crop_bbox_batch(imgs_fake, boxes, obj_to_img, args.crop_size)
-                    d_scores_fake_crop, d_obj_scores_fake_crop, d_rec_feature_fake_crop = obj_discriminator(fake_crops)
+                    if args.no_cls:
+                        d_scores_fake_crop = obj_discriminator(fake_crops)
+                    else:
+                        d_scores_fake_crop, d_obj_scores_fake_crop, d_rec_feature_fake_crop = obj_discriminator(fake_crops)
 
                     if args.not_crop:
                         real_crops = imgs
                     else:
                         real_crops = crop_bbox_batch(imgs, boxes, obj_to_img, args.crop_size)
-                    d_scores_real_crop, d_obj_scores_real_crop, d_rec_feature_real_crop = obj_discriminator(real_crops)
+                    if args.no_cls:
+                        d_scores_real_crop = obj_discriminator(real_crops)
+                    else:
+                        d_scores_real_crop, d_obj_scores_real_crop, d_rec_feature_real_crop = obj_discriminator(real_crops)
                     if args.gan_loss_type == "wgan-gp":
                         d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(), obj_discriminator)
                         # d_obj_gp = gradient_penalty_obj(imgs, imgs_fake, objs, boxes, obj_to_img, obj_discriminator)
@@ -267,10 +276,14 @@ while True:
                         crops = imgs_pred
                     else:
                         crops = crop_bbox_batch(imgs_pred, boxes, obj_to_img, args.crop_size)
-                    g_scores_fake_crop, g_obj_scores_fake_crop, g_rec_feature_fake_crop = obj_discriminator(crops)
+                    if args.no_cls:
+                        g_scores_fake_crop = obj_discriminator(crops)
+                    else:
+                        g_scores_fake_crop, g_obj_scores_fake_crop, g_rec_feature_fake_crop = obj_discriminator(crops)
 
-                total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
-                                      args.ac_loss_weight)
+                if args.ac_loss_weight > 0:
+                    total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
+                                        args.ac_loss_weight)
                 weight = args.discriminator_loss_weight * args.d_obj_weight
                 total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_crop), losses,
                                       'g_gan_obj_loss', weight)
