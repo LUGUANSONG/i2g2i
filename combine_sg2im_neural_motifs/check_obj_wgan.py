@@ -117,7 +117,7 @@ class AcDiscriminator(nn.Module):
     obj_scores = self.obj_classifier(vecs)
     return real_scores, obj_scores, None
 
-discriminator = None
+obj_discriminator = None
 d_kwargs = {}
 d_weight = args.discriminator_loss_weight
 d_obj_weight = args.d_obj_weight
