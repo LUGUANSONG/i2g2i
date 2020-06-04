@@ -250,7 +250,7 @@ while True:
             if obj_discriminator is not None:
                 with timeit('d_obj forward for g', args.timing):
                     crops = crop_bbox_batch(imgs_pred, boxes, obj_to_img, args.crop_size)
-                    g_scores_fake_crop, g_obj_scores_fake_crop, _, g_rec_feature_fake_crop = obj_discriminator(crops)
+                    g_scores_fake_crop, g_obj_scores_fake_crop, g_rec_feature_fake_crop = obj_discriminator(crops)
 
                 total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
                                       args.ac_loss_weight)
