@@ -24,6 +24,7 @@ from torch.utils.data import DataLoader
 from sg2im.losses import get_gan_losses, VGGLoss, gradient_penalty
 from sg2im.utils import timeit, bool_flag, LossManager
 from sg2im.bilinear import crop_bbox_batch
+from sg2im.layers import GlobalAvgPool, Flatten, get_activation, build_cnn
 
 # neural motifs
 # from dataloaders.visual_genome import VGDataLoader, VG
