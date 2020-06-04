@@ -181,7 +181,7 @@ def main(args):
             with timeit('d_obj loss', args.timing):
                 d_obj_losses = LossManager()
                 if args.d_obj_weight > 0:
-                    d_obj_gan_loss = gan_d_loss(d_obj_scores_real_crop, d_obj_scores_fake_crop)
+                    d_obj_gan_loss = gan_d_loss(d_scores_real_crop, d_scores_fake_crop)
                     d_obj_losses.add_loss(d_obj_gan_loss, 'd_obj_gan_loss')
                     if args.gan_loss_type == 'wgan-gp':
                         d_obj_losses.add_loss(d_obj_gp.mean(), 'd_obj_gp', args.d_obj_gp_weight)
