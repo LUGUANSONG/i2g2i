@@ -283,7 +283,13 @@ def main(args):
                         new_value = start_val + (end_val - start_val) * (t - start_step) / (end_step - start_step)
                         setattr(args, attr, new_value)
                         print("Change %s from %.10f to %.10f at iteration %d" % (attr, old_value, getattr(args, attr), t))
-
+                    elif t > end_step:
+                        end_val = getattr(args, "%s_change_vals" % mode)[1]
+                        if old_value != end_val:
+                            new_value = end_val
+                            setattr(args, attr, new_value)
+                            print("probably resume training from previous checkpoint")
+                            print("Change %s from %.10f to %.10f at iteration %d" % (attr, old_value, getattr(args, attr), t))
             t += 1
             if args.gan_loss_type in ["wgan", "wgan-gp"]:
                 # train discriminator (critic) for n_critic iterations
