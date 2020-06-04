@@ -171,7 +171,7 @@ while True:
                     if args.gan_loss_type == "wgan-gp":
                         # d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(),
                         #                             obj_discriminator.discriminator)
-                        d_obj_gp = gradient_penalty_obj(imgs, imgs_fake, obj_discriminator, objs, boxes, obj_to_img)
+                        d_obj_gp = gradient_penalty_obj(imgs, imgs_fake, objs, boxes, obj_to_img, obj_discriminator)
 
                 ## train d
                 with timeit('d_obj loss', args.timing):
