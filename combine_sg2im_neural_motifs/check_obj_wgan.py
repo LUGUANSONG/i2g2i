@@ -196,10 +196,16 @@ while True:
             if obj_discriminator is not None:
                 imgs_fake = imgs_pred.detach()
                 with timeit('d_obj forward for d', args.timing):
-                    fake_crops = crop_bbox_batch(imgs_fake, boxes, obj_to_img, args.crop_size)
+                    if args.not_crop:
+                        fake_crops = imgs_fake
+                    else:
+                        fake_crops = crop_bbox_batch(imgs_fake, boxes, obj_to_img, args.crop_size)
                     d_scores_fake_crop, d_obj_scores_fake_crop, d_rec_feature_fake_crop = obj_discriminator(fake_crops)
 
-                    real_crops = crop_bbox_batch(imgs, boxes, obj_to_img, args.crop_size)
+                    if args.not_crop:
+                        real_crops = imgs
+                    else:
+                        real_crops = crop_bbox_batch(imgs, boxes, obj_to_img, args.crop_size)
                     d_scores_real_crop, d_obj_scores_real_crop, d_rec_feature_real_crop = obj_discriminator(real_crops)
                     if args.gan_loss_type == "wgan-gp":
                         d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(), obj_discriminator)
@@ -257,7 +263,10 @@ while True:
 
             if obj_discriminator is not None:
                 with timeit('d_obj forward for g', args.timing):
-                    crops = crop_bbox_batch(imgs_pred, boxes, obj_to_img, args.crop_size)
+                    if args.not_crop:
+                        crops = imgs_pred
+                    else:
+                        crops = crop_bbox_batch(imgs_pred, boxes, obj_to_img, args.crop_size)
                     g_scores_fake_crop, g_obj_scores_fake_crop, g_rec_feature_fake_crop = obj_discriminator(crops)
 
                 total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
