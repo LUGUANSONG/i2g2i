@@ -97,7 +97,7 @@ def check_model(args, loader, model):
             imgs, imgs_pred = result.imgs, result.imgs_pred
             same_input_different_noise.append(imgs_pred)
         different_same_input = [torch.cat([batch[i:i+1] for i in range(args.num_diff_noise)], dim=3) for batch in same_input_different_noise]
-        different_same_input = torch.cat(different_same_input, dim=0)
+        different_same_input = torch.cat(different_same_input, dim=2)
 
         samples = {}
         samples['gt_img'] = imgs
