@@ -23,6 +23,7 @@ from torch.utils.data import DataLoader
 # sg2im
 from sg2im.losses import get_gan_losses, VGGLoss, gradient_penalty
 from sg2im.utils import timeit, bool_flag, LossManager
+from sg2im.bilinear import crop_bbox_batch
 
 # neural motifs
 # from dataloaders.visual_genome import VGDataLoader, VG
@@ -45,28 +46,6 @@ def add_loss(total_loss, curr_loss, loss_dict, loss_name, weight=1):
     else:
         total_loss = curr_loss
     return total_loss
-
-def gradient_penalty_obj(x_real, x_fake, objs, boxes, obj_to_img, f, gamma=1.0):
-  N = x_real.size(0)
-  device, dtype = x_real.device, x_real.dtype
-  eps = torch.rand(N, 1, 1, 1, device=device, dtype=dtype)
-  x_hat = eps * x_real + (1 - eps) * x_fake
-  x_hat.requires_grad_(True)
-  x_hat_score = f(x_hat, objs, boxes, obj_to_img)
-  if isinstance(x_hat_score, tuple):
-    x_hat_score = x_hat_score[0]
-  if x_hat_score.dim() > 1:
-    x_hat_score = x_hat_score.view(x_hat_score.size(0), -1).mean(dim=1)
-  # x_hat_score = x_hat_score.sum()
-  # grad_x_hat, = torch.autograd.grad(x_hat_score, x_hat, create_graph=True)
-  # grad_x_hat_norm = grad_x_hat.contiguous().view(N, -1).norm(p=2, dim=1)
-  # gp_loss = (grad_x_hat_norm - gamma).pow(2).div(gamma * gamma).mean()
-  gradients = torch.autograd.grad(outputs=x_hat_score, inputs=x_hat,
-                                  grad_outputs=torch.ones(x_hat_score.size()).to(device),
-                                  create_graph=True, retain_graph=True, only_inputs=True)
-  gradients = gradients[0].view(x_real.size(0), -1)  # flat the data
-  gp_loss = (((gradients + 1e-16).norm(2, dim=1) - gamma) ** 2).mean()  # added eps
-  return gp_loss
 
 args = config_args
 
@@ -100,11 +79,56 @@ vocab = {
     'object_idx_to_name': [None] * (num_class + 1)
 }
 
-obj_discriminator, _ = build_obj_discriminator(args, vocab)
+
+class AcDiscriminator(nn.Module):
+  def __init__(self, vocab, arch, normalization='none', activation='relu',
+               padding='same', pooling='avg', args=None):
+    super(AcDiscriminator, self).__init__()
+    print("i2g2i.combine_sg2im_neural_motifs.discriminator.AcDiscriminator")
+    self.vocab = vocab
+
+    cnn_kwargs = {
+      'arch': arch,
+      'normalization': normalization,
+      'activation': activation,
+      'pooling': pooling,
+      'padding': padding,
+    }
+    cnn, D = build_cnn(**cnn_kwargs)
+    self.cnn = nn.Sequential(cnn, GlobalAvgPool(), nn.Linear(D, 1024))
+
+    num_objects = len(vocab['object_idx_to_name']) - 1
+    self.real_classifier = nn.Linear(1024, 1)
+    self.obj_classifier = nn.Linear(1024, num_objects)
+
+  def forward(self, x, y=None):
+    if x.dim() == 3:
+      x = x[:, None]
+
+    vecs = self.cnn(x)
+    real_scores = self.real_classifier(vecs)
+    obj_scores = self.obj_classifier(vecs)
+    return real_scores, obj_scores, None
+
+discriminator = None
+d_kwargs = {}
+d_weight = args.discriminator_loss_weight
+d_obj_weight = args.d_obj_weight
+if not ((d_weight == 0 or d_obj_weight == 0) and args.ac_loss_weight == 0):
+    d_kwargs = {
+            'vocab': vocab,
+            'arch': args.d_obj_arch,
+            'normalization': args.d_normalization,
+            'activation': args.d_activation,
+            'padding': args.d_padding,
+            'object_size': args.crop_size,
+            'args': args
+        }
+    obj_discriminator = AcDiscriminator(**d_kwargs).cuda()
 if obj_discriminator is not None:
     print(obj_discriminator)
     obj_discriminator.train()
-    optimizer_d_obj = torch.optim.Adam(obj_discriminator.discriminator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
+    optimizer_d_obj = torch.optim.Adam(obj_discriminator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
 img_discriminator, _ = build_img_discriminator(args)
 if img_discriminator is not None:
@@ -164,13 +188,13 @@ while True:
             if obj_discriminator is not None:
                 imgs_fake = imgs_pred.detach()
                 with timeit('d_obj forward for d', args.timing):
-                    d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops, d_rec_feature_fake_crop = \
-                        obj_discriminator(imgs_fake, objs, boxes, obj_to_img)
-                    d_scores_real_crop, d_obj_scores_real_crop, real_crops, d_rec_feature_real_crop = \
-                        obj_discriminator(imgs, objs, boxes, obj_to_img)
+                    fake_crops = crop_bbox_batch(imgs_fake, boxes, obj_to_img, args.crop_size)
+                    d_scores_fake_crop, d_obj_scores_fake_crop, d_rec_feature_fake_crop = obj_discriminator(fake_crops)
+
+                    real_crops = crop_bbox_batch(imgs, boxes, obj_to_img, args.crop_size)
+                    d_scores_real_crop, d_obj_scores_real_crop, d_rec_feature_real_crop = obj_discriminator(real_crops)
                     if args.gan_loss_type == "wgan-gp":
-                        d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(),
-                                                    obj_discriminator.discriminator)
+                        d_obj_gp = gradient_penalty(real_crops.detach(), fake_crops.detach(), obj_discriminator)
                         # d_obj_gp = gradient_penalty_obj(imgs, imgs_fake, objs, boxes, obj_to_img, obj_discriminator)
 
                 ## train d
@@ -225,8 +249,8 @@ while True:
 
             if obj_discriminator is not None:
                 with timeit('d_obj forward for g', args.timing):
-                    g_scores_fake_crop, g_obj_scores_fake_crop, _, g_rec_feature_fake_crop = \
-                        obj_discriminator(imgs_pred, objs, boxes, obj_to_img)
+                    crops = crop_bbox_batch(imgs_pred, boxes, obj_to_img, args.crop_size)
+                    g_scores_fake_crop, g_obj_scores_fake_crop, _, g_rec_feature_fake_crop = obj_discriminator(crops)
 
                 total_loss = add_loss(total_loss, F.cross_entropy(g_obj_scores_fake_crop, objs), losses, 'ac_loss',
                                       args.ac_loss_weight)

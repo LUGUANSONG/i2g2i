@@ -26,4 +26,4 @@ CUDA_VISIBLE_DEVICES=3 python combine_sg2im_neural_motifs/check_obj_wgan.py --ga
 
 CUDA_VISIBLE_DEVICES=3 python combine_sg2im_neural_motifs/check_obj_wgan.py --gan_loss_type wgan-gp --n_critic 1 \
 --output_dir ../detector-sg2im-checkpoints/v2/cifar10_wgangp_0.01_objgan_gp_v2 --image_size 32,32 --ac_loss_weight 0 --d_obj_weight 1 \
---discriminator_loss_weight 0.01 --batch_size 32 --d_img_weight 0
+--discriminator_loss_weight 0.01 --batch_size 32 --d_img_weight 0 --print_every 99
