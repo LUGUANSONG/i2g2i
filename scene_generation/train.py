@@ -81,7 +81,7 @@ def build_loaders(args):
 
 def check_model(args, loader, model, inception_score, use_gt):
     fid = None
-    avg_iou = None
+    avg_iou = -1
     num_samples = 0
     total_iou = 0
     total_boxes = 0
