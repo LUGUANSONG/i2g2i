@@ -266,7 +266,7 @@ def main(args):
         return losses
 
     while True:
-        if t >= args.num_iterations * (args.n_critic + 1):
+        if t >= args.num_iterations * (args.n_critic + args.n_gen):
             break
         epoch += 1
         print('Starting epoch %d' % epoch)
@@ -303,9 +303,9 @@ def main(args):
                             print("probably resume training from previous checkpoint")
                             print("Change %s from %.10f to %.10f at iteration %d" % (attr, old_value, getattr(args, attr), t))
             t += 1
-            if args.gan_loss_type in ["wgan", "wgan-gp"]:
+            if args.gan_loss_type in ["wgan", "wgan-gp"] or args.n_critic != 0:
                 # train discriminator (critic) for n_critic iterations
-                if t % (args.n_critic + 1) != 0:
+                if t % (args.n_critic + args.n_gen) in list(range(1, args.n_critic+1)):
                     all_in_one_model.forward_G = True
                     all_in_one_model.calc_G_D_loss = False
                     all_in_one_model.forward_D = True
@@ -317,7 +317,7 @@ def main(args):
                     d_obj_losses, d_img_losses = D_step(result)
 
                 # train generator for 1 iteration after n_critic iterations
-                if t % (args.n_critic + 1) == 0:
+                if t % (args.n_critic + args.n_gen) in (list(range(args.n_critic+1, args.n_critic + args.n_gen)) + [0]):
                     all_in_one_model.forward_G = True
                     all_in_one_model.calc_G_D_loss = True
                     all_in_one_model.forward_D = False
@@ -342,7 +342,7 @@ def main(args):
                     continue
                 d_obj_losses, d_img_losses = D_step(result)
 
-            if t % (args.print_every * (args.n_critic + 1)) == 0:
+            if t % (args.print_every * (args.n_critic + args.n_gen)) == 0:
                 print('t = %d / %d' % (t, args.num_iterations))
                 G_loss_list = []
                 for name, val in losses.items():
@@ -368,7 +368,7 @@ def main(args):
                         summary_writer.add_scalar("D_img_%s" % name, val, t)
                     print("D_img: %s" % ", ".join(D_img_loss_list))
 
-            if t % (args.checkpoint_every * (args.n_critic + 1)) == 0:
+            if t % (args.checkpoint_every * (args.n_critic + args.n_gen)) == 0:
                 print('checking on train')
                 train_results = check_model(args, train_loader, all_in_one_model)
                 t_losses, t_samples = train_results

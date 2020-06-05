@@ -451,3 +451,12 @@ CUDA_VISIBLE_DEVICES=4 python metrics/calc_diversity.py -d ../detector-sg2im-che
 CUDA_VISIBLE_DEVICES=5 python metrics/inception_score.py ../detector-sg2im-checkpoints/vg64_l1_0_wgan-gp10_dis0_cls0.1_obj0_img0/test
 CUDA_VISIBLE_DEVICES=5 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/vg64_std0/test_real ../detector-sg2im-checkpoints/vg64_l1_0_wgan-gp10_dis0_cls0.1_obj0_img0/test 32
 CUDA_VISIBLE_DEVICES=5 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/vg64_l1_0_wgan-gp10_dis0_cls0.1_obj0_img0/test_noise --use_gpu --all_pairs
+
+
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py \
+-b 16 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v3/vg64_gan_img0.01_l1_1_on_noise_cls0.1_obj0.01 \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
+--l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 5000
+
