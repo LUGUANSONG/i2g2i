@@ -147,6 +147,7 @@ parser.add_argument('--refinement_network_dims', default='1024,512,256,128,64', 
 parser.add_argument('--normalization', default='batch')
 parser.add_argument('--activation', default='leakyrelu-0.2')
 parser.add_argument('--layout_noise_dim', default=32, type=int)
+parser.add_argument('--object_noise_dim', default=0, type=int)
 parser.add_argument('--noise_mask_ratio', type=float, default=0.0)
 parser.add_argument('--noise_std', type=float, default=1)
 parser.add_argument('--noise_std_mode', type=str, default='fix', help='can be fix, change')

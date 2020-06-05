@@ -50,6 +50,7 @@ class Sg2ImModel(nn.Module):
     # self.vocab = vocab
     self.image_size = image_size
     self.layout_noise_dim = layout_noise_dim
+    self.gconv_dim = gconv_dim
     self.args = args
 
     # num_objs = len(vocab['object_idx_to_name'])
@@ -93,7 +94,7 @@ class Sg2ImModel(nn.Module):
     # self.rel_aux_net = build_mlp(rel_aux_layers, batch_norm=mlp_normalization)
 
     refinement_kwargs = {
-      'dims': (gconv_dim + layout_noise_dim,) + refinement_dims,
+      'dims': (gconv_dim + args.object_noise_dim + layout_noise_dim,) + refinement_dims,
       'normalization': normalization,
       'activation': activation,
     }
@@ -149,6 +150,9 @@ class Sg2ImModel(nn.Module):
     # if self.gconv_net is not None:
     #   obj_vecs, pred_vecs = self.gconv_net(obj_vecs, pred_vecs, edges)
     obj_vecs = self.obj_fmap_net(obj_fmaps)
+    if self.args.object_noise_dim > 0:
+      object_noise = torch.randn((obj_vecs.shape[0], self.args.object_noise_dim), dtype=obj_vecs.dtype, device=obj_vecs.device)
+      obj_vecs = torch.cat([obj_vecs, object_noise], dim=1)
 
     # boxes_pred = self.box_net(obj_vecs)
 
@@ -175,6 +179,9 @@ class Sg2ImModel(nn.Module):
       layout = masks_to_layout(obj_vecs, layout_boxes, layout_masks,
                                obj_to_img, H, W)
     ret_layout = layout
+
+    if self.args.object_noise_dim > 0 and mask_noise_indexes is not None:
+      layout[mask_noise_indexes, self.gconv_dim:] = 0
 
     if self.layout_noise_dim > 0:
       N, C, H, W = layout.size()
