@@ -17,6 +17,11 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+import torch
+from torch.autograd import Function
+from torch.autograd.function import once_differentiable
+from torch._thnn import type2backend
+import torch.backends.cudnn as cudnn
 
 """
 Functions for computing image layouts from object vectors, bounding boxes,
@@ -83,9 +88,10 @@ def masks_to_layout(vecs, boxes, masks, obj_to_img, H, W=None, pooling='sum', te
     grid = _boxes_to_grid(boxes, H, W)
 
     img_in = vecs.contiguous().view(O, D, 1, 1) * masks.contiguous().float().view(O, 1, M, M)
-    img_in = img_in.contiguous()
-    grid = grid.contiguous()
-    sampled = F.grid_sample(img_in, grid)
+    # img_in = img_in.contiguous()
+    # grid = grid.contiguous()
+    # sampled = F.grid_sample(img_in, grid)
+    sampled = GridSampler.apply(img_in, grid, 'zeros')
     if test_mode:
         clean_mask_sampled = F.grid_sample(masks.float().view(O, 1, M, M), grid)
     else:
@@ -184,6 +190,51 @@ def _pool_samples(samples, clean_mask_sampled, obj_to_img, pooling='sum'):
         raise ValueError('Invalid pooling "%s"' % pooling)
 
     return out
+
+
+class GridSampler(Function):
+    @staticmethod
+    def forward(ctx, input, grid, padding_mode='zeros'):
+        ctx.save_for_backward(input, grid)
+        if padding_mode == 'zeros':
+            ctx.padding_mode = MODE_ZEROS
+        elif padding_mode == 'border':
+            ctx.padding_mode = MODE_BORDER
+        else:
+            raise ValueError("padding_mode needs to be 'zeros' or 'border', but got {}".format(padding_mode))
+        grid_sz = grid.size()
+        backend = type2backend[input.type()]
+        if input.dim() == 4:
+            output = input.new(grid_sz[0], input.size(1), grid_sz[1], grid_sz[2])
+            backend.SpatialGridSamplerBilinear_updateOutput(backend.library_state, input, grid,
+                                                            output, ctx.padding_mode)
+        elif input.dim() == 5:
+            output = input.new(grid_sz[0], input.size(1), grid_sz[1], grid_sz[2], grid_sz[3])
+            backend.VolumetricGridSamplerBilinear_updateOutput(backend.library_state, input, grid,
+                                                               output, ctx.padding_mode)
+        else:
+            raise ValueError("input has to be 4d or 5d but got input of shape: {}".format(input.shape))
+        return output
+    @staticmethod
+    @once_differentiable
+    def backward(ctx, grad_output):
+        input, grid = ctx.saved_tensors
+        padding_mode = ctx.padding_mode
+        backend = type2backend[input.type()]
+        grad_input = input.new(input.size())
+        grad_grid = grid.new(grid.size())
+        if input.dim() == 4:
+            backend.SpatialGridSamplerBilinear_updateGradInput(
+                backend.library_state, input, grad_input,
+                grid, grad_grid, grad_output, padding_mode)
+        elif input.dim() == 5:
+            backend.VolumetricGridSamplerBilinear_updateGradInput(
+                backend.library_state, input, grad_input,
+                grid, grad_grid, grad_output, padding_mode)
+        else:
+            raise ValueError("input has to be 4d or 5d but got input of shape: {}".format(input.shape))
+        return grad_input, grad_grid, None
+
 
 
 if __name__ == '__main__':
