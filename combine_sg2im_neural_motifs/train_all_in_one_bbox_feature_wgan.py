@@ -94,7 +94,7 @@ def check_model(args, loader, model):
         for i in range(args.num_diff_noise):
             _batch = deepcopy(batch)
             result = model[_batch]
-            same_input_different_noise.append(result.imgs_pred)
+            same_input_different_noise.append(result.imgs_pred.detach().cpu())
         different_same_input = [torch.cat([batch[i:i+1] for batch in same_input_different_noise], dim=3) for i in range(len(same_input_different_noise[0]))]
         different_same_input = torch.cat(different_same_input, dim=2)
 
