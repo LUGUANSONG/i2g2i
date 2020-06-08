@@ -261,9 +261,7 @@ class neural_motifs_sg2im_model(nn.Module):
 
         H, W = self.args.image_size
         bg_layout = boxes_to_layout(torch.ones(boxes.shape[0], 3).to(imgs.device), boxes, obj_to_img, H, W)
-        print(bg_layout.shape, bg_layout.min(), bg_layout.max())
-        bg_layout = 1 - bg_layout
-        print(bg_layout.shape, bg_layout.min(), bg_layout.max())
+        bg_layout = (bg_layout <= 0).type(imgs.dtype)
 
         layout = layout.detach()
         if self.args.condition_d_img_on_class_label_map:
