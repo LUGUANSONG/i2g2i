@@ -192,6 +192,9 @@ def _pool_samples(samples, clean_mask_sampled, obj_to_img, pooling='sum'):
     return out
 
 
+MODE_ZEROS = 0
+MODE_BORDER = 1
+
 class GridSampler(Function):
     @staticmethod
     def forward(ctx, input, grid, padding_mode='zeros'):

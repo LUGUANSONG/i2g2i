@@ -148,6 +148,7 @@ parser.add_argument('--normalization', default='batch')
 parser.add_argument('--activation', default='leakyrelu-0.2')
 parser.add_argument('--layout_noise_dim', default=32, type=int)
 parser.add_argument('--object_noise_dim', default=0, type=int)
+parser.add_argument('--noise_apply_method', default="concat", type=str)
 parser.add_argument('--noise_mask_ratio', type=float, default=0.0)
 parser.add_argument('--noise_std', type=float, default=1)
 parser.add_argument('--noise_std_mode', type=str, default='fix', help='can be fix, change')
@@ -166,6 +167,7 @@ parser.add_argument('--predicate_pred_loss_weight', default=0, type=float)  # DE
 
 # Perceptual loss
 parser.add_argument('--perceptual_loss_weight', default=0.0, type=float)
+parser.add_argument('--perceptual_not_on_noise', default=False, type=bool_flag)
 
 # Generic discriminator options
 parser.add_argument('--discriminator_loss_weight', default=0.01, type=float)

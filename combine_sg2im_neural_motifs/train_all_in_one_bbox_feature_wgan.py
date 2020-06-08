@@ -237,7 +237,11 @@ def main(args):
                 args, imgs, imgs_pred, mask_noise_indexes)
 
             if criterionVGG is not None:
-                total_loss = add_loss(total_loss, criterionVGG(imgs_pred, imgs), losses, 'perceptual_loss',
+                if mask_noise_indexes is not None and args.perceptual_not_on_noise:
+                    perceptual_loss = criterionVGG(imgs_pred[mask_noise_indexes], imgs[mask_noise_indexes])
+                else:
+                    perceptual_loss = criterionVGG(imgs_pred, imgs)
+                total_loss = add_loss(total_loss, perceptual_loss, losses, 'perceptual_loss',
                                       args.perceptual_loss_weight)
 
             if all_in_one_model.obj_discriminator is not None:

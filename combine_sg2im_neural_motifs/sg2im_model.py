@@ -180,7 +180,7 @@ class Sg2ImModel(nn.Module):
                                obj_to_img, H, W)
     ret_layout = layout
 
-    if self.args.object_noise_dim > 0 and mask_noise_indexes is not None:
+    if self.args.object_noise_dim > 0 and mask_noise_indexes is not None and self.training:
       layout[mask_noise_indexes, self.gconv_dim:] = 0
 
     if self.layout_noise_dim > 0:
@@ -190,7 +190,7 @@ class Sg2ImModel(nn.Module):
       noise_std = torch.zeros(noise_shape, dtype=layout.dtype,
                                  device=layout.device).fill_(self.args.noise_std)
       layout_noise = torch.normal(mean=0.0, std=noise_std)
-      if mask_noise_indexes is not None:
+      if mask_noise_indexes is not None and self.training:
         layout_noise[mask_noise_indexes] = 0.
       # layout_noise = torch.randn(noise_shape, dtype=layout.dtype,
       #                            device=layout.device)
