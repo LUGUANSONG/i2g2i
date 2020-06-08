@@ -260,7 +260,7 @@ class neural_motifs_sg2im_model(nn.Module):
                 imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmaps, mask_noise_indexes)
 
         H, W = self.args.image_size
-        bg_layout = boxes_to_layout(torch.ones(boxes.shape[0], 3), boxes, obj_to_img, H, W)
+        bg_layout = boxes_to_layout(torch.ones(boxes.shape[0], 3).to(imgs.device), boxes, obj_to_img, H, W)
         print(bg_layout.shape, bg_layout.min(), bg_layout.max())
         bg_layout = 1 - bg_layout
         print(bg_layout.shape, bg_layout.min(), bg_layout.max())
