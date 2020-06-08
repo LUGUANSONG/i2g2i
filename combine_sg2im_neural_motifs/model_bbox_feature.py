@@ -262,6 +262,7 @@ class neural_motifs_sg2im_model(nn.Module):
         H, W = self.args.image_size
         bg_layout = boxes_to_layout(torch.ones(boxes.shape[0], 3).to(imgs.device), boxes, obj_to_img, H, W)
         bg_layout = (bg_layout <= 0).type(imgs.dtype)
+        print(bg_layout.shape, bg_layout.min(), bg_layout.max())
 
         layout = layout.detach()
         if self.args.condition_d_img_on_class_label_map:
@@ -369,6 +370,7 @@ class neural_motifs_sg2im_model(nn.Module):
             d_scores_fake_bg=d_scores_fake_bg,
             d_scores_real_bg=d_scores_real_bg,
             d_bg_gp=d_bg_gp,
+            bg_layout=bg_layout,
         )
         # return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
         #        d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img
@@ -428,6 +430,7 @@ class Result(object):
             d_scores_fake_bg=None,
             d_scores_real_bg=None,
             d_bg_gp=None,
+            bg_layout=None,
             ):
         self.__dict__.update(locals())
         del self.__dict__['self']

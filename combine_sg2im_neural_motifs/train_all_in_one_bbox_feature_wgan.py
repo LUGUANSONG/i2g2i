@@ -102,6 +102,7 @@ def check_model(args, loader, model):
         samples['gt_img'] = imgs
         samples['pred_img'] = imgs_pred
         samples['diff_noise_img'] = different_same_input
+        samples['bg_layout'] = result.bg_layout
         if model.obj_discriminator is not None:
             real_crops, fake_crops = result.real_crops, result.fake_crops
             samples['real_crops'] = real_crops
