@@ -189,7 +189,7 @@ def main(args):
         obj_fmaps=result.obj_fmaps
         d_scores_fake_bg, d_scores_real_bg, d_bg_gp = result.d_scores_fake_bg, result.d_scores_real_bg, result.d_bg_gp
 
-        d_obj_losses, d_img_losses = None, None
+        d_obj_losses, d_img_losses, d_bg_losses = None, None, None
         if all_in_one_model.obj_discriminator is not None:
             with timeit('d_obj loss', args.timing):
                 d_obj_losses = LossManager()
