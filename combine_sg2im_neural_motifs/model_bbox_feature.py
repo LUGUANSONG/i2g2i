@@ -265,7 +265,7 @@ class neural_motifs_sg2im_model(nn.Module):
 
         layout = layout.detach()
         if self.args.condition_d_img_on_class_label_map:
-            layout = boxes_to_layout((objs+1).view(-1, 1).repeat(1, 3), boxes, obj_to_img, H, W)
+            layout = boxes_to_layout((objs+1).view(-1, 1).repeat(1, 3).type(imgs.dtype), boxes, obj_to_img, H, W)
 
         g_scores_fake_crop, g_obj_scores_fake_crop, g_rec_feature_fake_crop = None, None, None
         g_scores_fake_img = None
