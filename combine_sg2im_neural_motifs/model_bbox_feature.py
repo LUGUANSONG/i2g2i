@@ -100,7 +100,7 @@ def build_bg_discriminator(args):
         return discriminator, d_kwargs
 
     d_kwargs = {
-        'arch': args.d_background_arch,
+        'arch': args.d_bg_arch,
         'normalization': args.d_normalization,
         'activation': args.d_activation,
         'padding': args.d_padding,
