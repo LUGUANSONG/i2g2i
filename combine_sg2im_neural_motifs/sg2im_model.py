@@ -86,15 +86,22 @@ class Sg2ImModel(nn.Module):
     # box_net_layers = [gconv_dim, gconv_hidden_dim, box_net_dim]
     # self.box_net = build_mlp(box_net_layers, batch_norm=mlp_normalization)
 
+    if args.noise_apply_method == "concat":
+      factor = 1
+    elif args.noise_apply_method == "add":
+      factor = 0
+    else:
+      raise Exception("unrecognized noise_apply_method: %s" % args.noise_apply_method)
+
     self.mask_net = None
     if mask_size is not None and mask_size > 0:
-      self.mask_net = self._build_mask_net(gconv_dim, mask_size)
+      self.mask_net = self._build_mask_net(gconv_dim + args.object_noise_dim * factor, mask_size)
 
     # rel_aux_layers = [2 * embedding_dim + 8, gconv_hidden_dim, num_preds]
     # self.rel_aux_net = build_mlp(rel_aux_layers, batch_norm=mlp_normalization)
 
     refinement_kwargs = {
-      'dims': (gconv_dim + args.object_noise_dim + layout_noise_dim,) + refinement_dims,
+      'dims': (gconv_dim + args.object_noise_dim * factor + layout_noise_dim * factor,) + refinement_dims,
       'normalization': normalization,
       'activation': activation,
     }
@@ -151,8 +158,22 @@ class Sg2ImModel(nn.Module):
     #   obj_vecs, pred_vecs = self.gconv_net(obj_vecs, pred_vecs, edges)
     obj_vecs = self.obj_fmap_net(obj_fmaps)
     if self.args.object_noise_dim > 0:
-      object_noise = torch.randn((obj_vecs.shape[0], self.args.object_noise_dim), dtype=obj_vecs.dtype, device=obj_vecs.device)
-      obj_vecs = torch.cat([obj_vecs, object_noise], dim=1)
+      # select objs belongs to images in mask_noise_indexes
+      mask_noise_obj_index_list = []
+      for ind in mask_noise_indexes:
+        mask_noise_obj_index_list.append((obj_to_img == ind).nonzero()[:, 0])
+      mask_noise_obj_indexes = torch.cat(mask_noise_obj_index_list, dim=0)[:, 0]
+
+      if self.args.noise_apply_method == "concat":
+        object_noise = torch.randn((obj_vecs.shape[0], self.args.object_noise_dim), dtype=obj_vecs.dtype, device=obj_vecs.device)
+        if mask_noise_indexes is not None and self.training:
+          object_noise[mask_noise_obj_indexes] = 0
+        obj_vecs = torch.cat([obj_vecs, object_noise], dim=1)
+      elif self.args.noise_apply_method == "add":
+        object_noise = torch.randn(obj_vecs.shape, dtype=obj_vecs.dtype, device=obj_vecs.device)
+        if mask_noise_indexes is not None and self.training:
+          object_noise[mask_noise_obj_indexes] = 0
+        obj_vecs = obj_vecs + object_noise
 
     # boxes_pred = self.box_net(obj_vecs)
 
@@ -180,12 +201,12 @@ class Sg2ImModel(nn.Module):
                                obj_to_img, H, W)
     ret_layout = layout
 
-    if self.args.object_noise_dim > 0 and mask_noise_indexes is not None and self.training:
-      layout[mask_noise_indexes, self.gconv_dim:] = 0
-
     if self.layout_noise_dim > 0:
       N, C, H, W = layout.size()
-      noise_shape = (N, self.layout_noise_dim, H, W)
+      if self.args.noise_apply_method == "concat":
+        noise_shape = (N, self.layout_noise_dim, H, W)
+      elif self.args.noise_apply_method == "add":
+        noise_shape = layout.shape
       # print("check noise_std here, it is %.10f" % self.args.noise_std)
       noise_std = torch.zeros(noise_shape, dtype=layout.dtype,
                                  device=layout.device).fill_(self.args.noise_std)
@@ -194,7 +215,10 @@ class Sg2ImModel(nn.Module):
         layout_noise[mask_noise_indexes] = 0.
       # layout_noise = torch.randn(noise_shape, dtype=layout.dtype,
       #                            device=layout.device)
-      layout = torch.cat([layout, layout_noise], dim=1)
+      if self.args.noise_apply_method == "concat":
+        layout = torch.cat([layout, layout_noise], dim=1)
+      elif self.args.noise_apply_method == "add":
+        layout = layout + layout_noise
     img = self.refinement_net(layout)
     return img, ret_layout
 
