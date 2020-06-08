@@ -210,7 +210,7 @@ parser.add_argument('--condition_d_img_on_class_label_map', default=False, type=
 # Background discriminator
 parser.add_argument('--d_bg_arch',
                     default='C4-64-2,C4-128-2,C4-256-2')
-parser.add_argument('--d_bg_weight', default=1.0, type=float)  # multiplied by d_loss_weight
+parser.add_argument('--d_bg_weight', default=0.0, type=float)  # multiplied by d_loss_weight
 parser.add_argument('--d_bg_mode', type=str, default='fix', help='can be fix, change, change_linear')
 parser.add_argument('--d_bg_change_iters', type=str, default="-1")
 parser.add_argument('--d_bg_change_vals', type=str, default="")
