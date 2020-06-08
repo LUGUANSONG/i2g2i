@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.parallel
 from sg2im_model import Sg2ImModel
+from sg2im.layout import boxes_to_layout
 from discriminators import PatchDiscriminator, AcCropDiscriminator
 import os
 from collections import defaultdict
@@ -73,12 +74,37 @@ def build_img_discriminator(args):
     if d_weight == 0 or d_img_weight == 0:
         return discriminator, d_kwargs
 
+    layout_dim = 0
+    if args.condition_d_img:
+        layout_dim = args.gconv_dim
+        if args.condition_d_img_on_class_label_map:
+            layout_dim = 3
     d_kwargs = {
         'arch': args.d_img_arch,
         'normalization': args.d_normalization,
         'activation': args.d_activation,
         'padding': args.d_padding,
-        'layout_dim': args.gconv_dim if args.condition_d_img else 0,
+        'layout_dim': layout_dim,
+        'args': args
+    }
+    discriminator = PatchDiscriminator(**d_kwargs).cuda()
+    return discriminator, d_kwargs
+
+
+def build_bg_discriminator(args):
+    discriminator = None
+    d_kwargs = {}
+    d_weight = args.discriminator_loss_weight
+    d_bg_weight = args.d_bg_weight
+    if d_weight == 0 or d_bg_weight == 0:
+        return discriminator, d_kwargs
+
+    d_kwargs = {
+        'arch': args.d_background_arch,
+        'normalization': args.d_normalization,
+        'activation': args.d_activation,
+        'padding': args.d_padding,
+        'layout_dim': 3 if args.condition_d_bg else 0,
         'args': args
     }
     discriminator = PatchDiscriminator(**d_kwargs).cuda()
@@ -110,6 +136,7 @@ class neural_motifs_sg2im_model(nn.Module):
 
         self.obj_discriminator, d_obj_kwargs = build_obj_discriminator(args, vocab)
         self.img_discriminator, d_img_kwargs = build_img_discriminator(args)
+        self.bg_discriminator, d_bg_kwargs = build_bg_discriminator(args)
 
         if self.obj_discriminator is not None:
             self.obj_discriminator.train()
@@ -118,6 +145,10 @@ class neural_motifs_sg2im_model(nn.Module):
         if self.img_discriminator is not None:
             self.img_discriminator.train()
             self.optimizer_d_img = torch.optim.Adam(self.img_discriminator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
+
+        if self.bg_discriminator is not None:
+            self.bg_discriminator.train()
+            self.optimizer_d_bg = torch.optim.Adam(self.bg_discriminator.parameters(), lr=args.learning_rate, betas=(0.5, 0.999))
 
         restore_path = None
         if args.restore_from_checkpoint:
@@ -138,6 +169,10 @@ class neural_motifs_sg2im_model(nn.Module):
                 self.img_discriminator.load_state_dict(checkpoint['d_img_state'])
                 self.optimizer_d_img.load_state_dict(checkpoint['d_img_optim_state'])
 
+            if self.bg_discriminator is not None:
+                self.bg_discriminator.load_state_dict(checkpoint['d_bg_state'])
+                self.optimizer_d_bg.load_state_dict(checkpoint['d_bg_optim_state'])
+
             t = checkpoint['counters']['t']
             if 0 <= args.eval_mode_after <= t:
                 self.model.eval()
@@ -151,6 +186,7 @@ class neural_motifs_sg2im_model(nn.Module):
                 'model_kwargs': model_kwargs,
                 'd_obj_kwargs': d_obj_kwargs,
                 'd_img_kwargs': d_img_kwargs,
+                'd_bg_kwargs': d_bg_kwargs,
                 'losses_ts': [],
                 'losses': defaultdict(list),
                 'd_losses': defaultdict(list),
@@ -171,6 +207,7 @@ class neural_motifs_sg2im_model(nn.Module):
                 'model_state': None, 'model_best_state': None, 'optim_state': None,
                 'd_obj_state': None, 'd_obj_best_state': None, 'd_obj_optim_state': None,
                 'd_img_state': None, 'd_img_best_state': None, 'd_img_optim_state': None,
+                'd_bg_state': None, 'd_bg_best_state': None, 'd_bg_optim_state': None,
                 'best_t': [],
             }
 
@@ -221,10 +258,20 @@ class neural_motifs_sg2im_model(nn.Module):
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
                 imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmaps, mask_noise_indexes)
+
+        H, W = self.args.image_size
+        bg_layout = boxes_to_layout(torch.ones(boxes.shape[0], 3), boxes, obj_to_img, H, W)
+        print(bg_layout.shape, bg_layout.min(), bg_layout.max())
+        bg_layout = 1 - bg_layout
+        print(bg_layout.shape, bg_layout.min(), bg_layout.max())
+
         layout = layout.detach()
+        if self.args.condition_d_img_on_class_label_map:
+            layout = boxes_to_layout((objs+1).view(-1, 1).repeat(1, 3), boxes, obj_to_img, H, W)
 
         g_scores_fake_crop, g_obj_scores_fake_crop, g_rec_feature_fake_crop = None, None, None
         g_scores_fake_img = None
+        g_scores_fake_bg = None
         if self.calc_G_D_loss:
             # forward discriminators to train generator
             if self.obj_discriminator is not None:
@@ -239,12 +286,22 @@ class neural_motifs_sg2im_model(nn.Module):
                     else:
                         g_scores_fake_img = self.img_discriminator(imgs_pred)
 
+            if self.bg_discriminator is not None:
+                with timeit('d_bg forward for g', self.args.timing):
+                    if self.args.condition_d_bg:
+                        g_scores_fake_bg = self.bg_discriminator(imgs_pred, bg_layout)
+                    else:
+                        g_scores_fake_bg = self.bg_discriminator(imgs_pred * bg_layout)
+
         d_scores_fake_crop, d_obj_scores_fake_crop, fake_crops, d_rec_feature_fake_crop = None, None, None, None
         d_scores_real_crop, d_obj_scores_real_crop, real_crops, d_rec_feature_real_crop = None, None, None, None
         d_obj_gp = None
         d_scores_fake_img = None
         d_scores_real_img = None
         d_img_gp = None
+        d_scores_fake_bg = None
+        d_scores_real_bg = None
+        d_bg_gp = None
         if self.forward_D:
             # forward discriminators to train discriminators
             if self.obj_discriminator is not None:
@@ -273,6 +330,21 @@ class neural_motifs_sg2im_model(nn.Module):
                         else:
                             d_img_gp = gradient_penalty(imgs, imgs_fake, self.img_discriminator)
 
+            if self.bg_discriminator is not None:
+                imgs_fake = imgs_pred.detach()
+                with timeit('d_bg forward for d', self.args.timing):
+                    if self.args.condition_d_bg:
+                        d_scores_fake_bg = self.bg_discriminator(imgs_fake, bg_layout)
+                        d_scores_real_bg = self.bg_discriminator(imgs, bg_layout)
+                    else:
+                        d_scores_fake_bg = self.bg_discriminator(imgs_fake * bg_layout)
+                        d_scores_real_bg = self.bg_discriminator(imgs * bg_layout)
+
+                    if self.args.gan_loss_type == "wgan-gp" and self.training:
+                        if self.args.condition_d_bg:
+                            d_bg_gp = gradient_penalty(torch.cat([imgs, bg_layout], dim=1), torch.cat([imgs_fake, bg_layout], dim=1), self.bg_discriminator)
+                        else:
+                            d_bg_gp = gradient_penalty(imgs * bg_layout, imgs_fake * bg_layout, self.bg_discriminator)
         return Result(
             imgs=imgs,
             imgs_pred=imgs_pred,
@@ -295,6 +367,10 @@ class neural_motifs_sg2im_model(nn.Module):
             g_rec_feature_fake_crop=g_rec_feature_fake_crop,
             d_rec_feature_fake_crop=d_rec_feature_fake_crop,
             d_rec_feature_real_crop=d_rec_feature_real_crop,
+            g_scores_fake_bg=g_scores_fake_bg,
+            d_scores_fake_bg=d_scores_fake_bg,
+            d_scores_real_bg=d_scores_real_bg,
+            d_bg_gp=d_bg_gp,
         )
         # return imgs, imgs_pred, objs, g_scores_fake_crop, g_obj_scores_fake_crop, g_scores_fake_img, d_scores_fake_crop, \
         #        d_obj_scores_fake_crop, d_scores_real_crop, d_obj_scores_real_crop, d_scores_fake_img, d_scores_real_img
@@ -350,6 +426,10 @@ class Result(object):
             g_rec_feature_fake_crop=None,
             d_rec_feature_fake_crop=None,
             d_rec_feature_real_crop=None,
+            g_scores_fake_bg=None,
+            d_scores_fake_bg=None,
+            d_scores_real_bg=None,
+            d_bg_gp=None,
             ):
         self.__dict__.update(locals())
         del self.__dict__['self']

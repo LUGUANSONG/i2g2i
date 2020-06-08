@@ -178,7 +178,6 @@ parser.add_argument('--d_clip', default=None, type=float)
 parser.add_argument('--d_normalization', default='batch')
 parser.add_argument('--d_padding', default='valid')
 parser.add_argument('--d_activation', default='leakyrelu-0.2')
-parser.add_argument('--condition_d_img', action='store_true', help='image gan conditioned on layout?')
 
 # Object discriminator
 parser.add_argument('--d_obj_arch',
@@ -205,6 +204,18 @@ parser.add_argument('--d_img_change_iters', type=str, default="-1")
 parser.add_argument('--d_img_change_vals', type=str, default="")
 parser.add_argument('--d_img_gp_weight', type=float, default=10) # multiplied by d_loss_weight
 parser.add_argument('--down_to_1channel', default=False, type=bool_flag)
+parser.add_argument('--condition_d_img', action='store_true', help='image gan conditioned on layout?')
+parser.add_argument('--condition_d_img_on_class_label_map', default=False, type=bool_flag)
+
+# Background discriminator
+parser.add_argument('--d_bg_arch',
+                    default='C4-64-2,C4-128-2,C4-256-2')
+parser.add_argument('--d_bg_weight', default=1.0, type=float)  # multiplied by d_loss_weight
+parser.add_argument('--d_bg_mode', type=str, default='fix', help='can be fix, change, change_linear')
+parser.add_argument('--d_bg_change_iters', type=str, default="-1")
+parser.add_argument('--d_bg_change_vals', type=str, default="")
+parser.add_argument('--d_bg_gp_weight', type=float, default=10) # multiplied by d_loss_weight
+parser.add_argument('--condition_d_bg', action='store_true', help='bg gan conditioned on layout?')
 
 # Output options
 parser.add_argument('--print_every', default=10, type=int)

@@ -186,6 +186,7 @@ def main(args):
           result.d_obj_gp, result.d_img_gp
         d_rec_feature_fake_crop, d_rec_feature_real_crop = result.d_rec_feature_fake_crop, result.d_rec_feature_real_crop
         obj_fmaps=result.obj_fmaps
+        d_scores_fake_bg, d_scores_real_bg, d_bg_gp = result.d_scores_fake_bg, result.d_scores_real_bg, result.d_bg_gp
 
         d_obj_losses, d_img_losses = None, None
         if all_in_one_model.obj_discriminator is not None:
@@ -221,7 +222,20 @@ def main(args):
                 d_img_losses.total_loss.backward()
                 all_in_one_model.optimizer_d_img.step()
 
-        return d_obj_losses, d_img_losses
+        if all_in_one_model.bg_discriminator is not None:
+            with timeit('d_bg loss', args.timing):
+                d_bg_losses = LossManager()
+                d_bg_gan_loss = gan_d_loss(d_scores_real_bg, d_scores_fake_bg)
+                d_bg_losses.add_loss(d_bg_gan_loss, 'd_bg_gan_loss')
+                if args.gan_loss_type == 'wgan-gp':
+                    d_bg_losses.add_loss(d_bg_gp.mean(), 'd_bg_gp', args.d_bg_gp_weight)
+
+            with timeit('d_bg backward', args.timing):
+                all_in_one_model.optimizer_d_bg.zero_grad()
+                d_bg_losses.total_loss.backward()
+                all_in_one_model.optimizer_d_bg.step()
+
+        return d_obj_losses, d_img_losses, d_bg_losses
 
     def G_step(result):
         imgs, imgs_pred, objs, \
@@ -231,6 +245,7 @@ def main(args):
         mask_noise_indexes = result.mask_noise_indexes
         g_rec_feature_fake_crop = result.g_rec_feature_fake_crop
         obj_fmaps = result.obj_fmaps
+        g_scores_fake_bg = result.g_scores_fake_bg
         
         with timeit('loss', args.timing):
             total_loss, losses = calculate_model_losses(
@@ -258,6 +273,11 @@ def main(args):
                 weight = args.discriminator_loss_weight * args.d_img_weight
                 total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_img), losses,
                                       'g_gan_img_loss', weight)
+
+            if all_in_one_model.bg_discriminator is not None:
+                weight = args.discriminator_loss_weight * args.d_bg_weight
+                total_loss = add_loss(total_loss, gan_g_loss(g_scores_fake_bg), losses,
+                                      'g_gan_bg_loss', weight)
 
         losses['total_loss'] = total_loss.item()
 
@@ -318,7 +338,7 @@ def main(args):
                         True)
                     with timeit('forward', args.timing):
                         result = all_in_one_model[batch]
-                    d_obj_losses, d_img_losses = D_step(result)
+                    d_obj_losses, d_img_losses, d_bg_losses = D_step(result)
 
                 # train generator for 1 iteration after n_critic iterations
                 if t % (args.n_critic + args.n_gen) in (list(range(args.n_critic+1, args.n_critic + args.n_gen)) + [0]):
@@ -344,7 +364,7 @@ def main(args):
                 if not math.isfinite(losses['total_loss']):
                     print('WARNING: Got loss = NaN, not backpropping')
                     continue
-                d_obj_losses, d_img_losses = D_step(result)
+                d_obj_losses, d_img_losses, d_bg_losses = D_step(result)
 
             if t % (args.print_every * (args.n_critic + args.n_gen)) == 0:
                 print('t = %d / %d' % (t, args.num_iterations))
@@ -371,6 +391,14 @@ def main(args):
                         checkpoint['d_losses'][name].append(val)
                         summary_writer.add_scalar("D_img_%s" % name, val, t)
                     print("D_img: %s" % ", ".join(D_img_loss_list))
+
+                if all_in_one_model.bg_discriminator is not None:
+                    D_bg_loss_list = []
+                    for name, val in d_bg_losses.items():
+                        D_bg_loss_list.append('[%s]: %.4f' % (name, val))
+                        checkpoint['d_losses'][name].append(val)
+                        summary_writer.add_scalar("D_bg_%s" % name, val, t)
+                    print("D_bg: %s" % ", ".join(D_bg_loss_list))
 
             if t % (args.checkpoint_every * (args.n_critic + args.n_gen)) == 0:
                 print('checking on train')
@@ -402,6 +430,10 @@ def main(args):
                     checkpoint['d_img_state'] = all_in_one_model.img_discriminator.state_dict()
                     checkpoint['d_img_optim_state'] = all_in_one_model.optimizer_d_img.state_dict()
 
+                if all_in_one_model.bg_discriminator is not None:
+                    checkpoint['d_bg_state'] = all_in_one_model.bg_discriminator.state_dict()
+                    checkpoint['d_bg_optim_state'] = all_in_one_model.optimizer_d_bg.state_dict()
+
                 checkpoint['optim_state'] = all_in_one_model.optimizer.state_dict()
                 checkpoint['counters']['t'] = t
                 checkpoint['counters']['epoch'] = epoch
@@ -415,7 +447,8 @@ def main(args):
                                                '%s_no_model.pt' % args.checkpoint_name)
                 key_blacklist = ['model_state', 'optim_state', 'model_best_state',
                                  'd_obj_state', 'd_obj_optim_state', 'd_obj_best_state',
-                                 'd_img_state', 'd_img_optim_state', 'd_img_best_state']
+                                 'd_img_state', 'd_img_optim_state', 'd_img_best_state',
+                                 'd_bg_state', 'd_bg_optim_state', 'd_bg_best_state']
                 small_checkpoint = {}
                 for k, v in checkpoint.items():
                     if k not in key_blacklist:
