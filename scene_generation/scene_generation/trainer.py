@@ -513,10 +513,10 @@ class Trainer(nn.Module):
                              torchvision.utils.make_grid(g_fake_crops_print, normalize=True, scale_each=True), index)
         layout_one_hot_3d = self.one_hot_to_rgb(layout_one_hot)
         writer.add_image('img/layout',
-                         torchvision.utils.make_grid(layout_one_hot_3d, normalize=True, scale_each=True), index)
+                         torchvision.utils.make_grid(layout_one_hot_3d.cpu().data, normalize=True, scale_each=True), index)
         layout_pred_one_hot_3d = self.one_hot_to_rgb(layout_pred_one_hot)
         writer.add_image('img/layout_pred',
-                         torchvision.utils.make_grid(layout_pred_one_hot_3d, normalize=True, scale_each=True),
+                         torchvision.utils.make_grid(layout_pred_one_hot_3d.cpu().data, normalize=True, scale_each=True),
                          index)
 
     def one_hot_to_rgb(self, one_hot):
