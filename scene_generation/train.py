@@ -15,6 +15,7 @@ from scene_generation.metrics import jaccard
 from scene_generation.trainer import Trainer
 
 from scripts.inception_score import InceptionScore
+from tqdm import tqdm
 
 
 def build_coco_dsets(args):
@@ -208,7 +209,8 @@ def main(args):
         epoch += 1
         print('Starting epoch %d' % epoch)
 
-        for batch in train_loader:
+        # for batch in train_loader:
+        for step, batch in enumerate(tqdm(train_loader, desc='Training Epoch %d' % epoch, total=len(train_loader))):
             trainer.forward_D = True
             t += 1
             result = trainer[batch]
