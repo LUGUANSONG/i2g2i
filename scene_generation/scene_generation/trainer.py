@@ -373,7 +373,10 @@ class Trainer(nn.Module):
         self.generator_losses.all_losses['total_loss'] = self.generator_losses.total_loss.item()
 
         self.optimizer.zero_grad()
-        self.generator_losses.total_loss.backward()
+        if self.mask_discriminator is not None or self.obj_discriminator is not None or self.netD is not None:
+            self.generator_losses.total_loss.backward(retain_graph=True)
+        else:
+            self.generator_losses.total_loss.backward()
         self.optimizer.step()
 
     # def train_obj_discriminator(self, imgs, imgs_pred, objs, boxes, boxes_pred, obj_to_img):
@@ -390,7 +393,10 @@ class Trainer(nn.Module):
             d_obj_losses.add_loss(ac_loss_fake.mean(), 'd_ac_loss_fake')
 
             self.optimizer_d_obj.zero_grad()
-            d_obj_losses.total_loss.backward()
+            if self.netD is not None:
+                d_obj_losses.total_loss.backward(retain_graph=True)
+            else:
+                d_obj_losses.total_loss.backward()
             self.optimizer_d_obj.step()
 
     # def train_mask_discriminator(self, masks, masks_pred, objs):
@@ -412,7 +418,10 @@ class Trainer(nn.Module):
             d_mask_losses.add_loss(real_loss.mean(), 'real_loss', 0.5)
 
             self.optimizer_d_mask.zero_grad()
-            d_mask_losses.total_loss.backward()
+            if self.obj_discriminator is not None or self.netD is not None:
+                d_mask_losses.total_loss.backward(retain_graph=True)
+            else:
+                d_mask_losses.total_loss.backward()
             self.optimizer_d_mask.step()
 
     # def train_image_discriminator(self, imgs, imgs_pred, layout, layout_wrong):
