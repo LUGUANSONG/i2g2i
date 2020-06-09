@@ -1,4 +1,6 @@
-CUDA_VISIBLE_DEVICES=1 python scene_generation/train.py --d_mask_weight 0 --gconv_num_layers 0 --embedding_dim 4096 --batch_size 1
+CUDA_VISIBLE_DEVICES=4,5 python scene_generation/train.py --d_mask_weight 0 --gconv_num_layers 0 \
+--embedding_dim 4096 --batch_size 16 --num_gpus 2 --image_size 64,64 \
+--output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation
 
 
 

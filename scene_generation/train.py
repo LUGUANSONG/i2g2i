@@ -209,7 +209,7 @@ def main(args):
         print('Starting epoch %d' % epoch)
 
         for batch in train_loader:
-            model.forward_D = True
+            trainer.forward_D = True
             t += 1
             result = Trainer[batch]
             imgs, imgs_pred = result.imgs, result.imgs_pred
