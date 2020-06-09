@@ -233,7 +233,7 @@ class Trainer(nn.Module):
             scores_fake = self.mask_discriminator(masks_pred.unsqueeze(1), one_hot_obj)
             mask_loss = self.criterionGAN(scores_fake, True)
 
-            if args.d_mask_features_weight > 0:
+            if self.args.d_mask_features_weight > 0:
                 scores_real = self.mask_discriminator(masks.float().unsqueeze(1), one_hot_obj)
                 loss_mask_feat = self.calculate_features_loss(scores_fake, scores_real)
 
@@ -247,7 +247,7 @@ class Trainer(nn.Module):
             img_pred_fake = self.netD.forward(torch.cat((match_layout, imgs_pred), dim=1))
             g_gan_img_loss = self.criterionGAN(img_pred_fake, True)
 
-            if args.d_img_features_weight > 0:
+            if self.args.d_img_features_weight > 0:
                 loss_g_gan_feat_img = self.calculate_features_loss(img_pred_fake, pred_real)
 
         imgs_pred_detach = imgs_pred.detach()
