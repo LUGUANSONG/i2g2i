@@ -273,10 +273,11 @@ class Trainer(nn.Module):
 
         # trainer.train_obj_discriminator(imgs, imgs_pred_detach, objs, boxes, boxes_pred_detach, obj_to_img)
         d_obj_gan_loss, ac_loss_fake, ac_loss_real = None, None, None
+        d_fake_crops, d_real_crops = None, None
         if self.obj_discriminator is not None:
-            scores_fake, ac_loss_fake, self.d_fake_crops = self.obj_discriminator(imgs_pred_detach, objs, boxes_gt,
+            scores_fake, ac_loss_fake, d_fake_crops = self.obj_discriminator(imgs_pred_detach, objs, boxes_gt,
                                                                                   obj_to_img)
-            scores_real, ac_loss_real, self.d_real_crops = self.obj_discriminator(gt_imgs, objs, boxes_gt, obj_to_img)
+            scores_real, ac_loss_real, d_real_crops = self.obj_discriminator(gt_imgs, objs, boxes_gt, obj_to_img)
 
             d_obj_gan_loss = self.gan_d_loss(scores_real, scores_fake)
 
@@ -300,7 +301,8 @@ class Trainer(nn.Module):
             scores_fake=scores_fake, ac_loss=ac_loss, mask_loss=mask_loss, loss_mask_feat=loss_mask_feat,
             g_gan_img_loss=g_gan_img_loss, loss_g_gan_feat_img=loss_g_gan_feat_img, d_obj_gan_loss=d_obj_gan_loss,
             ac_loss_real=ac_loss_real, ac_loss_fake=ac_loss_fake, fake_loss=fake_loss, real_loss=real_loss,
-            loss_d_fake_img=loss_d_fake_img, loss_d_wrong_texture=loss_d_wrong_texture, loss_D_real=loss_D_real
+            loss_d_fake_img=loss_d_fake_img, loss_d_wrong_texture=loss_d_wrong_texture, loss_D_real=loss_D_real,
+            d_fake_crops=d_fake_crops, d_real_crops=d_real_crops,
         )
 
     def __getitem__(self, batch):
@@ -493,7 +495,7 @@ class Trainer(nn.Module):
                 checkpoint['d_losses'][name].append(val)
                 writer.add_scalar('d_img_loss/{}'.format(name), val, index)
 
-    def write_images(self, t, imgs, imgs_pred, layout_one_hot, layout_pred_one_hot):
+    def write_images(self, t, imgs, imgs_pred, layout_one_hot, layout_pred_one_hot, d_real_crops, d_fake_crops):
         writer = self.writer
         index = int(t / self.args.print_every)
         imgs_print = imagenet_deprocess_batch(imgs)
@@ -503,10 +505,10 @@ class Trainer(nn.Module):
             writer.add_image('img/pred', torchvision.utils.make_grid(imgs_pred_print, normalize=True, scale_each=True),
                              index)
         if self.obj_discriminator is not None:
-            d_real_crops_print = imagenet_deprocess_batch(self.d_real_crops)
+            d_real_crops_print = imagenet_deprocess_batch(d_real_crops)
             writer.add_image('objs/d_real',
                              torchvision.utils.make_grid(d_real_crops_print, normalize=True, scale_each=True), index)
-            g_fake_crops_print = imagenet_deprocess_batch(self.d_fake_crops)
+            g_fake_crops_print = imagenet_deprocess_batch(d_fake_crops)
             writer.add_image('objs/g_fake',
                              torchvision.utils.make_grid(g_fake_crops_print, normalize=True, scale_each=True), index)
         layout_one_hot_3d = self.one_hot_to_rgb(layout_one_hot)

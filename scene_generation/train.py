@@ -227,6 +227,7 @@ def main(args):
 
             # layout_one_hot = layout[:, :trainer.num_obj, :, :]
             layout_pred_one_hot = result.layout_pred[:, :trainer.num_obj, :, :]
+            d_real_crops, d_fake_crops = result.d_real_crops, result.d_fake_crops
 
             # trainer.train_generator(imgs, imgs_pred, masks, masks_pred, layout,
             #                         objs, boxes, boxes_pred, obj_to_img, use_gt)
@@ -248,7 +249,8 @@ def main(args):
 
             if t % args.print_every == 0 or t == 1:
                 trainer.write_losses(checkpoint, t)
-                trainer.write_images(t, imgs, imgs_pred, layout_pred_one_hot, layout_pred_one_hot)
+                trainer.write_images(t, imgs, imgs_pred, layout_pred_one_hot, layout_pred_one_hot, \
+                                     d_real_crops, d_fake_crops)
 
             if t % args.checkpoint_every == 0:
                 print('begin check model train')
