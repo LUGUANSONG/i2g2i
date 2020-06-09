@@ -94,14 +94,20 @@ class Sg2ImModel(nn.Module):
       raise Exception("unrecognized noise_apply_method: %s" % args.noise_apply_method)
 
     self.mask_net = None
+    object_factor = 1
     if mask_size is not None and mask_size > 0:
       self.mask_net = self._build_mask_net(gconv_dim + args.object_noise_dim * factor, mask_size)
+      if args.object_no_noise_with_mask:
+        object_factor = 0
+    else:
+      if args.object_no_noise_with_bbox:
+        object_factor = 0
 
     # rel_aux_layers = [2 * embedding_dim + 8, gconv_hidden_dim, num_preds]
     # self.rel_aux_net = build_mlp(rel_aux_layers, batch_norm=mlp_normalization)
 
     refinement_kwargs = {
-      'dims': (gconv_dim + args.object_noise_dim * factor + layout_noise_dim * factor,) + refinement_dims,
+      'dims': (gconv_dim + args.object_noise_dim * factor * object_factor + layout_noise_dim * factor,) + refinement_dims,
       'normalization': normalization,
       'activation': activation,
     }
@@ -157,6 +163,7 @@ class Sg2ImModel(nn.Module):
     # if self.gconv_net is not None:
     #   obj_vecs, pred_vecs = self.gconv_net(obj_vecs, pred_vecs, edges)
     obj_vecs = self.obj_fmap_net(obj_fmaps)
+    no_noise_obj_vecs = obj_vecs
     if self.args.object_noise_dim > 0:
       # select objs belongs to images in mask_noise_indexes
       if mask_noise_indexes is not None and self.training:
@@ -195,11 +202,18 @@ class Sg2ImModel(nn.Module):
     # layout = boxes_to_layout(obj_vecs, layout_boxes, obj_to_img, H, W)
 
     if masks_pred is None:
-      layout = boxes_to_layout(obj_vecs, layout_boxes, obj_to_img, H, W)
+      if self.args.object_no_noise_with_bbox:
+        layout = boxes_to_layout(no_noise_obj_vecs, layout_boxes, obj_to_img, H, W)
+      else:
+        layout = boxes_to_layout(obj_vecs, layout_boxes, obj_to_img, H, W)
     else:
       layout_masks = masks_pred if masks_gt is None else masks_gt
-      layout = masks_to_layout(obj_vecs, layout_boxes, layout_masks,
-                               obj_to_img, H, W)
+      if self.args.object_no_noise_with_mask:
+        layout = masks_to_layout(no_noise_obj_vecs, layout_boxes, layout_masks,
+                                 obj_to_img, H, W)
+      else:
+        layout = masks_to_layout(obj_vecs, layout_boxes, layout_masks,
+                                 obj_to_img, H, W)
     ret_layout = layout
 
     if self.layout_noise_dim > 0:
