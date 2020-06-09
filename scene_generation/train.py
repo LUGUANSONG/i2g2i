@@ -211,7 +211,7 @@ def main(args):
         for batch in train_loader:
             trainer.forward_D = True
             t += 1
-            result = Trainer[batch]
+            result = trainer[batch]
             imgs, imgs_pred = result.imgs, result.imgs_pred
 
             # batch = [tensor.cuda() for tensor in batch]
