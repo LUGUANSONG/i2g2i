@@ -159,10 +159,11 @@ class Sg2ImModel(nn.Module):
     obj_vecs = self.obj_fmap_net(obj_fmaps)
     if self.args.object_noise_dim > 0:
       # select objs belongs to images in mask_noise_indexes
-      mask_noise_obj_index_list = []
-      for ind in mask_noise_indexes:
-        mask_noise_obj_index_list.append((obj_to_img == ind).nonzero()[:, 0])
-      mask_noise_obj_indexes = torch.cat(mask_noise_obj_index_list, dim=0)[:, 0]
+      if mask_noise_indexes is not None and self.training:
+        mask_noise_obj_index_list = []
+        for ind in mask_noise_indexes:
+          mask_noise_obj_index_list.append((obj_to_img == ind).nonzero()[:, 0])
+        mask_noise_obj_indexes = torch.cat(mask_noise_obj_index_list, dim=0)[:, 0]
 
       if self.args.noise_apply_method == "concat":
         object_noise = torch.randn((obj_vecs.shape[0], self.args.object_noise_dim), dtype=obj_vecs.dtype, device=obj_vecs.device)
