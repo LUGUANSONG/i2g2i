@@ -109,6 +109,8 @@ def check_model(args, loader, model):
             samples['fake_crops'] = fake_crops
 
         for k, images in samples.items():
+            if k == "bg_layout":
+                continue
             images = images * torch.tensor([0.229, 0.224, 0.225], device=images.device).reshape(1, 3, 1, 1)
             images = images + torch.tensor([0.485, 0.456, 0.406], device=images.device).reshape(1, 3, 1, 1)
             images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
