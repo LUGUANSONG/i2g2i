@@ -169,7 +169,7 @@ class Sg2ImModel(nn.Module):
       if mask_noise_indexes is not None and self.training:
         mask_noise_obj_index_list = []
         for ind in mask_noise_indexes:
-          mask_noise_obj_index_list.append((obj_to_img == ind).nonzero()[:, 0])
+          mask_noise_obj_index_list.append((obj_to_img == ind).nonzero())
         mask_noise_obj_indexes = torch.cat(mask_noise_obj_index_list, dim=0)[:, 0]
 
       if self.args.noise_apply_method == "concat":
