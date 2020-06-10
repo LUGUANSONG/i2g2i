@@ -24,7 +24,7 @@ softmax = None
 
 # Call this function with list of images. Each of elements should be a
 # numpy array with values ranging from 0 to 255.
-def get_inception_score(images, splits=10):
+def get_inception_score(images, splits=10, bs=1):
   assert(type(images) == list)
   assert(type(images[0]) == np.ndarray)
   assert(len(images[0].shape) == 3)
@@ -34,7 +34,7 @@ def get_inception_score(images, splits=10):
   for img in images:
     img = img.astype(np.float32)
     inps.append(np.expand_dims(img, 0))
-  bs = 1
+  # bs = 1
   with tf.Session() as sess:
     preds = []
     n_batches = int(math.ceil(float(len(inps)) / float(bs)))
@@ -99,6 +99,7 @@ def _init_inception():
 if __name__ == "__main__":
     # img_dir = "../detector-sg2im-checkpoints/vg64_l1/test/"
     img_dir = sys.argv[1]
+    batch_size = int(sys.argv[2])
     img_files = os.listdir(img_dir)
     print("test the IS score for images in %s, find %d images" % (img_dir, len(img_files)))
     img_files = [join(img_dir, file) for file in img_files]
@@ -108,9 +109,9 @@ if __name__ == "__main__":
     if softmax is None:
       _init_inception()
 
-    mean, std = get_inception_score(imgs, splits=5)
+    mean, std = get_inception_score(imgs, splits=5, bs=batch_size)
     print(mean, std)
     if img_dir[-1] == "/":
-        img_dir = imgs_dir[:-1]
+        img_dir = img_dir[:-1]
     with open(join(dirname(img_dir), "test_metrics.txt"), "a") as f:
         f.write("IS score: %f + %f\n\n" % (mean, std))
