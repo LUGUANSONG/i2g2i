@@ -24,7 +24,7 @@ import gc
 
 
 class VG(Dataset):
-    def __init__(self, mode, transform, dict_file=VG_SGG_DICT_FN):
+    def __init__(self, mode, transform, args=None, dict_file=VG_SGG_DICT_FN):
         """
         Torch dataset for VisualGenome
         :param mode: Must be train, test, or val
@@ -44,6 +44,7 @@ class VG(Dataset):
         if mode not in ('test', 'train', 'val'):
             raise ValueError("Mode must be in test, train, or val. Supplied {}".format(mode))
         self.mode = mode
+        self.args = args
 
         pickle_files_dir = join(dirname(VG_IMAGES), mode)
         pickle_files = list(filter(lambda x: x.endswith(".pkl"), os.listdir(pickle_files_dir)))
@@ -103,19 +104,33 @@ class VG(Dataset):
         image_unpadded = Image.open(fn).convert('RGB')
 
         flipped = pickle_file['flipped']
-        gt_boxes = pickle_file['bbox'].numpy()
-
         if flipped:
             image_unpadded = image_unpadded.transpose(Image.FLIP_LEFT_RIGHT)
+
+        gt_boxes = pickle_file['bbox'].numpy()
+        gt_classes = pickle_file['objs'].numpy() - 1
+        fmap = pickle_file['fmap']
+
+        if self.args is not None:
+            if self.args.exchange_feat_cls:
+                print("exchange feature vectors and classes among bboxes")
+                permute = torch.randperm(fmap.shape[0])
+                fmap = fmap[permute]
+                gt_classes = gt_classes[permute]
+
+            if self.args.change_bbox:
+                print("change the position of bboxes")
+                pass
+
 
         entry = {
             'img': self.transform(image_unpadded),
             'gt_boxes': gt_boxes,
-            'gt_classes': pickle_file['objs'].numpy() - 1,
+            'gt_classes': gt_classes,
             'index': index,
             'flipped': flipped,
             'fn': fn,
-            'fmap': pickle_file['fmap']
+            'fmap': fmap
         }
 
         assertion_checks(entry)

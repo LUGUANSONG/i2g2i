@@ -228,6 +228,8 @@ parser.add_argument('--checkpoint_name', default='checkpoint')
 parser.add_argument('--checkpoint_start_from', default=None)
 parser.add_argument('--restore_from_checkpoint', default=False, type=bool_flag)
 parser.add_argument('--output_subdir', type=str, default="test_noise")
+parser.add_argument('--exchange_feat_cls', default=False, type=bool_flag)
+parser.add_argument('--change_bbox', default=False, type=bool_flag)
 
 config_args = parser.parse_args()
 # IM_SCALE = self.image_size[0]
