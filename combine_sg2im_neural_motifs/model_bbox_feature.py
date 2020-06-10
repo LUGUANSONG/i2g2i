@@ -411,6 +411,7 @@ class Result(object):
             objs=None,
             obj_fmaps=None,
             boxes=None,
+            obj_to_img=None,
             g_scores_fake_crop=None,
             g_obj_scores_fake_crop=None,
             g_scores_fake_img=None,
