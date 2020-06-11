@@ -217,6 +217,10 @@ CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox
 --l1_pixel_loss_weight 1 --noise_mask_ratio 0.5 --ac_loss_weight 0 --d_obj_weight 0 \
 --print_every 100 --checkpoint_every 10000 --num_val_samples 100 --output_subdir test_std
 
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' \
+ubuntu@18.221.104.138:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/v2/vg64_gan_img0.01_l1_1_not_on_noise_cls0_obj0/test_std \
+./vg64_gan_img0.01_l1_1_not_on_noise_cls0_obj0_test_std
+
 machine 2
 CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature_same_img_permute_change_bbox.py \
 -b 8 -ngpu 2 -nwork 16 \

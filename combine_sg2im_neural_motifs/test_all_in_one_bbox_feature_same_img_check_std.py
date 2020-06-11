@@ -164,7 +164,7 @@ def check_model(args, loader, model, output_path):
                     box = boxes[ind] * 256
                     cls = objs[ind] + 1
                     draw = draw_box(draw, box, loader.dataset.ind_to_classes[cls])
-                image.save(join(out_dir, "img_layout.png"))
+                image.save(join(out_dir, "img_bboxes.png"))
 
             num_samples += imgs.size(0)
             if num_samples >= args.num_val_samples:

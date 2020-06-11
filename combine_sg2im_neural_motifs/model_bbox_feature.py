@@ -257,13 +257,39 @@ class neural_motifs_sg2im_model(nn.Module):
                 print("exchange feature vectors and classes among bboxes")
                 for img_ind in range(imgs.shape[0]):
                     ind = (obj_to_img == img_ind).nonzero()[:, 0]
-                    permute = ind[torch.randperm(len(ind))]
-                    obj_fmaps[ind] = obj_fmaps[permute]
-                    objs[ind] = objs[permute]
+                    # permute = ind[torch.randperm(len(ind))]
+                    # obj_fmaps[ind] = obj_fmaps[permute]
+                    permute_ind = ind[torch.randperm(len(ind))[:2]]
+                    permute = permute_ind[[1, 0]]
+                    obj_fmaps[permute_ind] = obj_fmaps[permute]
+                    objs[permute_ind] = objs[permute]
 
             if self.args.change_bbox:
                 print("change the position of bboxes")
-                pass
+                for img_ind in range(imgs.shape[0]):
+                    ind = (obj_to_img == img_ind).nonzero()[:, 0][0]
+                    if boxes[ind][3] < 0.8:
+                        print("move to bottom")
+                        boxes[ind][1] += (1 - boxes[ind][3])
+                        boxes[ind][3] = 1
+                    elif boxes[ind][1] > 0.2:
+                        print("move to top")
+                        boxes[ind][3] -= boxes[ind][1]
+                        boxes[ind][1] = 0
+                    elif boxes[ind][0] > 0.2:
+                        print("move to left")
+                        boxes[ind][2] -= boxes[ind][0]
+                        boxes[ind][0] = 0
+                    elif boxes[ind][2] < 0.8:
+                        print("move to right")
+                        boxes[ind][0] += (1 - boxes[ind][2])
+                        boxes[ind][2] = 1
+                    else:
+                        print("move to bottom right")
+                        boxes[ind][1] += (1 - boxes[ind][3])
+                        boxes[ind][3] = 1
+                        boxes[ind][0] += (1 - boxes[ind][2])
+                        boxes[ind][2] = 1
 
         mask_noise_indexes = torch.randperm(imgs.shape[0])[:int(self.args.noise_mask_ratio * imgs.shape[0])].to(imgs.device)
         if len(mask_noise_indexes) == 0:
