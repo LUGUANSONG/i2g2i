@@ -94,13 +94,20 @@ def check_model(args, loader, model, output_path):
     model.forward_G = True
     model.calc_G_D_loss = False
     model.forward_D = False
+
+    exchange_feat_cls = args.exchange_feat_cls
+    change_bbox = args.change_bbox
     with torch.no_grad():
         for _batch in loader:
             for i in range(args.num_diff_noise):
                 if i == 0:
                     args.exchange_feat_cls = False
+                    args.change_bbox = False
                 else:
-                    args.exchange_feat_cls = True
+                    if exchange_feat_cls:
+                        args.exchange_feat_cls = True
+                    if change_bbox:
+                        args.change_bbox = True
 
                 batch = copy.deepcopy(_batch)
                 result = model[batch]

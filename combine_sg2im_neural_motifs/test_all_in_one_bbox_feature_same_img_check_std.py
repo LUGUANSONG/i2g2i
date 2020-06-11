@@ -142,7 +142,7 @@ def check_model(args, loader, model, output_path):
                 image.save(join(out_dir, 'img_layout.png'))
 
                 image = transforms.ToPILImage()(imgs[k]).convert("RGB")
-                image.save(join(out_dir, "img_pred_mean.png"))
+                image.save(join(out_dir, "img.png"))
 
                 stds = imgs_pred_stds[k].numpy()
                 for i, std in enumerate(stds):
