@@ -96,7 +96,7 @@ def check_model(args, loader, model, output_path):
     model.forward_D = False
     with torch.no_grad():
         # for _batch in loader:
-        for batch_ind in len(loader):
+        for batch_ind in range(len(loader)):
             for i in range(args.num_diff_noise):
                 if i == 0:
                     args.exchange_feat_cls = False
