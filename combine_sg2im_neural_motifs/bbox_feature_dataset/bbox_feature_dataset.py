@@ -111,16 +111,16 @@ class VG(Dataset):
         gt_classes = pickle_file['objs'].numpy() - 1
         fmap = pickle_file['fmap']
 
-        if self.args is not None:
-            if self.args.exchange_feat_cls:
-                print("exchange feature vectors and classes among bboxes")
-                permute = torch.randperm(fmap.shape[0])
-                fmap = fmap[permute]
-                gt_classes = gt_classes[permute]
-
-            if self.args.change_bbox:
-                print("change the position of bboxes")
-                pass
+        # if self.args is not None:
+        #     if self.args.exchange_feat_cls:
+        #         print("exchange feature vectors and classes among bboxes")
+        #         permute = torch.randperm(fmap.shape[0])
+        #         fmap = fmap[permute]
+        #         gt_classes = gt_classes[permute]
+        #
+        #     if self.args.change_bbox:
+        #         print("change the position of bboxes")
+        #         pass
 
 
         entry = {

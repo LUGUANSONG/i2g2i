@@ -252,6 +252,19 @@ class neural_motifs_sg2im_model(nn.Module):
         obj_fmaps = gt_fmaps
         objs = gt_classes[:, 1]
 
+        if self.args is not None:
+            if self.args.exchange_feat_cls:
+                print("exchange feature vectors and classes among bboxes")
+                for img_ind in range(imgs.shape[0]):
+                    ind = (obj_to_img == img_ind).nonzero()[:, 0]
+                    permute = ind[torch.randperm(len(ind))]
+                    obj_fmaps[ind] = obj_fmaps[permute]
+                    objs[ind] = objs[permute]
+
+            if self.args.change_bbox:
+                print("change the position of bboxes")
+                pass
+
         mask_noise_indexes = torch.randperm(imgs.shape[0])[:int(self.args.noise_mask_ratio * imgs.shape[0])].to(imgs.device)
         if len(mask_noise_indexes) == 0:
             mask_noise_indexes = None

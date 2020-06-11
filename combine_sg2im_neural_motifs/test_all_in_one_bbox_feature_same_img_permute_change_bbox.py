@@ -95,15 +95,14 @@ def check_model(args, loader, model, output_path):
     model.calc_G_D_loss = False
     model.forward_D = False
     with torch.no_grad():
-        # for _batch in loader:
-        for batch_ind in range(len(loader)):
+        for _batch in loader:
             for i in range(args.num_diff_noise):
                 if i == 0:
                     args.exchange_feat_cls = False
                 else:
                     args.exchange_feat_cls = True
 
-                batch = loader[batch_ind]
+                batch = copy.deepcopy(_batch)
                 result = model[batch]
                 imgs, imgs_pred, objs = result.imgs, result.imgs_pred, result.objs
                 boxes, obj_to_img = result.boxes, result.obj_to_img
