@@ -137,7 +137,7 @@ def check_model(args, loader, model, output_path):
                     image.save(join(out_dir, "img_%d.png" % i))
 
                     # draw bbox and class
-                    image = torch.ones(256, 256)
+                    image = torch.ones(3, 256, 256)
                     image = transforms.ToPILImage()(image).convert("RGB")
                     draw = ImageDraw.Draw(image)
                     index = (obj_to_img == k).nonzero()[:, 0]
