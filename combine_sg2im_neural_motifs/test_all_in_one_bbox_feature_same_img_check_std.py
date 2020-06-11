@@ -38,11 +38,44 @@ from torchvision import transforms
 from bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
 # from config import ModelConfig
 from config_args import config_args
+from PIL import Image, ImageDraw, ImageFont
 
 # combine
 from model_bbox_feature import neural_motifs_sg2im_model
 
 torch.backends.cudnn.benchmark = True
+
+font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 8)
+
+
+def draw_box(draw, boxx, text_str):
+    box = tuple([float(b) for b in boxx])
+    if '-GT' in text_str:
+        color = (255, 128, 0, 255)
+    else:
+        color = (0, 128, 0, 255)
+
+    # color = tuple([int(x) for x in cmap(cls_ind)])
+
+    # draw the fucking box
+    draw.line([(box[0], box[1]), (box[2], box[1])], fill=color, width=2)
+    draw.line([(box[2], box[1]), (box[2], box[3])], fill=color, width=2)
+    draw.line([(box[2], box[3]), (box[0], box[3])], fill=color, width=2)
+    draw.line([(box[0], box[3]), (box[0], box[1])], fill=color, width=2)
+
+    # draw.rectangle(box, outline=color)
+    w, h = draw.textsize(text_str, font=font)
+
+    x1text = box[0]
+    y1text = max(box[1] - h, 0)
+    x2text = min(x1text + w, draw.im.size[0])
+    y2text = y1text + h
+    print("drawing {}x{} rectangle at {:.1f} {:.1f} {:.1f} {:.1f}".format(
+        h, w, x1text, y1text, x2text, y2text))
+
+    draw.rectangle((x1text, y1text, x2text, y2text), fill=color)
+    draw.text((x1text, y1text), text_str, fill='black', font=font)
+    return draw
 
 
 def check_args(args):
@@ -69,6 +102,7 @@ def check_model(args, loader, model, output_path):
                 batch = copy.deepcopy(_batch)
                 result = model[batch]
                 imgs, imgs_pred, objs = result.imgs, result.imgs_pred, result.objs
+                boxes, obj_to_img = result.boxes, result.obj_to_img
 
                 imgs_pred = imgs_pred.cpu()
 
@@ -105,7 +139,7 @@ def check_model(args, loader, model, output_path):
                 image.save(join(out_dir, "img_pred_mean.png"))
 
                 image = transforms.ToPILImage()(bg_layout[k]).convert("RGB")
-                image.save(join(out_dir, 'mg_layout.png'))
+                image.save(join(out_dir, 'img_layout.png'))
 
                 image = transforms.ToPILImage()(imgs[k]).convert("RGB")
                 image.save(join(out_dir, "img_pred_mean.png"))
@@ -120,6 +154,17 @@ def check_model(args, loader, model, output_path):
                     plt.colorbar()
                     plt.savefig(join(out_dir, "img_pred_std_%d.png" % i))
                     plt.clf()
+
+                # draw bbox and class
+                image = torch.ones(3, 256, 256)
+                image = transforms.ToPILImage()(image).convert("RGB")
+                draw = ImageDraw.Draw(image)
+                index = (obj_to_img == k).nonzero()[:, 0]
+                for ind in index:
+                    box = boxes[ind] * 256
+                    cls = objs[ind] + 1
+                    draw = draw_box(draw, box, loader.dataset.ind_to_classes[cls])
+                image.save(join(out_dir, "img_layout.png" % i))
 
             num_samples += imgs.size(0)
             if num_samples >= args.num_val_samples:
