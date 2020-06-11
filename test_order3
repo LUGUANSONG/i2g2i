@@ -203,6 +203,10 @@ CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox
 --print_every 100 --checkpoint_every 10000 --num_val_samples 100 --output_subdir test_std
 
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' \
+ubuntu@3.14.68.45:/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf \
+/usr/share/fonts/truetype/freefont/
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' \
 ubuntu@18.221.104.138:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/v3/vg64_gan_img0.01_l1_1_not_on_noise_cls0.1_obj0.01/test_std \
 ./vg64_gan_img0.01_l1_1_not_on_noise_cls0.1_obj0.01_test_std
 
