@@ -163,9 +163,19 @@ def check_model(args, loader, model, output_path):
                         fmap = obj_fmaps[ind]
                         color_style = 'normal'
                         if i > 0:
-                            if (fmap == origin_fmaps[ind]).prod() != 1 or (box == boxes[ind]).prod() != 1:
+                            if (fmap == origin_fmaps[ind]).prod() != 1 or (box == origin_bboxes[ind]).prod() != 1:
+                                # color_style = 'special'
+                                continue
+                        draw = draw_box(draw, box * 512, loader.dataset.ind_to_classes[cls + 1], color_style)
+                    for ind in index:
+                        box = boxes[ind]
+                        cls = objs[ind]
+                        fmap = obj_fmaps[ind]
+                        color_style = 'normal'
+                        if i > 0:
+                            if (fmap == origin_fmaps[ind]).prod() != 1 or (box == origin_bboxes[ind]).prod() != 1:
                                 color_style = 'special'
-                        draw = draw_box(draw, box * 256, loader.dataset.ind_to_classes[cls + 1], color_style)
+                                draw = draw_box(draw, box * 512, loader.dataset.ind_to_classes[cls + 1], color_style)
                     image.save(join(out_dir, "img_layout_%d.png" % i))
 
             num_samples += imgs.size(0)
