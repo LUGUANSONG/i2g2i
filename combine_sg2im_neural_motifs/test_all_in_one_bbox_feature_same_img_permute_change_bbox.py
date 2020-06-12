@@ -98,6 +98,7 @@ def check_model(args, loader, model, output_path):
     exchange_feat_cls = args.exchange_feat_cls
     change_bbox = args.change_bbox
     origin_bboxes, origin_objs, origin_fmaps = None, None, None
+    image_size = 256
     with torch.no_grad():
         for _batch in loader:
             for i in range(args.num_diff_noise):
@@ -145,15 +146,15 @@ def check_model(args, loader, model, output_path):
                         os.makedirs(out_dir)
 
                     image = transforms.ToPILImage()(image).convert("RGB")
-                    image = image.resize((256, 256))
-                    image.save(join(out_dir, "img_pred_%d.png" % i))
+                    img_pred = image.resize((image_size, image_size))
+                    # image.save(join(out_dir, "img_pred_%d.png" % i))
 
                     image = transforms.ToPILImage()(imgs[k]).convert("RGB")
-                    image = image.resize((256, 256))
-                    image.save(join(out_dir, "img_%d.png" % i))
+                    img = image.resize((image_size, image_size))
+                    # image.save(join(out_dir, "img_%d.png" % i))
 
                     # draw bbox and class
-                    image = torch.ones(3, 512, 512)
+                    image = torch.ones(3, image_size, image_size)
                     image = transforms.ToPILImage()(image).convert("RGB")
                     draw = ImageDraw.Draw(image)
                     index = (obj_to_img == k).nonzero()[:, 0]
@@ -166,7 +167,7 @@ def check_model(args, loader, model, output_path):
                             if (fmap == origin_fmaps[ind]).prod() != 1 or (box == origin_bboxes[ind]).prod() != 1:
                                 # color_style = 'special'
                                 continue
-                        draw = draw_box(draw, box * 512, loader.dataset.ind_to_classes[cls + 1], color_style)
+                        draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
                     for ind in index:
                         box = boxes[ind]
                         cls = objs[ind]
@@ -175,8 +176,14 @@ def check_model(args, loader, model, output_path):
                         if i > 0:
                             if (fmap == origin_fmaps[ind]).prod() != 1 or (box == origin_bboxes[ind]).prod() != 1:
                                 color_style = 'special'
-                                draw = draw_box(draw, box * 512, loader.dataset.ind_to_classes[cls + 1], color_style)
-                    image.save(join(out_dir, "img_layout_%d.png" % i))
+                                draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
+                    # image.save(join(out_dir, "img_layout_%d.png" % i))
+
+                    concat_image = Image.new('RGB', (image_size * 3, image_size))
+                    concat_image.paste(img, (0, 0))
+                    concat_image.paste(image, (image_size, 0))
+                    concat_image.paste(img_pred, (image_size * 2, 0))
+                    concat_image.save(join(out_dir, "img_%d.png" % i))
 
             num_samples += imgs.size(0)
             if num_samples >= args.num_val_samples:
