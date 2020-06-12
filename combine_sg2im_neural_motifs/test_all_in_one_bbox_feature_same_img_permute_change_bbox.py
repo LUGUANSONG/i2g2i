@@ -47,9 +47,9 @@ torch.backends.cudnn.benchmark = True
 font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 8)
 
 
-def draw_box(draw, boxx, text_str):
+def draw_box(draw, boxx, text_str, color_style='normal'):
     box = tuple([float(b) for b in boxx])
-    if '-GT' in text_str:
+    if color_style == "special":
         color = (255, 128, 0, 255)
     else:
         color = (0, 128, 0, 255)
@@ -97,6 +97,7 @@ def check_model(args, loader, model, output_path):
 
     exchange_feat_cls = args.exchange_feat_cls
     change_bbox = args.change_bbox
+    origin_bboxes, origin_objs, origin_fmaps = None, None, None
     with torch.no_grad():
         for _batch in loader:
             for i in range(args.num_diff_noise):
@@ -113,6 +114,12 @@ def check_model(args, loader, model, output_path):
                 result = model[batch]
                 imgs, imgs_pred, objs = result.imgs, result.imgs_pred, result.objs
                 boxes, obj_to_img = result.boxes, result.obj_to_img
+                obj_fmaps = result.obj_fmaps
+
+                if i == 0:
+                    origin_bboxes = boxes
+                    origin_objs = objs
+                    origin_fmaps = obj_fmaps
 
                 imgs_pred = imgs_pred.cpu()
                 images = imgs_pred * torch.tensor([0.229, 0.224, 0.225], device=imgs_pred.device).reshape(1, 3, 1, 1)
@@ -138,20 +145,27 @@ def check_model(args, loader, model, output_path):
                         os.makedirs(out_dir)
 
                     image = transforms.ToPILImage()(image).convert("RGB")
+                    image = image.resize((256, 256))
                     image.save(join(out_dir, "img_pred_%d.png" % i))
 
                     image = transforms.ToPILImage()(imgs[k]).convert("RGB")
+                    image = image.resize((256, 256))
                     image.save(join(out_dir, "img_%d.png" % i))
 
                     # draw bbox and class
-                    image = torch.ones(3, 256, 256)
+                    image = torch.ones(3, 512, 512)
                     image = transforms.ToPILImage()(image).convert("RGB")
                     draw = ImageDraw.Draw(image)
                     index = (obj_to_img == k).nonzero()[:, 0]
                     for ind in index:
-                        box = boxes[ind] * 256
-                        cls = objs[ind] + 1
-                        draw = draw_box(draw, box, loader.dataset.ind_to_classes[cls])
+                        box = boxes[ind]
+                        cls = objs[ind]
+                        fmap = obj_fmaps[ind]
+                        color_style = 'normal'
+                        if i > 0:
+                            if (fmap == origin_fmaps[ind]).prod() != 1 or (box == boxes[ind]).prod() != 1:
+                                color_style = 'special'
+                        draw = draw_box(draw, box * 256, loader.dataset.ind_to_classes[cls + 1], color_style)
                     image.save(join(out_dir, "img_layout_%d.png" % i))
 
             num_samples += imgs.size(0)

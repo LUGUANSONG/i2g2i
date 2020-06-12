@@ -267,7 +267,8 @@ class neural_motifs_sg2im_model(nn.Module):
             if self.args.change_bbox:
                 print("change the position of bboxes")
                 for img_ind in range(imgs.shape[0]):
-                    ind = (obj_to_img == img_ind).nonzero()[:, 0][0]
+                    ind = (obj_to_img == img_ind).nonzero()[:, 0]
+                    ind = torch.randperm(len(ind))[0]
                     if boxes[ind][3] < 0.8:
                         print("move to bottom")
                         boxes[ind][1] += (1 - boxes[ind][3])
