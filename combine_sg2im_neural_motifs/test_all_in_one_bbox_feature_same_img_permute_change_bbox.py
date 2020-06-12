@@ -44,7 +44,7 @@ from model_bbox_feature import neural_motifs_sg2im_model
 
 torch.backends.cudnn.benchmark = True
 
-font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 8)
+font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 16)
 
 
 def draw_box(draw, boxx, text_str, color_style='normal'):
