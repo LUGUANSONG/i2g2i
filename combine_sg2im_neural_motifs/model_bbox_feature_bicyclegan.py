@@ -364,11 +364,11 @@ class neural_motifs_sg2im_model(nn.Module):
                                                     mask_noise_indexes=mask_noise_indexes,
                                                     object_noise=z_random)
                     layout = layout.detach()
-                    crops_encoded = None,
-                    crops_pred_encoded = None,
-                    z_random = None,
-                    z_random_rec = None,
-                    mu_encoded = None,
+                    crops_encoded = None
+                    crops_pred_encoded = None
+                    z_random = None
+                    z_random_rec = None
+                    mu_encoded = None
                     logvar_encoded = None
 
         H, W = self.args.image_size
