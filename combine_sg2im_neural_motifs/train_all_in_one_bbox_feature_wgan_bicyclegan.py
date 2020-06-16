@@ -313,7 +313,7 @@ def main(args):
             with timeit('backward', args.timing):
                 all_in_one_model.optimizer_e_obj.zero_grad()
                 all_in_one_model.optimizer.zero_grad()
-                total_loss.backward()
+                total_loss.backward(retain_graph=True)
                 all_in_one_model.optimizer.step()
                 all_in_one_model.optimizer_e_obj.step()
 
