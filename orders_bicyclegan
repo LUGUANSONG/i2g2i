@@ -12,5 +12,5 @@ CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train_all_in_one_bbo
 --image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
 --l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
 --kl_loss_weight 0.01 --z_random_rec_loss_weight 0.5 --crops_encoded_rec_loss_weight 10 \
---l1_on_bg \
+--l1_on_bg 1 \
 --print_every 100 --checkpoint_every 10000 --num_val_samples 128

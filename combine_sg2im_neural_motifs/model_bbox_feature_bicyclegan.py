@@ -65,7 +65,6 @@ def build_obj_encoder(args):
             'normalization': args.d_normalization,
             'activation': args.d_activation,
             'padding': args.d_padding,
-            'object_size': args.crop_size,
             'args': args
         }
         obj_encoder = Encoder(**e_obj_kwargs).cuda()
