@@ -161,14 +161,20 @@ parser.add_argument('--use_boxes_pred_after', default=-1, type=int)
 # Generator losses
 parser.add_argument('--mask_loss_weight', default=0, type=float)
 parser.add_argument('--l1_pixel_loss_weight', default=1.0, type=float)
+parser.add_argument('--l1_on_bg', default=False, type=bool_flag)
 parser.add_argument('--l1_mode', type=str, default='fix', help='can be fix, change')
 parser.add_argument('--l1_change_iters', type=str, default="-1")
 parser.add_argument('--l1_change_vals', type=str, default="")
 parser.add_argument('--bbox_pred_loss_weight', default=10, type=float)
 parser.add_argument('--predicate_pred_loss_weight', default=0, type=float)  # DEPRECATED
+## bicyclegan losses
+parser.add_argument('--kl_loss_weight', default=0.01, type=float)
+parser.add_argument('--z_random_rec_loss_weight', default=0.5, type=float)
+parser.add_argument('--crops_encoded_rec_loss_weight', default=10., type=float)
 
 # Perceptual loss
 parser.add_argument('--perceptual_loss_weight', default=0.0, type=float)
+parser.add_argument('--perceptual_on_bg', default=False, type=bool_flag)
 parser.add_argument('--perceptual_not_on_noise', default=False, type=bool_flag)
 
 # Generic discriminator options
