@@ -15,7 +15,7 @@ CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train_all_in_one_bbo
 --l1_on_bg 1 --layout_noise_dim 0 --object_noise_dim 32 \
 --print_every 100 --checkpoint_every 10000 --num_val_samples 128
 
-CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan_bicyclegan.py \
+CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan_bicyclegan_image.py \
 -b 16 -ngpu 2 -nwork 16 \
 --output_dir ../detector-sg2im-checkpoints/v4/vg64_gan_img0.01_l1_1_on_noise_cls0.1_obj0.01_kl0.01_z_random_rec0.5_imgs_encoded_rec_10 \
 --image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
