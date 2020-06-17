@@ -45,12 +45,11 @@ class ImageEncoder(nn.Module):
       'padding': padding,
     }
     self.layout_noise_dim = args.layout_noise_dim
-    cnn, D = build_cnn(**cnn_kwargs)
-    self.cnn = nn.Sequential(cnn, GlobalAvgPool(), nn.Linear(D, self.layout_noise_dim * 2))
+    self.cnn, D = build_cnn(**cnn_kwargs)
 
   def forward(self, x):
     noise = self.cnn(x)
-    mu = noise[:, :self.layout_noise_dim]
-    logvar = noise[:, self.layout_noise_dim:]
+    mu = noise[:, :self.layout_noise_dim, :, :]
+    logvar = noise[:, self.layout_noise_dim:, :, :]
 
     return mu, logvar
