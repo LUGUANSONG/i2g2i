@@ -142,7 +142,7 @@ class neural_motifs_sg2im_model(nn.Module):
         super(neural_motifs_sg2im_model, self).__init__()
         self.args = args
 
-        # define and initial generator, obj_encoder, image_discriminator, obj_discriminator
+        # define and initial generator, img_encoder, image_discriminator, obj_discriminator
         # and corresponding optimizer
         vocab = {
                 'object_idx_to_name': ind_to_classes,
@@ -332,7 +332,6 @@ class neural_motifs_sg2im_model(nn.Module):
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
                 if self.training:
-                    # mu_encoded, logvar_encoded = self.obj_encoder(crops_encoded)
                     mu_encoded, logvar_encoded = self.img_encoder(imgs_encoded)
                     std = logvar_encoded.mul(0.5).exp_()
                     eps = torch.randn((std.size(0), std.size(1)), dtype=std.dtype, device=std.device)
@@ -347,7 +346,7 @@ class neural_motifs_sg2im_model(nn.Module):
                                                                  mask_noise_indexes=mask_noise_indexes_random,
                                                                  object_noise=z_random)
 
-                    mu_rec, logvar_rec = self.obj_encoder(imgs_pred_random)
+                    mu_rec, logvar_rec = self.img_encoder(imgs_pred_random)
                     z_random_rec = mu_rec
 
                     imgs_pred = torch.cat([imgs_pred_encoded, imgs_pred_random], dim=0)
