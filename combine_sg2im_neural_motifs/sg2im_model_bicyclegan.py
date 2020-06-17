@@ -221,6 +221,7 @@ class Sg2ImModel(nn.Module):
           layout_noise[mask_noise_indexes] = 0.
         # layout_noise = torch.randn(noise_shape, dtype=layout.dtype,
         #                            device=layout.device)
+      print(layout.shape, layout_noise.shape)
       if self.args.noise_apply_method == "concat":
         layout = torch.cat([layout, layout_noise], dim=1)
       elif self.args.noise_apply_method == "add":
