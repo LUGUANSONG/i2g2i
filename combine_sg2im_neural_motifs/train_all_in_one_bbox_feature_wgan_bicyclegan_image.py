@@ -257,8 +257,8 @@ def main(args):
         g_scores_fake_bg = result.g_scores_fake_bg
 
         bg_layout = result.bg_layout
-        imgs_encoded = result.crops_encoded
-        imgs_pred_encoded = result.crops_pred_encoded
+        imgs_encoded = result.imgs_encoded
+        imgs_pred_encoded = result.imgs_pred_encoded
         z_random = result.z_random
         z_random_rec = result.z_random_rec
         mu_encoded = result.mu_encoded
