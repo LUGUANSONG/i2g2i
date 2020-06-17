@@ -46,6 +46,11 @@ class ImageEncoder(nn.Module):
     }
     self.layout_noise_dim = args.layout_noise_dim
     self.cnn, D = build_cnn(**cnn_kwargs)
+    for i in range(len(self.cnn)):
+      if isinstance(self.cnn[i], nn.Conv2d):
+        origin_cnn = self.cnn[i]
+        self.cnn[i] = nn.Conv2d(origin_cnn.in_channels, origin_cnn.out_channels, kernel_size=origin_cnn.kernel_size,
+                                stride=origin_cnn.stride, padding=1)
 
   def forward(self, x):
     noise = self.cnn(x)
