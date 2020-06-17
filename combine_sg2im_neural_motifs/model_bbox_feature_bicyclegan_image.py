@@ -334,7 +334,7 @@ class neural_motifs_sg2im_model(nn.Module):
                 if self.training:
                     mu_encoded, logvar_encoded = self.img_encoder(imgs_encoded)
                     std = logvar_encoded.mul(0.5).exp_()
-                    eps = torch.randn((std.size(0), std.size(1)), dtype=std.dtype, device=std.device)
+                    eps = torch.randn(std.shape, dtype=std.dtype, device=std.device)
                     z_encoded = eps.mul(std).add_(mu_encoded)
                     z_random = torch.randn((imgs_random.shape[0], self.args.layout_noise_dim, imgs_random.shape[2], imgs_random.shape[3]),
                                            dtype=imgs_random.dtype, device=imgs_random.device)
