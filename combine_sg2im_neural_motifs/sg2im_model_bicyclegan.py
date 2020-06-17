@@ -120,7 +120,7 @@ class Sg2ImModel(nn.Module):
     layers.append(nn.Conv2d(dim, output_dim, kernel_size=1))
     return nn.Sequential(*layers)
 
-  def forward(self, obj_to_img, boxes_gt, obj_fmaps, mask_noise_indexes=None, masks_gt=None, object_noise=None):
+  def forward(self, obj_to_img, boxes_gt, obj_fmaps, mask_noise_indexes=None, masks_gt=None, object_noise=None, layout_noise=None):
     """
     Required Inputs:
     - objs: LongTensor of shape (O,) giving categories for all objects
@@ -207,19 +207,20 @@ class Sg2ImModel(nn.Module):
     ret_layout = layout
 
     if self.layout_noise_dim > 0:
-      N, C, H, W = layout.size()
-      if self.args.noise_apply_method == "concat":
-        noise_shape = (N, self.layout_noise_dim, H, W)
-      elif self.args.noise_apply_method == "add":
-        noise_shape = layout.shape
-      # print("check noise_std here, it is %.10f" % self.args.noise_std)
-      noise_std = torch.zeros(noise_shape, dtype=layout.dtype,
-                                 device=layout.device).fill_(self.args.noise_std)
-      layout_noise = torch.normal(mean=0.0, std=noise_std)
-      if mask_noise_indexes is not None and self.training:
-        layout_noise[mask_noise_indexes] = 0.
-      # layout_noise = torch.randn(noise_shape, dtype=layout.dtype,
-      #                            device=layout.device)
+      if layout_noise is None:
+        N, C, H, W = layout.size()
+        if self.args.noise_apply_method == "concat":
+          noise_shape = (N, self.layout_noise_dim, H, W)
+        elif self.args.noise_apply_method == "add":
+          noise_shape = layout.shape
+        # print("check noise_std here, it is %.10f" % self.args.noise_std)
+        noise_std = torch.zeros(noise_shape, dtype=layout.dtype,
+                                   device=layout.device).fill_(self.args.noise_std)
+        layout_noise = torch.normal(mean=0.0, std=noise_std)
+        if mask_noise_indexes is not None and self.training:
+          layout_noise[mask_noise_indexes] = 0.
+        # layout_noise = torch.randn(noise_shape, dtype=layout.dtype,
+        #                            device=layout.device)
       if self.args.noise_apply_method == "concat":
         layout = torch.cat([layout, layout_noise], dim=1)
       elif self.args.noise_apply_method == "add":

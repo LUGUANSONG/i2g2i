@@ -171,6 +171,7 @@ parser.add_argument('--predicate_pred_loss_weight', default=0, type=float)  # DE
 parser.add_argument('--kl_loss_weight', default=0.01, type=float)
 parser.add_argument('--z_random_rec_loss_weight', default=0.5, type=float)
 parser.add_argument('--crops_encoded_rec_loss_weight', default=10., type=float)
+parser.add_argument('--imgs_encoded_rec_loss_weight', default=10., type=float)
 
 # Perceptual loss
 parser.add_argument('--perceptual_loss_weight', default=0.0, type=float)

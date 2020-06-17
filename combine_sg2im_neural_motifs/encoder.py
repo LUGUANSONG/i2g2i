@@ -28,3 +28,28 @@ class Encoder(nn.Module):
     logvar = noise[:, self.object_noise_dim:]
 
     return mu, logvar
+
+
+class ImageEncoder(nn.Module):
+  def __init__(self, arch, normalization='batch', activation='leakyrelu-0.2',
+               padding='same', pooling='avg', args=None):
+    super(ImageEncoder, self).__init__()
+    print("i2g2i.combine_sg2im_neural_motifs.encoder.ImageEncoder")
+    input_dim = 3
+    arch = 'I%d,%s' % (input_dim, arch)
+    cnn_kwargs = {
+      'arch': arch,
+      'normalization': normalization,
+      'activation': activation,
+      'pooling': pooling,
+      'padding': padding,
+    }
+    cnn, D = build_cnn(**cnn_kwargs)
+    self.cnn = nn.Sequential(cnn, GlobalAvgPool(), nn.Linear(D, self.object_noise_dim * 2))
+
+  def forward(self, x):
+    noise = self.cnn(x)
+    mu = noise[:, :self.object_noise_dim]
+    logvar = noise[:, self.object_noise_dim:]
+
+    return mu, logvar
