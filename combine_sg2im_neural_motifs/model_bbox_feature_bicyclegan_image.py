@@ -61,7 +61,7 @@ def build_img_encoder(args):
         img_encoder.load_state_dict(state_dict)
     else:
         e_img_kwargs = {
-            'arch': args.d_img_arch,
+            'arch': args.e_img_arch,
             'normalization': args.d_normalization,
             'activation': args.d_activation,
             'padding': args.d_padding,
@@ -336,15 +336,15 @@ class neural_motifs_sg2im_model(nn.Module):
                     std = logvar_encoded.mul(0.5).exp_()
                     eps = torch.randn((std.size(0), std.size(1)), dtype=std.dtype, device=std.device)
                     z_encoded = eps.mul(std).add_(mu_encoded)
-                    z_random = torch.randn((imgs_random.shape[0], self.args.layout_noise_dim),
+                    z_random = torch.randn((imgs_random.shape[0], self.args.layout_noise_dim, imgs_random.shape[2], imgs_random.shape[3]),
                                            dtype=imgs_random.dtype, device=imgs_random.device)
 
                     imgs_pred_encoded, layout_encoded = self.model(obj_to_img_encoded, boxes_encoded, obj_fmaps_encoded,
                                                                    mask_noise_indexes=mask_noise_indexes_encoded,
-                                                                   object_noise=z_encoded)
+                                                                   layout_noise=z_encoded)
                     imgs_pred_random, layout_random = self.model(obj_to_img_random, boxes_random, obj_fmaps_random,
                                                                  mask_noise_indexes=mask_noise_indexes_random,
-                                                                 object_noise=z_random)
+                                                                 layout_noise=z_random)
 
                     mu_rec, logvar_rec = self.img_encoder(imgs_pred_random)
                     z_random_rec = mu_rec
@@ -353,11 +353,11 @@ class neural_motifs_sg2im_model(nn.Module):
 
                     layout = torch.cat([layout_encoded, layout_random], dim=0).detach()
                 else:
-                    z_random = torch.randn((imgs.shape[0], self.args.layout_noise_dim),
+                    z_random = torch.randn((imgs.shape[0], self.args.layout_noise_dim, imgs_random.shape[2], imgs_random.shape[3]),
                                            dtype=imgs.dtype, device=imgs.device)
                     imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmaps,
                                                     mask_noise_indexes=mask_noise_indexes,
-                                                    object_noise=z_random)
+                                                    layout_noise=z_random)
                     layout = layout.detach()
                     imgs_encoded = None
                     imgs_pred_encoded = None
