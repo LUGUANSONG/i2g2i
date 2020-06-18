@@ -132,7 +132,7 @@ def run_model(args, checkpoint, output_dir, loader=None):
             #     img_idx += 1
 
             imgs_pred = imgs_pred.cpu()
-            imgs = imgs.cpu()
+            imgs = gt_imgs.cpu()
 
             images = imgs_pred * torch.tensor([0.5, 0.5, 0.5], device=imgs_pred.device).reshape(1, 3, 1, 1)
             images = images + torch.tensor([0.5, 0.5, 0.5], device=images.device).reshape(1, 3, 1, 1)
