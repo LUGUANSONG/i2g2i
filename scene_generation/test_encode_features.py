@@ -14,6 +14,7 @@ from scipy.misc import imsave
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
+from tqdm import tqdm
 
 
 def makedir(base, name, flag=True):
@@ -65,7 +66,8 @@ def check_model(args, loader, model, checkpoint):
         features = {}
         for label in range(num_objs):
             features[label] = np.zeros((0, rep_size))
-        for i, batch in enumerate(loader):
+        # for i, batch in enumerate(loader):
+        for t, batch in enumerate(tqdm(loader, desc='extract object representation', total=len(loader))):
             if counter >= max_counter:
                 break
             # (all_imgs, all_objs, all_boxes, all_masks, all_triples,
