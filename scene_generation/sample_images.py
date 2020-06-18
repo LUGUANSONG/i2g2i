@@ -114,6 +114,7 @@ def run_model(args, checkpoint, output_dir, loader=None):
 
             imgs_pred = model(gt_imgs, objs, gt_fmaps, obj_to_img, boxes_gt=boxes_gt, test_mode=True,
                               use_gt_box=True, features=all_features)[0]
+            print(gt_imgs.shape, img_offset, boxes_gt.shape, gt_classes.shape, gt_fmaps.shape, imgs_pred.shape)
 
             imgs_gt = imagenet_deprocess_batch(gt_imgs)
             imgs_pred = imagenet_deprocess_batch(imgs_pred)
