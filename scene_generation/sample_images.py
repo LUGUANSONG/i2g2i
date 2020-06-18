@@ -92,7 +92,7 @@ def run_model(args, checkpoint, output_dir, loader=None):
         img_idx = 0
         for batch in loader:
             batch.scatter()
-            assert len(batch.imgs) == 1, "single gpu, batch should contain only one partition"
+            assert not isinstance(batch.imgs, list), "single gpu, batch should contain only one partition, so should no be a list, but a tensor directly"
             gt_imgs, img_offset, boxes_gt, gt_classes, gt_fmaps = batch[0]
             assert img_offset == 0, "single gpu, img_offset should be 0"
 
