@@ -146,8 +146,8 @@ def run_model(args, checkpoint, output_dir, loader=None):
                 image = transforms.ToPILImage()(image).convert("RGB")
                 image.save(os.path.join(img_dir, "img_pred_%d.png" % (img_idx + k)))
 
-            if args.save_gt:
-                images = imgs * torch.tensor([0.5, 0.5, 0.5], device=imgs_pred.device).reshape(1, 3, 1, 1)
+            if args.save_gt_imgs:
+                images = imgs * torch.tensor([0.5, 0.5, 0.5], device=imgs.device).reshape(1, 3, 1, 1)
                 images = images + torch.tensor([0.5, 0.5, 0.5], device=images.device).reshape(1, 3, 1, 1)
                 images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
                 images_max = images.max(3)[0].max(2)[0].max(1)[0].reshape(len(images), 1, 1, 1)
