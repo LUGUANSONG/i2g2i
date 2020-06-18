@@ -8,7 +8,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python scene_generation/train.py --d_mask_weight 0 
 --output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation_128 --num_val_samples 128
 
 
-CUDA_VISIBLE_DEVICES=2,3 python scene_generation/scripts/sample_images.py --checkpoint \
+CUDA_VISIBLE_DEVICES=2,3 python scene_generation/sample_images.py --checkpoint \
 ../detector-sg2im-checkpoints/v3/vg64_scene_generation/checkpoint_with_model.pt \
 --batch_size 4 --image_size 64,64 --num_samples 5000 --save_gt_imgs 1 --use_gt_textures 1 \
 --output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation

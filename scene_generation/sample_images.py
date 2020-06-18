@@ -93,8 +93,10 @@ def run_model(args, checkpoint, output_dir, loader=None):
         for batch in loader:
             batch.scatter()
             gt_imgs, img_offset, boxes_gt, gt_classes, gt_fmaps = batch[0]
-            imgs_gt = imagenet_deprocess_batch(gt_imgs)
+            assert img_offset.max() == 0, "single gpu, img_offset should be all 0"
+
             objs = gt_classes[:, 1]
+            obj_to_img = gt_classes[:, 0]
 
             if args.use_gt_textures:
                 all_features = None
@@ -106,9 +108,10 @@ def run_model(args, checkpoint, output_dir, loader=None):
                     feat = torch.from_numpy(obj_feature[random_index, :]).type(torch.float32).cuda()
                     all_features.append(feat)
 
-            result = model(gt_imgs, img_offset, boxes_gt, gt_classes, gt_fmaps, test_mode=True, use_gt_box=True, features=all_features)
-            imgs, imgs_pred = result.imgs, result.imgs_pred
+            imgs_pred = model(gt_imgs, objs, gt_fmaps, obj_to_img, boxes_gt=boxes_gt, test_mode=True,
+                              use_gt_box=True, features=all_features)[0]
 
+            imgs_gt = imagenet_deprocess_batch(gt_imgs)
             imgs_pred = imagenet_deprocess_batch(imgs_pred)
             for i in range(imgs_pred.size(0)):
                 img_filename = '%04d.png' % img_idx
