@@ -207,7 +207,7 @@ class Trainer(nn.Module):
         print('Saving checkpoint to ', checkpoint_path)
         torch.save(checkpoint, checkpoint_path)
 
-    def forward(self, gt_imgs, img_offset, boxes_gt, gt_classes, gt_fmaps):
+    def forward(self, gt_imgs, img_offset, boxes_gt, gt_classes, gt_fmaps, test_mode=False, use_gt_box=False, features=None):
         objs = gt_classes[:, 1]
         obj_to_img = gt_classes[:, 0] - img_offset
         # print("obj_to_img.min(), obj_to_img.max(), len(imgs) {} {} {}".format(obj_to_img.min(), obj_to_img.max(), len(imgs)))
@@ -215,7 +215,8 @@ class Trainer(nn.Module):
             "obj_to_img.min() >= 0 and obj_to_img.max() < len(gt_imgs) is not satidfied: {} {} {}" \
                 .format(obj_to_img.min(), obj_to_img.max(), len(gt_imgs))
 
-        imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong = self.model(gt_imgs, objs, gt_fmaps, obj_to_img, boxes_gt=boxes_gt)
+        imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong = self.model(gt_imgs, objs, gt_fmaps,
+                        obj_to_img, boxes_gt=boxes_gt, test_mode=test_mode, use_gt_box=use_gt_box, features=features)
 
         if not self.forward_D:
             return Result(
