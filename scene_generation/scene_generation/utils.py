@@ -96,7 +96,7 @@ class Result(object):
                  scores_fake=None, ac_loss=None, mask_loss=None, loss_mask_feat=None, g_gan_img_loss=None,
                  loss_g_gan_feat_img=None, d_obj_gan_loss=None, ac_loss_real=None, ac_loss_fake=None, fake_loss=None,
                  real_loss=None, loss_d_fake_img=None, loss_d_wrong_texture=None, loss_D_real=None,
-                 d_fake_crops=None, d_real_crops=None,
+                 d_fake_crops=None, d_real_crops=None, obj_repr=None, objs=None
                  ):
         self.__dict__.update(locals())
         del self.__dict__['self']

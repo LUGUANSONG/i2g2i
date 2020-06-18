@@ -215,12 +215,12 @@ class Trainer(nn.Module):
             "obj_to_img.min() >= 0 and obj_to_img.max() < len(gt_imgs) is not satidfied: {} {} {}" \
                 .format(obj_to_img.min(), obj_to_img.max(), len(gt_imgs))
 
-        imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong = self.model(gt_imgs, objs, gt_fmaps,
+        imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong, obj_repr = self.model(gt_imgs, objs, gt_fmaps,
                         obj_to_img, boxes_gt=boxes_gt, test_mode=test_mode, use_gt_box=use_gt_box, features=features)
 
         if not self.forward_D:
             return Result(
-                imgs=gt_imgs, imgs_pred=imgs_pred
+                imgs=gt_imgs, imgs_pred=imgs_pred, obj_repr=obj_repr, objs=objs
             )
 
         scores_fake, ac_loss, g_fake_crops = self.obj_discriminator(imgs_pred, objs, boxes_gt, obj_to_img)

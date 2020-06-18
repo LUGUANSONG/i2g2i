@@ -8,11 +8,26 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python scene_generation/train.py --d_mask_weight 0 
 --output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation_128 --num_val_samples 128
 
 
+CUDA_VISIBLE_DEVICES=0,1,2,3 python scene_generation/test.py --d_mask_weight 0 --gconv_num_layers 0 \
+--embedding_dim 4096 --batch_size 2 --num_gpus 4 --image_size 64,64 \
+--output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation --num_val_samples 5000 --restore_from_checkpoint 1
+
+
 CUDA_VISIBLE_DEVICES=2,3 python scene_generation/sample_images.py --checkpoint \
 ../detector-sg2im-checkpoints/v3/vg64_scene_generation/checkpoint_with_model.pt \
---batch_size 4 --image_size 64,64 --num_samples 5000 --save_gt_imgs 1 --use_gt_textures 1 \
---output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation
+--batch_size 4 --image_size 64,64 --num_samples 10 --save_gt_imgs 1 --use_gt_textures 1 \
+--output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation --model_mode train --test_on_train 1
 
+
+CUDA_VISIBLE_DEVICES=2 python metrics/inception_score.py ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test 1
+CUDA_VISIBLE_DEVICES=2 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test_real ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test 32
+CUDA_VISIBLE_DEVICES=3 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test_noise --use_gpu --all_pairs
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@3.136.84.139:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/v3/vg64_scene_generation/test_real \
+./vg64_scene_generation/
+
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@3.136.84.139:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/v3/vg64_scene_generation/test \
+./vg64_scene_generation/
 
 
 CUDA_VISIBLE_DEVICES=0 python combine_sg2im_neural_motifs/check_obj_wgan.py --gan_loss_type gan --n_critic 1 \

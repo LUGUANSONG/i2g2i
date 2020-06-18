@@ -5,11 +5,11 @@ import numpy as np
 import torch
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
-from torch.utils.data import DataLoader
+
+from combine_sg2im_neural_motifs.bbox_feature_dataset.bbox_feature_dataset import VG, VGDataLoader
+from torchvision import transforms
 
 from scene_generation.bilinear import crop_bbox_batch
-from scene_generation.data.coco import CocoSceneGraphDataset, coco_collate_fn
-from scene_generation.data.coco_panoptic import CocoPanopticSceneGraphDataset, coco_panoptic_collate_fn
 from scene_generation.model import Model
 from scene_generation.utils import int_tuple, bool_flag
 
@@ -25,32 +25,6 @@ parser.add_argument('--loader_num_workers', default=4, type=int)
 parser.add_argument('--num_samples', default=None, type=int)
 parser.add_argument('--object_size', default=64, type=int)
 
-# For COCO
-COCO_DIR = os.path.expanduser('~/data3/data/coco')
-parser.add_argument('--coco_image_dir', default=os.path.join(COCO_DIR, 'images/train2017'))
-parser.add_argument('--instances_json', default=os.path.join(COCO_DIR, 'annotations/instances_train2017.json'))
-parser.add_argument('--stuff_json', default=os.path.join(COCO_DIR, 'annotations/stuff_train2017.json'))
-
-
-def build_coco_dset(args, checkpoint):
-    checkpoint_args = checkpoint['args']
-    print('include other: ', checkpoint_args.get('coco_include_other'))
-    dset_kwargs = {
-        'image_dir': args.coco_image_dir,
-        'instances_json': args.instances_json,
-        'stuff_json': args.stuff_json,
-        'image_size': args.image_size,
-        'mask_size': checkpoint_args['mask_size'],
-        'max_samples': args.num_samples,
-        'min_object_size': checkpoint_args['min_object_size'],
-        'min_objects_per_image': checkpoint_args['min_objects_per_image'],
-        'instance_whitelist': checkpoint_args['instance_whitelist'],
-        'stuff_whitelist': checkpoint_args['stuff_whitelist'],
-        'include_other': checkpoint_args.get('coco_include_other', True),
-    }
-    dset = CocoSceneGraphDataset(**dset_kwargs)
-    return dset
-
 
 def build_model(args, checkpoint):
     kwargs = checkpoint['model_kwargs']
@@ -63,20 +37,6 @@ def build_model(args, checkpoint):
     model.image_size = args.image_size
     model.cuda()
     return model
-
-
-def build_loader(args, checkpoint):
-    dset = build_coco_dset(args, checkpoint)
-    collate_fn = coco_collate_fn
-
-    loader_kwargs = {
-        'batch_size': args.batch_size,
-        'num_workers': args.loader_num_workers,
-        'shuffle': args.shuffle,
-        'collate_fn': collate_fn,
-    }
-    loader = DataLoader(dset, **loader_kwargs)
-    return loader
 
 
 def cluster(features, num_objs, n_clusters, save_path):
@@ -107,7 +67,16 @@ def main(opt):
     vocab = checkpoint['model_kwargs']['vocab']
     num_objs = len(vocab['object_to_idx'])
     model = build_model(opt, checkpoint)
-    loader = build_loader(opt, checkpoint)
+    train, val, test = VG.splits(transform=transforms.Compose([
+        transforms.Resize(opt.image_size),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ]))
+    train_loader, test_loader = VGDataLoader.splits(train, test, batch_size=opt.batch_size,
+                                                    num_workers=opt.loader_num_workers,
+                                                    num_gpus=1)
+    loader = test_loader
+    print(train.ind_to_classes)
 
     save_path = os.path.dirname(opt.checkpoint)
 
@@ -122,6 +91,8 @@ def main(opt):
         for i, data in enumerate(loader):
             if counter >= max_counter:
                 break
+            # (all_imgs, all_objs, all_boxes, all_masks, all_triples,
+            #            all_obj_to_img, all_triple_to_img, all_attributes)
             imgs = data[0].cuda()
             objs = data[1]
             objs = [j.item() for j in objs]
