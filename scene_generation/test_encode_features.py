@@ -79,8 +79,9 @@ def check_model(args, loader, model, checkpoint):
             # feat = model.repr_net(model.image_encoder(crops)).cpu()
 
             result = model[batch]
-            feat = result.obj_repr
+            feat = result.obj_repr.cpu()
             objs = result.objs
+            objs = [j.item() for j in objs]
 
             for ind, label in enumerate(objs):
                 features[label] = np.append(features[label], feat[ind].view(1, -1), axis=0)
