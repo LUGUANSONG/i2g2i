@@ -87,7 +87,18 @@ def check_model(args, loader, model, checkpoint):
 
             for ind, label in enumerate(objs):
                 features[label] = np.append(features[label], feat[ind].view(1, -1), axis=0)
+
             counter += len(objs)
+
+            min_size = -1
+            for k, v in features.items():
+                if min_size == -1:
+                    min_size = v.shape[0]
+                else:
+                    min_size = min(min_size, v.shape[0])
+            print("min_size: %d" % min_size)
+            if min_size >= args.num_val_samples:
+                break
 
             # print('%d / %d images' % (i + 1, dataset_size))
         save_name = os.path.join(save_path, name + '.npy')
