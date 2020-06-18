@@ -38,10 +38,10 @@ def check_model(args, loader, model):
             imgs_pred = imagenet_deprocess_batch(imgs_pred)
             for i in range(imgs_pred.size(0)):
                 img_filename = '%04d.png' % num_samples
-                if args.save_gt_imgs:
-                    img_gt = imgs_gt[i].numpy().transpose(1, 2, 0)
-                    img_gt_path = os.path.join(gt_img_dir, img_filename)
-                    imsave(img_gt_path, img_gt)
+
+                img_gt = imgs_gt[i].numpy().transpose(1, 2, 0)
+                img_gt_path = os.path.join(gt_img_dir, img_filename)
+                imsave(img_gt_path, img_gt)
 
                 img_pred_np = imgs_pred[i].numpy().transpose(1, 2, 0)
                 img_path = os.path.join(img_dir, img_filename)
