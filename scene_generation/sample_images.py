@@ -28,6 +28,7 @@ parser.add_argument('--num_samples', default=10000, type=int)
 parser.add_argument('--save_gt_imgs', default=False, type=bool_flag)
 parser.add_argument('--use_gt_textures', default=False, type=bool_flag)
 parser.add_argument('--output_dir', default='output')
+parser.add_argument('--test_on_train', default=False, type=bool_flag)
 
 
 def build_model(args, checkpoint):
@@ -41,7 +42,6 @@ def build_model(args, checkpoint):
         model.train()
     model.image_size = args.image_size
     model.cuda()
-    model.forward_D = False
     return model
 
 
@@ -83,7 +83,10 @@ def run_model(args, checkpoint, output_dir, loader=None):
             train_loader, test_loader = VGDataLoader.splits(train, test, batch_size=args.batch_size,
                                                            num_workers=args.loader_num_workers,
                                                            num_gpus=1)
-            loader = test_loader
+            if args.test_on_train:
+                loader = train_loader
+            else:
+                loader = test_loader
             print(train.ind_to_classes)
 
         img_dir = makedir(output_dir, 'test')
