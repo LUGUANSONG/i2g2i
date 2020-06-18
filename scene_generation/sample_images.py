@@ -116,21 +116,50 @@ def run_model(args, checkpoint, output_dir, loader=None):
                               use_gt_box=True, features=all_features)[0]
             print(gt_imgs.shape, img_offset, boxes_gt.shape, gt_classes.shape, gt_fmaps.shape, imgs_pred.shape)
 
-            imgs_gt = imagenet_deprocess_batch(gt_imgs)
-            imgs_pred = imagenet_deprocess_batch(imgs_pred)
-            for i in range(imgs_pred.size(0)):
-                img_filename = '%04d.png' % img_idx
-                if args.save_gt_imgs:
-                    img_gt = imgs_gt[i].numpy().transpose(1, 2, 0)
-                    img_gt_path = os.path.join(gt_img_dir, img_filename)
-                    imsave(img_gt_path, img_gt)
+            # imgs_gt = imagenet_deprocess_batch(gt_imgs)
+            # imgs_pred = imagenet_deprocess_batch(imgs_pred)
+            # for i in range(imgs_pred.size(0)):
+            #     img_filename = '%04d.png' % img_idx
+            #     if args.save_gt_imgs:
+            #         img_gt = imgs_gt[i].numpy().transpose(1, 2, 0)
+            #         img_gt_path = os.path.join(gt_img_dir, img_filename)
+            #         imsave(img_gt_path, img_gt)
+            #
+            #     img_pred_np = imgs_pred[i].numpy().transpose(1, 2, 0)
+            #     img_path = os.path.join(img_dir, img_filename)
+            #     imsave(img_path, img_pred_np)
+            #
+            #     img_idx += 1
 
-                img_pred_np = imgs_pred[i].numpy().transpose(1, 2, 0)
-                img_path = os.path.join(img_dir, img_filename)
-                imsave(img_path, img_pred_np)
+            imgs_pred = imgs_pred.cpu()
+            imgs = imgs.cpu()
 
-                img_idx += 1
+            images = imgs_pred * torch.tensor([0.5, 0.5, 0.5], device=imgs_pred.device).reshape(1, 3, 1, 1)
+            images = images + torch.tensor([0.5, 0.5, 0.5], device=images.device).reshape(1, 3, 1, 1)
+            images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
+            images_max = images.max(3)[0].max(2)[0].max(1)[0].reshape(len(images), 1, 1, 1)
+            images = images - images_min
+            images = images / (images_max - images_min)
+            imgs_pred = images.clamp(min=0, max=1)
 
+            for k, image in enumerate(imgs_pred):
+                image = transforms.ToPILImage()(image).convert("RGB")
+                image.save(os.path.join(img_dir, "img_pred_%d.png" % (img_idx + k)))
+
+            if args.save_gt:
+                images = imgs * torch.tensor([0.5, 0.5, 0.5], device=imgs_pred.device).reshape(1, 3, 1, 1)
+                images = images + torch.tensor([0.5, 0.5, 0.5], device=images.device).reshape(1, 3, 1, 1)
+                images_min = images.min(3)[0].min(2)[0].min(1)[0].reshape(len(images), 1, 1, 1)
+                images_max = images.max(3)[0].max(2)[0].max(1)[0].reshape(len(images), 1, 1, 1)
+                images = images - images_min
+                images = images / (images_max - images_min)
+                imgs = images.clamp(min=0, max=1)
+
+                for k, image in enumerate(imgs):
+                    image = transforms.ToPILImage()(image).convert("RGB")
+                    image.save(os.path.join(gt_img_dir, "img_pred_%d.png" % (img_idx + k)))
+
+            img_idx += imgs_pred.size(0)
             print('Saved %d images' % img_idx)
             if img_idx >= args.num_samples:
                 break
