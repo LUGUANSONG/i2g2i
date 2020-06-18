@@ -34,7 +34,7 @@ class Trainer(nn.Module):
         self.forward_D = True
         self.features = None
         if not args.use_gt_textures:
-            features_path = os.path.join(args.output_dir, 'features_clustered_%03d.npy' % args.n_clusters)
+            features_path = os.path.join(args.output_dir, args.features_file_name)
             print(features_path)
             if os.path.isfile(features_path):
                 self.features = np.load(features_path, allow_pickle=True).item()
