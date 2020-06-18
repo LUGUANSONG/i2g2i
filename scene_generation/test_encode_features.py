@@ -56,58 +56,65 @@ def check_model(args, loader, model, checkpoint):
     vocab = checkpoint['model_kwargs']['vocab']
     num_objs = len(vocab['object_to_idx'])
 
-    save_path = os.path.dirname(args.output_dir)
+    save_path = args.output_dir
 
     ########### Encode features ###########
     counter = 0
     max_counter = 1000000000
-    print('begin')
-    with torch.no_grad():
-        features = {}
-        for label in range(num_objs):
-            features[label] = np.zeros((0, rep_size))
-        # for i, batch in enumerate(loader):
-        for t, batch in enumerate(tqdm(loader, desc='extract object representation', total=len(loader))):
-            if counter >= max_counter:
-                break
-            # (all_imgs, all_objs, all_boxes, all_masks, all_triples,
-            #            all_obj_to_img, all_triple_to_img, all_attributes)
-            # imgs = data[0].cuda()
-            # objs = data[1]
-            # objs = [j.item() for j in objs]
-            # boxes = data[2].cuda()
-            # obj_to_img = data[5].cuda()
-            # crops = crop_bbox_batch(imgs, boxes, obj_to_img, model.object_size)
-            # feat = model.repr_net(model.image_encoder(crops)).cpu()
+    if not args.only_clustering:
+        print('begin')
+        with torch.no_grad():
+            features = {}
+            for label in range(num_objs):
+                features[label] = np.zeros((0, rep_size))
+            # for i, batch in enumerate(loader):
+            for t, batch in enumerate(tqdm(loader, desc='extract object representation', total=len(loader))):
+                if counter >= max_counter:
+                    break
+                # (all_imgs, all_objs, all_boxes, all_masks, all_triples,
+                #            all_obj_to_img, all_triple_to_img, all_attributes)
+                # imgs = data[0].cuda()
+                # objs = data[1]
+                # objs = [j.item() for j in objs]
+                # boxes = data[2].cuda()
+                # obj_to_img = data[5].cuda()
+                # crops = crop_bbox_batch(imgs, boxes, obj_to_img, model.object_size)
+                # feat = model.repr_net(model.image_encoder(crops)).cpu()
 
-            result = model[batch]
-            feat = result.obj_repr.cpu()
-            objs = result.objs
-            objs = [j.item() for j in objs]
+                result = model[batch]
+                feat = result.obj_repr.cpu()
+                objs = result.objs
+                objs = [j.item() for j in objs]
 
-            for ind, label in enumerate(objs):
-                features[label] = np.append(features[label], feat[ind].view(1, -1), axis=0)
+                for ind, label in enumerate(objs):
+                    features[label] = np.append(features[label], feat[ind].view(1, -1), axis=0)
 
-            counter += len(objs)
+                counter += len(objs)
 
-            min_size = -1
-            for k, v in features.items():
-                if min_size == -1:
-                    min_size = v.shape[0]
-                else:
-                    min_size = min(min_size, v.shape[0])
-            print("min_size: %d" % min_size)
-            if min_size >= args.num_val_samples:
-                break
+                min_size = -1
+                max_size = -1
+                for k, v in features.items():
+                    if min_size == -1:
+                        min_size = v.shape[0]
+                    else:
+                        min_size = min(min_size, v.shape[0])
 
-            # print('%d / %d images' % (i + 1, dataset_size))
-        save_name = os.path.join(save_path, name + '.npy')
-        np.save(save_name, features)
+                    if max_size == -1:
+                        max_size = v.shape[0]
+                    else:
+                        max_size = max(max_size, v.shape[0])
+                print("min_size: %d, max_size: %d" % (min_size, max_size))
+                if args.num_val_samples > 0 and min_size >= args.num_val_samples:
+                    break
+
+                # print('%d / %d images' % (i + 1, dataset_size))
+            save_name = os.path.join(save_path, name + '.npy')
+            np.save(save_name, features)
 
     ############## Clustering ###########
     print('begin clustering')
     load_name = os.path.join(save_path, name + '.npy')
-    features = np.load(load_name).item()
+    features = np.load(load_name, allow_pickle=True).item()
     cluster(features, num_objs, 100, save_path)
     cluster(features, num_objs, 10, save_path)
     cluster(features, num_objs, 1, save_path)

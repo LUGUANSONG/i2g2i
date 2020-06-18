@@ -108,6 +108,8 @@ parser.add_argument('--checkpoint_every', default=10000, type=int)
 parser.add_argument('--output_dir', default=log_dir)
 parser.add_argument('--checkpoint_name', default='checkpoint')
 parser.add_argument('--restore_from_checkpoint', default=False, type=bool_flag)
+parser.add_argument('--n_clusters', default=1, type=int)
+parser.add_argument('--only_clustering', default=False, type=bool_flag)
 
 
 def get_args():

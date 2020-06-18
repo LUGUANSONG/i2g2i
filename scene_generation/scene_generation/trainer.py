@@ -1,5 +1,7 @@
 import os
 
+import numpy as np
+from random import randint
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,7 +14,6 @@ from scene_generation.losses import get_gan_losses, GANLoss, VGGLoss
 from scene_generation.model import Model
 from scene_generation.utils import LossManager, Result
 from lib.object_detector import gather_res
-
 
 class Trainer(nn.Module):
     def __init__(self, args, vocab, checkpoint):
@@ -31,6 +32,14 @@ class Trainer(nn.Module):
         self.init_mask_discriminator(args, checkpoint)
 
         self.forward_D = True
+        self.features = None
+        if not args.use_gt_textures:
+            features_path = os.path.join(args.output_dir, 'features_clustered_%03d.npy' % args.n_clusters)
+            print(features_path)
+            if os.path.isfile(features_path):
+                self.features = np.load(features_path, allow_pickle=True).item()
+            else:
+                raise ValueError('No features file')
 
     def init_generator(self, args, checkpoint):
         if args.restore_from_checkpoint:
@@ -215,8 +224,17 @@ class Trainer(nn.Module):
             "obj_to_img.min() >= 0 and obj_to_img.max() < len(gt_imgs) is not satidfied: {} {} {}" \
                 .format(obj_to_img.min(), obj_to_img.max(), len(gt_imgs))
 
+        if self.args.use_gt_textures:
+            all_features = None
+        else:
+            all_features = []
+            for obj_name in objs:
+                obj_feature = self.features[obj_name.item()]
+                random_index = randint(0, obj_feature.shape[0] - 1)
+                feat = torch.from_numpy(obj_feature[random_index, :]).type(torch.float32).cuda()
+                all_features.append(feat)
         imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong, obj_repr = self.model(gt_imgs, objs, gt_fmaps,
-                        obj_to_img, boxes_gt=boxes_gt, test_mode=test_mode, use_gt_box=use_gt_box, features=features)
+                        obj_to_img, boxes_gt=boxes_gt, test_mode=test_mode, use_gt_box=use_gt_box, features=all_features)
 
         if not self.forward_D:
             return Result(
