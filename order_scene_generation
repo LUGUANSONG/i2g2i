@@ -32,12 +32,11 @@ CUDA_VISIBLE_DEVICES=0,2,6,7 python scene_generation/test_noise.py --d_mask_weig
 --output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation --num_val_samples 100 --restore_from_checkpoint 1
 
 
-
-
-
 CUDA_VISIBLE_DEVICES=2 python metrics/inception_score.py ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test 1
-CUDA_VISIBLE_DEVICES=2 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test_real ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test 32
-CUDA_VISIBLE_DEVICES=2 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test_real ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test 32
+CUDA_VISIBLE_DEVICES=2 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test_real \
+../detector-sg2im-checkpoints/v3/vg64_scene_generation/test 32
+CUDA_VISIBLE_DEVICES=2 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test_real \
+../detector-sg2im-checkpoints/v3/vg64_scene_generation/test_patch 32
 
 CUDA_VISIBLE_DEVICES=3 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test_noise --use_gpu --all_pairs
 CUDA_VISIBLE_DEVICES=3 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/v3/vg64_scene_generation/test_noise_patch --use_gpu --all_pairs
