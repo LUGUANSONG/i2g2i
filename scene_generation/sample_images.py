@@ -92,8 +92,9 @@ def run_model(args, checkpoint, output_dir, loader=None):
         img_idx = 0
         for batch in loader:
             batch.scatter()
+            assert len(batch) == 1, "single gpu, batch should contain only one partition"
             gt_imgs, img_offset, boxes_gt, gt_classes, gt_fmaps = batch[0]
-            assert img_offset.max() == 0, "single gpu, img_offset should be all 0"
+            assert img_offset == 0, "single gpu, img_offset should be 0"
 
             objs = gt_classes[:, 1]
             obj_to_img = gt_classes[:, 0]
