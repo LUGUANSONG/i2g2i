@@ -112,7 +112,7 @@ parser.add_argument('--n_clusters', default=1, type=int)
 parser.add_argument('--only_clustering', default=False, type=bool_flag)
 parser.add_argument('--use_gt_textures', default=True, type=bool_flag)
 parser.add_argument('--features_file_name', default='features_clustered_001.npy')
-
+parser.add_argument('--num_diff_noise', default=10, type=int)
 
 def get_args():
     return parser.parse_args()
