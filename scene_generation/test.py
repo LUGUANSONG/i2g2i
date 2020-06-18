@@ -26,8 +26,8 @@ def check_model(args, loader, model):
     model.forward_D = False
     model.eval()
 
-    img_dir = makedir(args.output_dir, 'test')
-    gt_img_dir = makedir(args.output_dir, 'test_real')
+    img_dir = makedir(args.output_dir, 'test' if args.use_gt_textures else 'test_patch')
+    gt_img_dir = makedir(args.output_dir, 'test_real', args.save_gt_imgs)
 
     with torch.no_grad():
         for batch in loader:
@@ -39,9 +39,10 @@ def check_model(args, loader, model):
             for i in range(imgs_pred.size(0)):
                 img_filename = '%04d.png' % num_samples
 
-                img_gt = imgs_gt[i].numpy().transpose(1, 2, 0)
-                img_gt_path = os.path.join(gt_img_dir, img_filename)
-                imsave(img_gt_path, img_gt)
+                if args.save_gt_imgs:
+                    img_gt = imgs_gt[i].numpy().transpose(1, 2, 0)
+                    img_gt_path = os.path.join(gt_img_dir, img_filename)
+                    imsave(img_gt_path, img_gt)
 
                 img_pred_np = imgs_pred[i].numpy().transpose(1, 2, 0)
                 img_path = os.path.join(img_dir, img_filename)
