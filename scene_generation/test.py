@@ -49,6 +49,7 @@ def check_model(args, loader, model):
 
                 num_samples += 1
 
+            print('Saved %d images' % num_samples)
             if num_samples >= args.num_val_samples:
                 break
 
@@ -102,7 +103,7 @@ def get_checkpoint(args, vocab):
 
 def main(args):
     print(args)
-    train, val, _ = VG.splits(transform=transforms.Compose([
+    train, val, test = VG.splits(transform=transforms.Compose([
         transforms.Resize(args.image_size),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
@@ -110,7 +111,7 @@ def main(args):
     vocab = {
         'object_to_idx': {train.ind_to_classes[i]: (i - 1) for i in range(1, len(train.ind_to_classes))},
     }
-    train_loader, val_loader = VGDataLoader.splits(train, val, batch_size=args.batch_size,
+    train_loader, test_loader = VGDataLoader.splits(train, test, batch_size=args.batch_size,
                                                    num_workers=args.loader_num_workers,
                                                    num_gpus=args.num_gpus)
     print(train.ind_to_classes)
@@ -128,7 +129,7 @@ def main(args):
     print("t: %d, epoch: %d" % (t, epoch))
     with open(os.path.join(args.output_dir, "test_metrics.txt"), "a") as f:
         f.write("t: %d, epoch: %d\n\n" % (t, epoch))
-    check_model(args, val_loader, trainer)
+    check_model(args, test_loader, trainer)
 
 
 if __name__ == '__main__':
