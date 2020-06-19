@@ -114,6 +114,7 @@ def check_model(args, loader, model):
                         change_index = change_indexes[i]
                         box = boxes[change_index]
                         cls = objs[change_index]
+                        print(cls, type(cls))
                         color_style = 'special'
                         draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
 
