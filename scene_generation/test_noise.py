@@ -98,25 +98,27 @@ def check_model(args, loader, model):
                     img_path = os.path.join(this_img_dir, img_filename)
                     imsave(img_path, img_pred_np)
 
-                    # draw bbox and class
-                    image = torch.ones(3, image_size, image_size)
-                    image = transforms.ToPILImage()(image).convert("RGB")
-                    draw = ImageDraw.Draw(image)
-                    index = (obj_to_img == i).nonzero()[:, 0]
-                    for ind in index:
-                        box = boxes[ind]
-                        cls = objs[ind]
-                        color_style = 'normal'
-                        draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
+                    if args.save_layout:
+                        # draw bbox and class
+                        image = torch.ones(3, image_size, image_size)
+                        image = transforms.ToPILImage()(image).convert("RGB")
+                        draw = ImageDraw.Draw(image)
+                        index = (obj_to_img == i).nonzero()[:, 0]
+                        for ind in index:
+                            box = boxes[ind]
+                            cls = objs[ind]
+                            color_style = 'normal'
+                            draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
 
                     # draw box of changed object and save used object patch
                     if change_indexes is not None:
-                        change_index = change_indexes[i]
-                        box = boxes[change_index]
-                        cls = objs[change_index]
-                        print(cls, type(cls))
-                        color_style = 'special'
-                        draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
+                        if args.save_layout:
+                            change_index = change_indexes[i]
+                            box = boxes[change_index]
+                            cls = objs[change_index]
+                            print(cls, type(cls))
+                            color_style = 'special'
+                            draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
 
                         if args.save_crop and crops_dict is not None:
                             crop = crops_dict[cls][crop_indexes[i]]
