@@ -108,9 +108,12 @@ parser.add_argument('--checkpoint_every', default=10000, type=int)
 parser.add_argument('--output_dir', default=log_dir)
 parser.add_argument('--checkpoint_name', default='checkpoint')
 parser.add_argument('--restore_from_checkpoint', default=False, type=bool_flag)
+
 parser.add_argument('--n_clusters', default=1, type=int)
 parser.add_argument('--only_clustering', default=False, type=bool_flag)
 parser.add_argument('--not_clustering', default=False, type=bool_flag)
+parser.add_argument('--not_save_features', default=False, type=bool_flag)
+
 parser.add_argument('--use_gt_textures', default=True, type=bool_flag)
 parser.add_argument('--features_file_name', default='features_clustered_001.npy')
 parser.add_argument('--num_diff_noise', default=10, type=int)
