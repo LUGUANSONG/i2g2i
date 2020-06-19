@@ -10,7 +10,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python scene_generation/train.py --d_mask_weight 0 
 
 
 CUDA_VISIBLE_DEVICES=0,1,2,3 python scene_generation/train_encode_features.py --d_mask_weight 0 --gconv_num_layers 0 \
---embedding_dim 4096 --batch_size 2 --num_gpus 4 --image_size 64,64 \
+--embedding_dim 4096 --batch_size 4 --num_gpus 4 --image_size 64,64 \
 --output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation --num_val_samples 10 --restore_from_checkpoint 1
 
 CUDA_VISIBLE_DEVICES=0,1,2,3 python scene_generation/train_encode_features.py --d_mask_weight 0 --gconv_num_layers 0 \
@@ -28,7 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python scene_generation/test.py --d_mask_weight 0 -
 --output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation --num_val_samples 5000 --restore_from_checkpoint 1
 
 CUDA_VISIBLE_DEVICES=0,1,2,3 python scene_generation/test.py --d_mask_weight 0 --gconv_num_layers 0 \
---embedding_dim 4096 --batch_size 2 --num_gpus 4 --image_size 64,64 --use_gt_textures 0 --features_file_name features_clustered_100.npy \
+--embedding_dim 4096 --batch_size 2 --num_gpus 4 --image_size 64,64 --use_gt_textures 0 --features_file_name features.npy \
 --output_dir ../detector-sg2im-checkpoints/v3/vg64_scene_generation --num_val_samples 5000 --restore_from_checkpoint 1 \
 --save_gt_imgs 0
 

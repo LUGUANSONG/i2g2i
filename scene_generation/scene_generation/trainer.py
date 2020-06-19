@@ -256,8 +256,8 @@ class Trainer(nn.Module):
                 crop_indexes.append(random_index)
                 feat = torch.from_numpy(obj_feature[random_index, :]).type(torch.float32).cuda()
                 all_features[change_ind] = feat
-            change_indexes = torch.LongTensor(change_indexes)
-            crop_indexes = torch.LongTensor(crop_indexes)
+            change_indexes = torch.LongTensor(change_indexes).cuda()
+            crop_indexes = torch.LongTensor(crop_indexes).cuda()
 
         imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong, obj_repr, crops = self.model(gt_imgs, objs, gt_fmaps,
                         obj_to_img, boxes_gt=boxes_gt, test_mode=test_mode, use_gt_box=use_gt_box, features=all_features)
