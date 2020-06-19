@@ -67,7 +67,7 @@ def check_model(args, loader, model):
     crops_path = os.path.join(args.output_dir, args.features_file_name[:-4] + "_crops.pt")
     print(crops_path)
     if os.path.isfile(crops_path):
-        crops_dict = torch.load(crops_path, "rb")
+        crops_dict = torch.load(crops_path)
     else:
         crops_dict = None
         print('No crops file !!!!!!!!!!!!!')
