@@ -112,8 +112,8 @@ def check_model(args, loader, model):
                     # draw box of changed object and save used object patch
                     if change_indexes is not None:
                         change_index = change_indexes[i]
-                        box = boxes[change_indexes]
-                        cls = objs[change_indexes]
+                        box = boxes[change_index]
+                        cls = objs[change_index]
                         color_style = 'special'
                         draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
 
