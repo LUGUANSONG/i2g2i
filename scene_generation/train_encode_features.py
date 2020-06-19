@@ -115,7 +115,7 @@ def check_model(args, loader, model, checkpoint):
                 # print('%d / %d images' % (i + 1, dataset_size))
             save_name = os.path.join(save_path, name + '.npy')
             np.save(save_name, features)
-            pickle.dump(crops_dict, open(os.path.join(save_path, name + "_crops.pkl"), "wb"))
+            pickle.dump(crops_dict, open(os.path.join(save_path, name + "_crops.pkl"), "wb"), protocol=4)
 
     if not args.not_clustering:
         ############## Clustering ###########
