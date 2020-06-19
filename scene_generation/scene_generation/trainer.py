@@ -265,7 +265,7 @@ class Trainer(nn.Module):
         if not self.forward_D:
             return Result(
                 imgs=gt_imgs, imgs_pred=imgs_pred, obj_repr=obj_repr, objs=objs, crops=crops,
-                change_indexes=change_indexes, crop_indexes=crop_indexes
+                change_indexes=change_indexes, crop_indexes=crop_indexes, boxes=boxes_gt, obj_to_img=obj_to_img + img_offset
             )
 
         scores_fake, ac_loss, g_fake_crops = self.obj_discriminator(imgs_pred, objs, boxes_gt, obj_to_img)

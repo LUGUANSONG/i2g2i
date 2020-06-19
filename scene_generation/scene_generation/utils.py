@@ -97,7 +97,7 @@ class Result(object):
                  loss_g_gan_feat_img=None, d_obj_gan_loss=None, ac_loss_real=None, ac_loss_fake=None, fake_loss=None,
                  real_loss=None, loss_d_fake_img=None, loss_d_wrong_texture=None, loss_D_real=None,
                  d_fake_crops=None, d_real_crops=None, obj_repr=None, objs=None, crops=None,
-                 change_indexes=None, crop_indexes=None
+                 change_indexes=None, crop_indexes=None, boxes=None, obj_to_img=None
                  ):
         self.__dict__.update(locals())
         del self.__dict__['self']

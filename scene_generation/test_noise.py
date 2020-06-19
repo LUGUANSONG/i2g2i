@@ -11,6 +11,41 @@ from torchvision import transforms
 from scene_generation.trainer import Trainer
 from scene_generation.data import imagenet_deprocess_batch
 from scipy.misc import imsave
+import pickle
+from PIL import Image, ImageDraw, ImageFont
+
+
+font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', 16)
+
+
+def draw_box(draw, boxx, text_str, color_style='normal'):
+    box = tuple([float(b) for b in boxx])
+    if color_style == "special":
+        color = (255, 128, 0, 255)
+    else:
+        color = (0, 128, 0, 255)
+
+    # color = tuple([int(x) for x in cmap(cls_ind)])
+
+    # draw the fucking box
+    draw.line([(box[0], box[1]), (box[2], box[1])], fill=color, width=2)
+    draw.line([(box[2], box[1]), (box[2], box[3])], fill=color, width=2)
+    draw.line([(box[2], box[3]), (box[0], box[3])], fill=color, width=2)
+    draw.line([(box[0], box[3]), (box[0], box[1])], fill=color, width=2)
+
+    # draw.rectangle(box, outline=color)
+    w, h = draw.textsize(text_str, font=font)
+
+    x1text = box[0]
+    y1text = max(box[1] - h, 0)
+    x2text = min(x1text + w, draw.im.size[0])
+    y2text = y1text + h
+    print("drawing {}x{} rectangle at {:.1f} {:.1f} {:.1f} {:.1f}".format(
+        h, w, x1text, y1text, x2text, y2text))
+
+    draw.rectangle((x1text, y1text, x2text, y2text), fill=color)
+    draw.text((x1text, y1text), text_str, fill='black', font=font)
+    return draw
 
 
 def makedir(base, name, flag=True):
@@ -29,12 +64,30 @@ def check_model(args, loader, model):
 
     img_dir = makedir(args.output_dir, 'test_noise' if args.use_gt_textures else 'test_noise_patch')
 
+    crops_path = os.path.join(args.output_dir, args.features_file_name[:-4] + "_crops.pkl")
+    print(crops_path)
+    if os.path.isfile(crops_path):
+        crops_dict = pickle.load(open(crops_path, "rb"))
+    else:
+        crops_dict = None
+        print('No crops file !!!!!!!!!!!!!')
+
+    image_size = 256
+    use_gt_textures = args.use_gt_textures
+    args.use_gt_textures = True
     with torch.no_grad():
         for _batch in loader:
             for noise_index in range(args.num_diff_noise):
+                if noise_index > 0:
+                    args.use_gt_textures = use_gt_textures
                 batch = deepcopy(_batch)
                 result = model[batch]
                 imgs, imgs_pred = result.imgs, result.imgs_pred
+                objs = result.objs
+                change_indexes = result.change_indexes
+                crop_indexes = result.crop_indexes
+                boxes = result.boxes
+                obj_to_img = result.obj_to_img
 
                 imgs_pred = imagenet_deprocess_batch(imgs_pred)
                 for i in range(imgs_pred.size(0)):
@@ -44,6 +97,34 @@ def check_model(args, loader, model):
                     img_pred_np = imgs_pred[i].numpy().transpose(1, 2, 0)
                     img_path = os.path.join(this_img_dir, img_filename)
                     imsave(img_path, img_pred_np)
+
+                    # draw bbox and class
+                    image = torch.ones(3, image_size, image_size)
+                    image = transforms.ToPILImage()(image).convert("RGB")
+                    draw = ImageDraw.Draw(image)
+                    index = (obj_to_img == i).nonzero()[:, 0]
+                    for ind in index:
+                        box = boxes[ind]
+                        cls = objs[ind]
+                        color_style = 'normal'
+                        draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
+
+                    # draw box of changed object and save used object patch
+                    if change_indexes is not None:
+                        change_index = change_indexes[i]
+                        box = boxes[change_indexes]
+                        cls = objs[change_indexes]
+                        color_style = 'special'
+                        draw = draw_box(draw, box * image_size, loader.dataset.ind_to_classes[cls + 1], color_style)
+
+                        if args.save_crop and crops_dict is not None:
+                            crop = crops_dict[cls][crop_indexes[i]]
+                            crop = crop.numpy().transpose(1, 2, 0)
+                            crop_path = os.path.join(this_img_dir, "%04d_crop.png" % noise_index)
+                            imsave(crop_path, crop)
+
+                    if args.save_layout:
+                        image.save(os.path.join(this_img_dir, "%04d_layout.png" % noise_index))
 
             num_samples += imgs.shape[0]
             print('Saved %d images' % num_samples)
