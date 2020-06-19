@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 from tensorboardX import SummaryWriter
+import pickle
 
 from scene_generation.data import imagenet_deprocess_batch
 from scene_generation.discriminators import AcCropDiscriminator, define_mask_D, define_D
@@ -40,6 +41,13 @@ class Trainer(nn.Module):
                 self.features = np.load(features_path, allow_pickle=True).item()
             else:
                 raise ValueError('No features file')
+
+            # crops_path = os.path.join(args.output_dir, args.features_file_name[:-4] + "_crops.pkl")
+            # print(crops_path)
+            # if os.path.isfile(crops_path):
+            #     self.crops_dict = pickle.load(open(crops_path, "rb"))
+            # else:
+            #     raise ValueError('No crops file')
 
     def init_generator(self, args, checkpoint):
         if args.restore_from_checkpoint:
@@ -226,19 +234,38 @@ class Trainer(nn.Module):
 
         if self.args.use_gt_textures:
             all_features = None
+            change_indexes = None
+            crop_indexes = None
         else:
-            all_features = []
-            for obj_name in objs:
-                obj_feature = self.features[obj_name.item()]
+            # all_features = []
+            # for obj_name in objs:
+            #     obj_feature = self.features[obj_name.item()]
+            #     random_index = randint(0, obj_feature.shape[0] - 1)
+            #     feat = torch.from_numpy(obj_feature[random_index, :]).type(torch.float32).cuda()
+            #     all_features.append(feat)
+            all_features = [None] * len(objs)
+            change_indexes = []
+            crop_indexes = []
+            for ind in range(len(gt_imgs)):
+                obj_index = (obj_to_img == ind).nonzero()[:, 0]
+                change_ind = obj_index[torch.randperm(len(obj_index))[0]]
+                change_indexes.append(change_ind)
+
+                obj_feature = self.features[objs[change_ind].item()]
                 random_index = randint(0, obj_feature.shape[0] - 1)
+                crop_indexes.append(random_index)
                 feat = torch.from_numpy(obj_feature[random_index, :]).type(torch.float32).cuda()
-                all_features.append(feat)
-        imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong, obj_repr = self.model(gt_imgs, objs, gt_fmaps,
+                all_features[change_ind] = feat
+            change_indexes = torch.LongTensor(change_indexes)
+            crop_indexes = torch.LongTensor(crop_indexes)
+
+        imgs_pred, boxes_pred, masks_pred, layout, layout_pred, layout_wrong, obj_repr, crops = self.model(gt_imgs, objs, gt_fmaps,
                         obj_to_img, boxes_gt=boxes_gt, test_mode=test_mode, use_gt_box=use_gt_box, features=all_features)
 
         if not self.forward_D:
             return Result(
-                imgs=gt_imgs, imgs_pred=imgs_pred, obj_repr=obj_repr, objs=objs
+                imgs=gt_imgs, imgs_pred=imgs_pred, obj_repr=obj_repr, objs=objs, crops=crops,
+                change_indexes=change_indexes, crop_indexes=crop_indexes
             )
 
         scores_fake, ac_loss, g_fake_crops = self.obj_discriminator(imgs_pred, objs, boxes_gt, obj_to_img)

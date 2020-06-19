@@ -15,6 +15,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 from tqdm import tqdm
+import pickle
 
 
 def makedir(base, name, flag=True):
@@ -65,8 +66,10 @@ def check_model(args, loader, model, checkpoint):
         print('begin')
         with torch.no_grad():
             features = {}
+            crops_dict = {}
             for label in range(num_objs):
                 features[label] = np.zeros((0, rep_size))
+                crops_dict[label] = []
             # for i, batch in enumerate(loader):
             for t, batch in enumerate(tqdm(loader, desc='extract object representation', total=len(loader))):
                 if counter >= max_counter:
@@ -86,8 +89,10 @@ def check_model(args, loader, model, checkpoint):
                 objs = result.objs
                 objs = [j.item() for j in objs]
 
+                crops = result.crops.cpu()
                 for ind, label in enumerate(objs):
                     features[label] = np.append(features[label], feat[ind].view(1, -1), axis=0)
+                    crops_dict[label].append(crops[ind])
 
                 counter += len(objs)
 
@@ -110,14 +115,16 @@ def check_model(args, loader, model, checkpoint):
                 # print('%d / %d images' % (i + 1, dataset_size))
             save_name = os.path.join(save_path, name + '.npy')
             np.save(save_name, features)
+            pickle.dump(crops_dict, open(os.path.join(save_path, name + "_crops.pkl"), "wb"))
 
-    ############## Clustering ###########
-    print('begin clustering')
-    load_name = os.path.join(save_path, name + '.npy')
-    features = np.load(load_name, allow_pickle=True).item()
-    cluster(features, num_objs, 100, save_path)
-    cluster(features, num_objs, 10, save_path)
-    cluster(features, num_objs, 1, save_path)
+    if not args.not_clustering:
+        ############## Clustering ###########
+        print('begin clustering')
+        load_name = os.path.join(save_path, name + '.npy')
+        features = np.load(load_name, allow_pickle=True).item()
+        cluster(features, num_objs, 100, save_path)
+        cluster(features, num_objs, 10, save_path)
+        cluster(features, num_objs, 1, save_path)
 
 
 def get_checkpoint(args, vocab):

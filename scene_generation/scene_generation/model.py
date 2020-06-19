@@ -101,7 +101,7 @@ class Model(nn.Module):
         assert isinstance(self.gconv, nn.Linear), "self.gconv is not Linear, but currently we do not input scene graph"
         obj_vecs = self.gconv(gt_fmaps)
 
-        box_vecs, mask_vecs, scene_layout_vecs, wrong_layout_vecs, obj_repr = \
+        box_vecs, mask_vecs, scene_layout_vecs, wrong_layout_vecs, obj_repr, crops = \
             self.create_components_vecs(gt_imgs, boxes_gt, obj_to_img, objs, obj_vecs, features)
 
         # Generate Boxes
@@ -129,7 +129,7 @@ class Model(nn.Module):
 
             # imgs_pred = self.layout_to_image(gt_layout)
             imgs_pred = self.layout_to_image(pred_layout)
-        return imgs_pred, boxes_pred, masks_pred, gt_layout, pred_layout, wrong_layout, obj_repr
+        return imgs_pred, boxes_pred, masks_pred, gt_layout, pred_layout, wrong_layout, obj_repr, crops
 
     def scene_graph_to_vectors(self, objs, triples, attributes):
         s, p, o = triples.chunk(3, dim=1)
@@ -160,12 +160,15 @@ class Model(nn.Module):
         mask_vecs = torch.cat([mask_vecs, layout_noise], dim=1)
 
         # create encoding
+        crops = None
         if features is None:
             crops = crop_bbox_batch(imgs, boxes, obj_to_img, self.object_size)
             obj_repr = self.repr_net(self.image_encoder(crops))
         else:
             # Only in inference time
-            obj_repr = self.repr_net(mask_vecs)
+            # obj_repr = self.repr_net(mask_vecs)
+            crops = crop_bbox_batch(imgs, boxes, obj_to_img, self.object_size)
+            obj_repr = self.repr_net(self.image_encoder(crops))
             for ind, feature in enumerate(features):
                 if feature is not None:
                     obj_repr[ind, :] = feature
@@ -177,7 +180,7 @@ class Model(nn.Module):
 
         wrong_objs_rep = self.fake_pool.query(objs, obj_repr)
         wrong_layout_vecs = torch.cat([one_hot_obj, wrong_objs_rep], dim=1)
-        return box_vecs, mask_vecs, layout_vecs, wrong_layout_vecs, obj_repr
+        return box_vecs, mask_vecs, layout_vecs, wrong_layout_vecs, obj_repr, crops
 
     def encode_scene_graphs(self, scene_graphs, rand=False):
         """
