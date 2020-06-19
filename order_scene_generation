@@ -65,6 +65,9 @@ rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@3.136.84.139:/home/u
 rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@3.136.84.139:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/v3/vg64_scene_generation/test_noise_patch \
 ./vg64_scene_generation/
 
+rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' ubuntu@3.136.84.139:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/v3/vg64_scene_generation/test_noise_patch \
+./vg64_scene_generation_one_object/
+
 
 CUDA_VISIBLE_DEVICES=0 python combine_sg2im_neural_motifs/check_obj_wgan.py --gan_loss_type gan --n_critic 1 \
 --output_dir ../detector-sg2im-checkpoints/v2/cifar10_gan --image_size 32,32 --ac_loss_weight 0.1 --d_obj_weight 1 \

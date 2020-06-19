@@ -122,8 +122,8 @@ def check_model(args, loader, model, checkpoint):
             print("size of crops_dict: %dB, %.3fMB" % (byte_size, byte_size / 1024. / 1024.))
             for k, v in crops_dict.items():
                 print(k, len(v), v[0].shape if len(v) > 0 else None)
-            pickle.dump(crops_dict, open(os.path.join(save_path, name + "_crops.pkl"), "wb"), protocol=4)
-            print("finish save %s" % os.path.join(save_path, name + "_crops.pkl"))
+            torch.save(crops_dict, os.path.join(save_path, name + "_crops.pt"))
+            print("finish save %s" % os.path.join(save_path, name + "_crops.pt"))
 
     if not args.not_clustering:
         ############## Clustering ###########

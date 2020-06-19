@@ -64,10 +64,10 @@ def check_model(args, loader, model):
 
     img_dir = makedir(args.output_dir, 'test_noise' if args.use_gt_textures else 'test_noise_patch')
 
-    crops_path = os.path.join(args.output_dir, args.features_file_name[:-4] + "_crops.pkl")
+    crops_path = os.path.join(args.output_dir, args.features_file_name[:-4] + "_crops.pt")
     print(crops_path)
     if os.path.isfile(crops_path):
-        crops_dict = pickle.load(open(crops_path, "rb"))
+        crops_dict = torch.load(crops_path, "rb")
     else:
         crops_dict = None
         print('No crops file !!!!!!!!!!!!!')
