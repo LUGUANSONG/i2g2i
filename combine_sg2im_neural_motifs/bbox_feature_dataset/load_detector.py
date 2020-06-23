@@ -39,6 +39,10 @@ if conf.coco:
 else:
     train_not_flip, train_flip, val, test = VG.splits(num_val_im=conf.val_size, filter_non_overlap=False,
                                                       filter_empty_rels=False, use_proposals=conf.use_proposals)
+    print("length of train_not_flip: %d" % len(train_not_flip))
+    print("length of train_flip: %d" % len(train_flip))
+    print("length of val: %d" % len(val))
+    print("length of test: %d" % len(test))
     train_not_flip_loader, train_flip_loader, val_loader, test_loader = VGDataLoader.splits(
         train_not_flip, train_flip, val, test, batch_size=conf.batch_size,
         num_workers=conf.num_workers, num_gpus=detector_num_gpus)

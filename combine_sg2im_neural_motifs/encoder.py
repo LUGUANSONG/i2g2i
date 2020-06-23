@@ -45,6 +45,8 @@ class ImageEncoder(nn.Module):
       'padding': padding,
     }
     self.layout_noise_dim = args.layout_noise_dim
+    self.object_noise_dim = args.object_noise_dim
+    assert not (self.layout_noise_dim > 0 and self.object_noise_dim > 0), "layout noise, object noise should not be applied at the same time"
     self.cnn, D = build_cnn(**cnn_kwargs)
     for i in range(len(self.cnn)):
       if isinstance(self.cnn[i], nn.Conv2d):
@@ -54,7 +56,7 @@ class ImageEncoder(nn.Module):
 
   def forward(self, x):
     noise = self.cnn(x)
-    mu = noise[:, :self.layout_noise_dim, :, :]
-    logvar = noise[:, self.layout_noise_dim:, :, :]
+    mu = noise[:, :self.layout_noise_dim+self.object_noise_dim, :, :]
+    logvar = noise[:, self.layout_noise_dim+self.object_noise_dim:, :, :]
 
     return mu, logvar
