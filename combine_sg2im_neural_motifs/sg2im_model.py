@@ -51,6 +51,8 @@ class Sg2ImModel(nn.Module):
     self.image_size = image_size
     self.layout_noise_dim = layout_noise_dim
     self.gconv_dim = gconv_dim
+    if args.not_decrease_feature_dimension:
+      self.gconv_dim = 4096
     self.args = args
 
     # num_objs = len(vocab['object_idx_to_name'])
@@ -97,7 +99,7 @@ class Sg2ImModel(nn.Module):
     self.mask_net = None
     object_factor = 1
     if mask_size is not None and mask_size > 0:
-      self.mask_net = self._build_mask_net(gconv_dim + args.object_noise_dim * factor, mask_size)
+      self.mask_net = self._build_mask_net(self.gconv_dim + args.object_noise_dim * factor, mask_size)
       if args.object_no_noise_with_mask:
         object_factor = 0
     else:
@@ -108,7 +110,7 @@ class Sg2ImModel(nn.Module):
     # self.rel_aux_net = build_mlp(rel_aux_layers, batch_norm=mlp_normalization)
 
     refinement_kwargs = {
-      'dims': (gconv_dim + args.object_noise_dim * factor * object_factor + layout_noise_dim * factor,) + refinement_dims,
+      'dims': (self.gconv_dim + args.object_noise_dim * factor * object_factor + layout_noise_dim * factor,) + refinement_dims,
       'normalization': normalization,
       'activation': activation,
     }
