@@ -80,7 +80,8 @@ class Sg2ImModel(nn.Module):
     #     'mlp_normalization': mlp_normalization,
     #   }
     #   self.gconv_net = GraphTripleConvNet(**gconv_kwargs)
-    self.obj_fmap_net = nn.Linear(4096, gconv_dim)
+    if not args.not_decrease_feature_dimension:
+      self.obj_fmap_net = nn.Linear(4096, gconv_dim)
 
     # box_net_dim = 4
     # box_net_layers = [gconv_dim, gconv_hidden_dim, box_net_dim]
@@ -162,7 +163,10 @@ class Sg2ImModel(nn.Module):
     #   obj_vecs, pred_vecs = self.gconv(obj_vecs, pred_vecs, edges)
     # if self.gconv_net is not None:
     #   obj_vecs, pred_vecs = self.gconv_net(obj_vecs, pred_vecs, edges)
-    obj_vecs = self.obj_fmap_net(obj_fmaps)
+    if self.args.not_decrease_feature_dimension:
+      obj_vecs = obj_fmaps
+    else:
+      obj_vecs = self.obj_fmap_net(obj_fmaps)
     no_noise_obj_vecs = obj_vecs
     if self.args.object_noise_dim > 0:
       # select objs belongs to images in mask_noise_indexes
