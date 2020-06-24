@@ -299,3 +299,99 @@ rsync -avz --progress -e 'ssh -i ./guansong_aws.pem' \
 ubuntu@3.14.68.45:/home/ubuntu/scene_graph/code/detector-sg2im-checkpoints/v3/vg64_gan_img0.01_l1_1_on_noise_cls0.1_obj0.01_perceptual1/change_bbox \
 ./
 
+
+machine 6
+CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_l1_obj_gan_cls \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 0 \
+--l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 5000 --save_gt
+
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature_same_img.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_l1_obj_gan_cls \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 0 \
+--l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 100
+
+CUDA_VISIBLE_DEVICES=0 python metrics/inception_score.py ../detector-sg2im-checkpoints/v4/vg64_l1_obj_gan_cls/test 1
+CUDA_VISIBLE_DEVICES=0 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v4/vg64_l1_obj_gan_cls/test_real ../detector-sg2im-checkpoints/v4/vg64_l1_obj_gan_cls/test 32
+CUDA_VISIBLE_DEVICES=1 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/v4/vg64_l1_obj_gan_cls/test_noise --use_gpu --all_pairs
+
+
+machine 2
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_img_gan \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
+--l1_pixel_loss_weight 0 --noise_mask_ratio 0 --ac_loss_weight 0 --d_obj_weight 0 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 5000 --save_gt
+
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature_same_img.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_img_gan \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
+--l1_pixel_loss_weight 0 --noise_mask_ratio 0 --ac_loss_weight 0 --d_obj_weight 0 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 100
+
+CUDA_VISIBLE_DEVICES=0 python metrics/inception_score.py ../detector-sg2im-checkpoints/v4/vg64_img_gan/test 1
+CUDA_VISIBLE_DEVICES=0 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v4/vg64_img_gan/test_real ../detector-sg2im-checkpoints/v4/vg64_img_gan/test 32
+CUDA_VISIBLE_DEVICES=1 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/v4/vg64_img_gan/test_noise --use_gpu --all_pairs
+
+
+CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_obj_gan_cls \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 0 \
+--l1_pixel_loss_weight 0 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 5000 --save_gt
+
+CUDA_VISIBLE_DEVICES=2,3 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature_same_img.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_obj_gan_cls \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 0 \
+--l1_pixel_loss_weight 0 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 100
+
+CUDA_VISIBLE_DEVICES=2 python metrics/inception_score.py ../detector-sg2im-checkpoints/v4/vg64_obj_gan_cls/test 1
+CUDA_VISIBLE_DEVICES=2 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v4/vg64_obj_gan_cls/test_real ../detector-sg2im-checkpoints/v4/vg64_obj_gan_cls/test 32
+CUDA_VISIBLE_DEVICES=3 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/v4/vg64_obj_gan_cls/test_noise --use_gpu --all_pairs
+
+
+CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_l1 \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 0 \
+--l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0 --d_obj_weight 0 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 5000 --save_gt
+
+CUDA_VISIBLE_DEVICES=4,5 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature_same_img.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_l1 \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 0 \
+--l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0 --d_obj_weight 0 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 100
+
+CUDA_VISIBLE_DEVICES=4 python metrics/inception_score.py ../detector-sg2im-checkpoints/v4/vg64_l1/test 1
+CUDA_VISIBLE_DEVICES=4 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v4/vg64_l1/test_real ../detector-sg2im-checkpoints/v4/vg64_l1/test 32
+CUDA_VISIBLE_DEVICES=5 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/v4/vg64_l1/test_noise --use_gpu --all_pairs
+
+
+CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_img_gan_obj_gan_cls \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
+--l1_pixel_loss_weight 0 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 5000 --save_gt
+
+CUDA_VISIBLE_DEVICES=6,7 python combine_sg2im_neural_motifs/test_all_in_one_bbox_feature_same_img.py \
+-b 8 -ngpu 2 -nwork 16 \
+--output_dir ../detector-sg2im-checkpoints/v4/vg64_img_gan_obj_gan_cls \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
+--l1_pixel_loss_weight 0 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 100
+
+CUDA_VISIBLE_DEVICES=6 python metrics/inception_score.py ../detector-sg2im-checkpoints/v4/vg64_img_gan_obj_gan_cls/test 1
+CUDA_VISIBLE_DEVICES=6 python metrics/calc_fid_kid.py ../detector-sg2im-checkpoints/v4/vg64_img_gan_obj_gan_cls/test_real ../detector-sg2im-checkpoints/v4/vg64_img_gan_obj_gan_cls/test 32
+CUDA_VISIBLE_DEVICES=7 python metrics/calc_diversity.py -d ../detector-sg2im-checkpoints/v4/vg64_img_gan_obj_gan_cls/test_noise --use_gpu --all_pairs

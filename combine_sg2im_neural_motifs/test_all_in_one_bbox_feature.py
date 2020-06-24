@@ -118,6 +118,7 @@ def main(args):
                                                    num_workers=args.num_workers,
                                                    num_gpus=args.num_gpus)
     print(train.ind_to_classes)
+    print(train.ind_to_predicates)
 
     all_in_one_model = neural_motifs_sg2im_model(args, train.ind_to_classes)
     restore_path = '%s_with_model.pt' % args.checkpoint_name
