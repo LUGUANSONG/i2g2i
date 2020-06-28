@@ -295,13 +295,14 @@ class neural_motifs_sg2im_model(nn.Module):
         mask_noise_indexes = torch.randperm(imgs.shape[0])[:int(self.args.noise_mask_ratio * imgs.shape[0])].to(imgs.device)
         if len(mask_noise_indexes) == 0:
             mask_noise_indexes = None
-        if self.forward_G:
-            with timeit('generator forward', self.args.timing):
-                imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmaps, mask_noise_indexes)
 
         H, W = self.args.image_size
-        bg_layout = boxes_to_layout(torch.ones(boxes.shape[0], 3).to(imgs.device), boxes, obj_to_img, H, W)
-        bg_layout = (bg_layout <= 0).type(imgs.dtype)
+        fg_layout = boxes_to_layout(torch.ones(boxes.shape[0], 3).to(imgs.device), boxes, obj_to_img, H, W)
+        bg_layout = (fg_layout <= 0).type(imgs.dtype)
+
+        if self.forward_G:
+            with timeit('generator forward', self.args.timing):
+                imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmaps, mask_noise_indexes, bg_layout)
 
         layout = layout.detach()
         if self.args.condition_d_img_on_class_label_map:

@@ -132,7 +132,7 @@ class Sg2ImModel(nn.Module):
 
   # def forward(self, objs, triples, obj_to_img=None,
   #             boxes_gt=None, masks_gt=None):
-  def forward(self, obj_to_img, boxes_gt, obj_fmaps, mask_noise_indexes=None, masks_gt=None):
+  def forward(self, obj_to_img, boxes_gt, obj_fmaps, mask_noise_indexes=None, masks_gt=None, bg_layout=None):
     """
     Required Inputs:
     - objs: LongTensor of shape (O,) giving categories for all objects
@@ -232,6 +232,9 @@ class Sg2ImModel(nn.Module):
       noise_std = torch.zeros(noise_shape, dtype=layout.dtype,
                                  device=layout.device).fill_(self.args.noise_std)
       layout_noise = torch.normal(mean=0.0, std=noise_std)
+      if self.args.layout_noise_only_on_foreground:
+        layout_noise *= (1 - bg_layout[:, :1, :, :].repeat(1, self.layout_noise_dim, 1, 1))
+
       if mask_noise_indexes is not None and self.training:
         layout_noise[mask_noise_indexes] = 0.
       # layout_noise = torch.randn(noise_shape, dtype=layout.dtype,
