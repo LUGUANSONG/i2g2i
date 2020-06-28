@@ -302,7 +302,7 @@ class neural_motifs_sg2im_model(nn.Module):
 
         if self.forward_G:
             with timeit('generator forward', self.args.timing):
-                imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmaps, mask_noise_indexes, bg_layout)
+                imgs_pred, layout = self.model(obj_to_img, boxes, obj_fmaps, mask_noise_indexes, bg_layout=bg_layout)
 
         layout = layout.detach()
         if self.args.condition_d_img_on_class_label_map:
