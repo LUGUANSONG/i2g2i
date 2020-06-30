@@ -1,4 +1,4 @@
-exclude: [README.md, LICENSE.md]
+exclude: [README_neural_motifs.md, LICENSE.md]
 
 defaults:
   - values:

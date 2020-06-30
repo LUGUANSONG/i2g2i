@@ -17,7 +17,7 @@ def stanford_path(fn):
 # =============================================================================
 # Update these with where your data is stored ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-VG_IMAGES = '/newNAS/Workspaces/UCGroup/gslu/aws_ailab/datasets/vg/VG_100K'
+VG_IMAGES = '/home/ubuntu/scene_graph/datasets/vg/VG_100K'
 RCNN_CHECKPOINT_FN = path('faster_rcnn_500k.h5')
 
 IM_DATA_FN = stanford_path('image_data.json')
@@ -25,7 +25,7 @@ VG_SGG_FN = stanford_path('VG-SGG.h5')
 VG_SGG_DICT_FN = stanford_path('VG-SGG-dicts.json')
 PROPOSAL_FN = stanford_path('proposals.h5')
 
-COCO_PATH = '/home/rowan/datasets/mscoco'
+COCO_PATH = '/home/ubuntu/scene_graph/code/data/coco'
 # =============================================================================
 # =============================================================================
 
