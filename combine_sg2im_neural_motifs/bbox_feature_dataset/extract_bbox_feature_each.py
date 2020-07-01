@@ -4,13 +4,16 @@ import torch
 import os
 from os.path import join, dirname
 import pickle
-from config import VG_IMAGES
+from config import VG_IMAGES, COCO_PATH
 
 
 args = load_detector.conf
 
 # save_path = "./data/"
-save_path = dirname(VG_IMAGES)
+if args.coco:
+    save_path = COCO_PATH
+else:
+    save_path = dirname(VG_IMAGES)
 global_index = 0
 
 def get_bbox_feature(loader, str, save_path):
@@ -65,6 +68,10 @@ get_bbox_feature(load_detector.train_not_flip_loader, "Train Not Flip Loader", j
 get_bbox_feature(load_detector.train_flip_loader, "Train Flip Loader", join(save_path, "train"))
 print("finish train dataset")
 
-global_index = 0
-get_bbox_feature(load_detector.test_loader, "Test Loader", join(save_path, "test"))
-print("finish test dataset")
+if args.coco:
+    os.system("cp -r %s %s" % (join(save_path, "val"), join(save_path, "test")))
+    print("finish copy val to test dataset")
+else:
+    global_index = 0
+    get_bbox_feature(load_detector.test_loader, "Test Loader", join(save_path, "test"))
+    print("finish test dataset")

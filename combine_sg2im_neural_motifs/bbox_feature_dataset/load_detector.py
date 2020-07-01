@@ -31,10 +31,14 @@ if conf.num_gpus > 1:
     detector_num_gpus = conf.num_gpus - 1
 
 if conf.coco:
-    train, val = CocoDetection.splits()
-    val.ids = val.ids[:conf.val_size]
-    train.ids = train.ids
-    train_loader, val_loader = CocoDataLoader.splits(train, val, batch_size=conf.batch_size,
+    train_not_flip, train_flip, val = CocoDetection.splits()
+    # val.ids = val.ids[:conf.val_size]
+    # train.ids = train.ids
+    print("length of train_not_flip: %d" % len(train_not_flip))
+    print("length of train_flip: %d" % len(train_flip))
+    print("length of val: %d" % len(val))
+    train_not_flip_loader, train_flip_loader, val_loader = \
+        CocoDataLoader.splits(train_not_flip, train_flip, val, batch_size=conf.batch_size,
                                                      num_workers=conf.num_workers,
                                                      num_gpus=detector_num_gpus)
 else:
