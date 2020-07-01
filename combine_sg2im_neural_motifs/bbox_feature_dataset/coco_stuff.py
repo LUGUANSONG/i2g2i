@@ -42,7 +42,8 @@ class CocoDetection(Dataset):
                normalize_images=True, max_samples=None,
                include_relationships=True, min_object_size=0.02,
                min_objects_per_image=3, max_objects_per_image=8,
-               include_other=False, instance_whitelist=None, stuff_whitelist=None):
+               include_other=False, instance_whitelist=None, stuff_whitelist=None,
+               flip=-1):
     """
     A PyTorch Dataset for loading Coco and Coco-Stuff annotations and converting
     them to scene graphs on the fly.
@@ -78,6 +79,7 @@ class CocoDetection(Dataset):
     """
     super(Dataset, self).__init__()
     self.mode = mode
+    self.flip = flip
 
     image_dir = join(COCO_PATH, "images", "%s2017" % mode)
     instances_json = join(COCO_PATH, "annotations", "instances_%s2017.json" % mode)
@@ -95,18 +97,18 @@ class CocoDetection(Dataset):
     self.set_image_size(image_size)
 
     tform = []
-    if self.is_train:
-      tform.append(RandomOrder([
-        Grayscale(),
-        Brightness(),
-        Contrast(),
-        Sharpness(),
-        Hue(),
-      ]))
+    # if self.is_train:
+    #   tform.append(RandomOrder([
+    #     Grayscale(),
+    #     Brightness(),
+    #     Contrast(),
+    #     Sharpness(),
+    #     Hue(),
+    #   ]))
 
     tform += [
-      SquarePad(),
-      Resize(IM_SCALE),
+      # SquarePad(),
+      Resize((IM_SCALE, IM_SCALE)),
       ToTensor(),
       Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
@@ -437,9 +439,10 @@ class CocoDetection(Dataset):
   @classmethod
   def splits(cls, *args, **kwargs):
       """ Helper method to generate splits of the dataset"""
-      train = cls('train', *args, **kwargs)
+      train_not_flip = cls('train', flip=0, *args, **kwargs)
+      train_flip = cls('train', flip=1, *args, **kwargs)
       val = cls('val', *args, **kwargs)
-      return train, val
+      return train_not_flip, train_flip, val
 
   def __len__(self):
       return len(self.ids)
@@ -467,16 +470,26 @@ class CocoDataLoader(torch.utils.data.DataLoader):
     #             yield x.cuda(async=True)
 
     @classmethod
-    def splits(cls, train_data, val_data, batch_size=3, num_workers=1, num_gpus=3, **kwargs):
-        train_load = cls(
-            dataset=train_data,
+    def splits(cls, train_not_flip_data, train_flip_data, val_data, batch_size=3, num_workers=1, num_gpus=3, **kwargs):
+        train_not_flip_load = cls(
+            dataset=train_not_flip_data,
             batch_size=batch_size*num_gpus,
-            shuffle=True,
+            shuffle=False,
             num_workers=num_workers,
             collate_fn=lambda x: coco_collate(x, num_gpus=num_gpus, is_train=True),
             drop_last=True,
             # pin_memory=True,
             **kwargs,
+        )
+        train_flip_load = cls(
+          dataset=train_flip_data,
+          batch_size=batch_size * num_gpus,
+          shuffle=False,
+          num_workers=num_workers,
+          collate_fn=lambda x: coco_collate(x, num_gpus=num_gpus, is_train=True),
+          drop_last=True,
+          # pin_memory=True,
+          **kwargs,
         )
         val_load = cls(
             dataset=val_data,
@@ -488,7 +501,7 @@ class CocoDataLoader(torch.utils.data.DataLoader):
             # pin_memory=True,
             **kwargs,
         )
-        return train_load, val_load
+        return train_not_flip_load, train_flip_load, val_load
 
 
 if __name__ == '__main__':
