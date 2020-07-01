@@ -384,28 +384,21 @@ class CocoDetection(Dataset):
     # triples = torch.LongTensor(triples)
     # return image, objs, boxes, masks, triples
 
-    # # Rescale so that the boxes are at BOX_SCALE
-    # if self.is_train:
-    #   image_unpadded, gt_boxes = random_crop(image_unpadded,
-    #                                          gt_boxes * BOX_SCALE / max(image_unpadded.size),
-    #                                          BOX_SCALE,
-    #                                          round_boxes=False,
-    #                                          )
-    # else:
-    #   # Seems a bit silly because we won't be using GT boxes then but whatever
-    #   gt_boxes = gt_boxes * BOX_SCALE / max(image_unpadded.size)
-    gt_boxes = gt_boxes * BOX_SCALE / max(image_unpadded.size)
+    # Rescale so that the boxes are at BOX_SCALE
+    if self.is_train:
+      image_unpadded, gt_boxes = random_crop(image_unpadded,
+                                             gt_boxes * BOX_SCALE / max(image_unpadded.size),
+                                             BOX_SCALE,
+                                             round_boxes=False,
+                                             )
+    else:
+      # Seems a bit silly because we won't be using GT boxes then but whatever
+      gt_boxes = gt_boxes * BOX_SCALE / max(image_unpadded.size)
     w, h = image_unpadded.size
     box_scale_factor = BOX_SCALE / max(w, h)
 
     # Optionally flip the image if we're doing training
-    # flipped = self.is_train and np.random.random() > 0.5
-    if self.flip == -1:
-      flipped = self.is_train and np.random.random() > 0.5
-    elif self.flip == 0:
-      flipped = False
-    else:
-      flipped = True
+    flipped = self.is_train and np.random.random() > 0.5
     if flipped:
       scaled_w = int(box_scale_factor * float(w))
       image_unpadded = image_unpadded.transpose(PIL.Image.FLIP_LEFT_RIGHT)
