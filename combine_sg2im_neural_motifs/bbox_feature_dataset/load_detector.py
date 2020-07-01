@@ -2,7 +2,7 @@
 Training script 4 Detection
 """
 # from mscoco import CocoDetection, CocoDataLoader
-from coco_stuff import CocoDetection, CocoDataLoader
+from coco_stuff_extract_bbox_feature import CocoDetection, CocoDataLoader
 from visual_genome import VGDataLoader, VG
 from lib.object_detector import ObjectDetector
 import numpy as np

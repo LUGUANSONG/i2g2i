@@ -17,12 +17,14 @@ from torchvision.transforms import Resize, Compose, ToTensor, Normalize
 from .bbox_feature_blob import Blob
 from lib.fpn.box_intersections_cpu.bbox import bbox_overlaps
 from config import VG_IMAGES, IM_DATA_FN, VG_SGG_FN, VG_SGG_DICT_FN, BOX_SCALE, IM_SCALE, PROPOSAL_FN
+from config import COCO_PATH
 from collections import defaultdict
 import pickle
 import time
 import gc
 
 
+# I make it compatible with coco-stuff dataset but donot modify the name as to be compatible with original orders
 class VG(Dataset):
     def __init__(self, mode, transform, args=None, dict_file=VG_SGG_DICT_FN):
         """
@@ -46,7 +48,10 @@ class VG(Dataset):
         self.mode = mode
         self.args = args
 
-        pickle_files_dir = join(dirname(VG_IMAGES), mode)
+        if args.coco:
+            pickle_files_dir = join(COCO_PATH, mode)
+        else:
+            pickle_files_dir = join(dirname(VG_IMAGES), mode)
         pickle_files = list(filter(lambda x: x.endswith(".pkl"), os.listdir(pickle_files_dir)))
         self.pickle_files = [join(pickle_files_dir, file) for file in pickle_files]
         print("number of samples under %s: %d" % (pickle_files_dir, len(self.pickle_files)))
@@ -66,7 +71,41 @@ class VG(Dataset):
         # self.fmaps = pickle_file['fmap']
         # self.gt_boxes = pickle_file['bbox']
 
-        self.ind_to_classes, self.ind_to_predicates = load_info(dict_file)
+        if args.coco:
+            image_dir = join(COCO_PATH, "images", "%s2017" % mode)
+            instances_json = join(COCO_PATH, "annotations", "instances_%s2017.json" % mode)
+            stuff_json = join(COCO_PATH, "annotations", "stuff_%s2017.json" % mode)
+            with open(instances_json, 'r') as f:
+                instances_data = json.load(f)
+            with open(stuff_json, 'r') as f:
+                stuff_data = json.load(f)
+
+            self.vocab = {
+                'object_name_to_idx': {}
+            }
+            for category_data in instances_data['categories']:
+                category_id = category_data['id']
+                category_name = category_data['name']
+                self.vocab['object_name_to_idx'][category_name] = category_id
+            for category_data in stuff_data['categories']:
+                category_name = category_data['name']
+                category_id = category_data['id']
+                self.vocab['object_name_to_idx'][category_name] = category_id
+
+            # COCO category labels start at 1, so use 0 for __image__
+            self.vocab['object_name_to_idx']['__image__'] = 0
+
+            # Build object_idx_to_name
+            name_to_idx = self.vocab['object_name_to_idx']
+            assert len(name_to_idx) == len(set(name_to_idx.values()))
+            max_object_idx = max(name_to_idx.values())
+            idx_to_name = ['NONE'] * (1 + max_object_idx)
+            for name, idx in self.vocab['object_name_to_idx'].items():
+                idx_to_name[idx] = name
+            self.vocab['object_idx_to_name'] = idx_to_name
+            self.ind_to_classes = self.vocab['object_idx_to_name']
+        else:
+            self.ind_to_classes, self.ind_to_predicates = load_info(dict_file)
 
         # tform = [
         #     # SquarePad(),

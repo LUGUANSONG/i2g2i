@@ -241,6 +241,8 @@ class CocoDetection(Dataset):
     for idx, name in enumerate(self.vocab['pred_idx_to_name']):
       self.vocab['pred_name_to_idx'][name] = idx
 
+    self.ind_to_classes = self.vocab['object_idx_to_name']
+
   def __len__(self):
     if self.max_samples is None:
       return len(self.ids)

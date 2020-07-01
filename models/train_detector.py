@@ -2,7 +2,7 @@
 Training script 4 Detection
 """
 # from dataloaders.mscoco import CocoDetection, CocoDataLoader
-from dataloaders.coco_stuff import CocoDetection, CocoDataLoader
+from dataloaders.coco_stuff_detection import CocoDetection, CocoDataLoader
 from dataloaders.visual_genome import VGDataLoader, VG
 from lib.object_detector import ObjectDetector
 import numpy as np
