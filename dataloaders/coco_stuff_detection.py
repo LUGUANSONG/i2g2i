@@ -241,6 +241,7 @@ class CocoDetection(Dataset):
 
     # for object detection model to get number of class
     self.ind_to_classes = self.vocab['object_idx_to_name']
+    self.ind_to_id = {i:i for i in range(len(self.ind_to_classes))}
 
   def __len__(self):
     if self.max_samples is None:

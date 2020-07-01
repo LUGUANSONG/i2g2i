@@ -209,6 +209,7 @@ def val_batch(batch_num, b):
 
 print("Training starts now!")
 for epoch in range(start_epoch + 1, start_epoch + 1 + conf.num_epochs):
+    mAp = val_epoch()
     rez = train_epoch(epoch)
     print("overall{:2d}: ({:.3f})\n{}".format(epoch, rez.mean(1)['total'], rez.mean(1)), flush=True)
     mAp = val_epoch()
