@@ -31,7 +31,7 @@ import pycocotools.mask as mask_utils
 from config import COCO_PATH, IM_SCALE, BOX_SCALE
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize
 from dataloaders.image_transforms import SquarePad, Grayscale, Brightness, Sharpness, Contrast, RandomOrder, Hue, random_crop
-from blob import Blob
+from dataloaders.blob import Blob
 from lib.fpn.anchor_targets import anchor_target_layer
 
 
