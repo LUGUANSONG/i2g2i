@@ -174,6 +174,7 @@ parser.add_argument('--e_img_arch',
                     default='C3-64-1,C3-32-1')
 parser.add_argument('--kl_loss_weight', default=0.01, type=float)
 parser.add_argument('--z_random_rec_loss_weight', default=0.5, type=float)
+parser.add_argument('--z_random_rec_train_encoder', default=False, type=bool_flag)
 parser.add_argument('--crops_encoded_rec_loss_weight', default=10., type=float)
 parser.add_argument('--imgs_encoded_rec_loss_weight', default=10., type=float)
 

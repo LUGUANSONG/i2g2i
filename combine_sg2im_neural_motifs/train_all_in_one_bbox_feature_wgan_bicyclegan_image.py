@@ -324,6 +324,8 @@ def main(args):
         all_in_one_model.optimizer_e_img.zero_grad()
         z_random_rec_loss.backward()
         all_in_one_model.optimizer.step()
+        if args.z_random_rec_train_encoder:
+            all_in_one_model.optimizer_e_img.step()
 
         total_loss = add_loss(total_loss, z_random_rec_loss, losses, 'z_random_rec_loss', 1.)
         losses['total_loss'] = total_loss.item()
