@@ -98,8 +98,7 @@ def train_batch(b):
 
     :return:
     """
-    with timeit("detector forward"):
-        result = detector[b]
+    result = detector[b]
     scores = result.od_obj_dists
     box_deltas = result.od_box_deltas
     labels = result.od_obj_labels
