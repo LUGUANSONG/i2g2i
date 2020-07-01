@@ -92,7 +92,7 @@ class CocoDetection(Dataset):
     self.max_samples = max_samples
     self.normalize_images = normalize_images
     self.include_relationships = include_relationships
-    self.set_image_size(image_size)
+    # self.set_image_size(image_size)
 
     tform = []
     if self.is_train:
