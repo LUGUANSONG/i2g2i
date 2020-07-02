@@ -171,6 +171,8 @@ class ModelConfig(object):
         parser.add_argument('-lr', dest='lr', help='learning rate', type=float, default=1e-3)
 
         parser.add_argument('-b', dest='batch_size', help='batch size per GPU',type=int, default=2)
+        parser.add_argument('-train_size', dest='train_size', help='train size to use (if -1 we use all)', type=int,
+                            default=-1)
         parser.add_argument('-val_size', dest='val_size', help='val size to use (if 0 we wont use val)', type=int, default=5000)
 
         parser.add_argument('-l2', dest='l2', help='weight decay', type=float, default=1e-4)

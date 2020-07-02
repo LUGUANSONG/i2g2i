@@ -27,7 +27,8 @@ conf = ModelConfig()
 if conf.coco:
     train, val = CocoDetection.splits()
     val.ids = val.ids[:conf.val_size]
-    train.ids = train.ids
+    if conf.train_size >= 0:
+        train.ids = train.ids[:conf.train_size]
     train_loader, val_loader = CocoDataLoader.splits(train, val, batch_size=conf.batch_size,
                                                      num_workers=conf.num_workers,
                                                      num_gpus=conf.num_gpus)
