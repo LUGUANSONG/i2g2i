@@ -174,6 +174,7 @@ def val_epoch():
         return 0.0
 
     val_coco = val.coco
+    # here I just comment out the assertion, TODO
     coco_dt = val_coco.loadRes(vr)
     coco_eval = COCOeval(val_coco, coco_dt, 'bbox')
     coco_eval.params.imgIds = val.ids if conf.coco else [x for x in range(len(val))]

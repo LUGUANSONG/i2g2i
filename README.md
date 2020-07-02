@@ -22,4 +22,9 @@ you can search the order of it for training in one of `order` `order_2` ... with
 
 The order for testing can be found in one of `test_orders` `test_order2` ...
 
- 
+# COCO-stuff
+For COCO-Stuff, you need to download the coco 2017 data from the official website.
+
+I write code to train a faster rcnn model for object detection and also
+code for training a generative model on COCO-stuff.
+Be careful about these code if you use it.

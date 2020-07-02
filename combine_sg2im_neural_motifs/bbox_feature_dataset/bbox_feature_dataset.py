@@ -48,7 +48,7 @@ class VG(Dataset):
         self.mode = mode
         self.args = args
 
-        if args.coco:
+        if args is not None and args.coco:
             pickle_files_dir = join(COCO_PATH, mode)
         else:
             pickle_files_dir = join(dirname(VG_IMAGES), mode)

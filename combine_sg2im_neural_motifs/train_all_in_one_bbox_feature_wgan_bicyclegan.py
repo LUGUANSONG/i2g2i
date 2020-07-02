@@ -167,7 +167,7 @@ def main(args):
                                     transforms.Resize(args.image_size),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                              ]))
+                              ]), args=args)
     train_loader, val_loader = VGDataLoader.splits(train, val, batch_size=args.batch_size,
                                                    num_workers=args.num_workers,
                                                    num_gpus=args.num_gpus)

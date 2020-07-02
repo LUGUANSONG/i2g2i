@@ -3,3 +3,12 @@ CUDA_VISIBLE_DEVICES=6 python models/train_detector.py -b 6 -lr 1e-3 -save_dir c
 -ngpu 1 -nwork 3 -p 100 -clip 5 -coco -train_size 6000
 
 python combine_sg2im_neural_motifs/bbox_feature_dataset/extract_bbox_feature_each.py -coco -ckpt vg-faster-rcnn.tar
+
+
+CUDA_VISIBLE_DEVICES=0,1 python combine_sg2im_neural_motifs/train_all_in_one_bbox_feature_wgan.py \
+-b 8 -ngpu 2 -nwork 16 -coco \
+--output_dir ../detector-sg2im-checkpoints/v3/coco64_gan_img0.01_l1_1_on_noise_cls0.1_obj0.01 \
+--image_size 64,64 --gan_loss_type gan --discriminator_loss_weight 0.01 --d_img_weight 1 \
+--l1_pixel_loss_weight 1 --noise_mask_ratio 0 --ac_loss_weight 0.1 --d_obj_weight 1 \
+--print_every 100 --checkpoint_every 10000 --num_val_samples 128 --restore_from_checkpoint 1
+
