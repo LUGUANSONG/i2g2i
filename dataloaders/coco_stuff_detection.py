@@ -33,6 +33,7 @@ from torchvision.transforms import Resize, Compose, ToTensor, Normalize
 from dataloaders.image_transforms import SquarePad, Grayscale, Brightness, Sharpness, Contrast, RandomOrder, Hue, random_crop
 from dataloaders.blob import Blob
 from lib.fpn.anchor_targets import anchor_target_layer
+from pycocotools.coco import COCO
 
 
 class CocoDetection(Dataset):
@@ -247,6 +248,50 @@ class CocoDetection(Dataset):
     if self.max_samples is None:
       return len(self.ids)
     return min(len(self.ids), self.max_samples)
+
+  @property
+  def coco(self):
+    """
+    :return: a Coco-like object that we can use to evaluate detection!
+    """
+    anns = []
+
+    for index in range(self.__len__()):
+      image_id = self.ids[index]
+      # H, W = self.image_size
+      objs, boxes, masks = [], [], []
+      for object_data in self.image_id_to_objects[image_id]:
+        objs.append(object_data['category_id'])
+        x, y, w, h = object_data['bbox']
+        x0 = x
+        y0 = y
+        x1 = (x + w)
+        y1 = (y + h)
+        boxes.append([x0, y0, x1, y1])
+
+
+    # for i, (cls_array, box_array) in enumerate(zip(self.gt_classes, self.gt_boxes)):
+    #   for cls, box in zip(cls_array.tolist(), box_array.tolist()):
+      for cls, box in zip(objs, boxes):
+        anns.append({
+          'area': (box[3] - box[1] + 1) * (box[2] - box[0] + 1),
+          'bbox': [box[0], box[1], box[2] - box[0] + 1, box[3] - box[1] + 1],
+          'category_id': cls,
+          'id': len(anns),
+          # 'image_id': i,
+          'image_id': index,
+          'iscrowd': 0,
+        })
+    fauxcoco = COCO()
+    fauxcoco.dataset = {
+      'info': {'description': 'ayy lmao'},
+      'images': [{'id': i} for i in range(self.__len__())],
+      'categories': [{'supercategory': 'person',
+                      'id': i, 'name': name} for i, name in enumerate(self.ind_to_classes) if name != '__image__'],
+      'annotations': anns,
+    }
+    fauxcoco.createIndex()
+    return fauxcoco
 
   def __getitem__(self, index):
     """
