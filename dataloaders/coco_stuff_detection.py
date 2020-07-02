@@ -279,7 +279,7 @@ class CocoDetection(Dataset):
           'category_id': cls,
           'id': len(anns),
           # 'image_id': i,
-          'image_id': index,
+          'image_id': image_id,
           'iscrowd': 0,
         })
     fauxcoco = COCO()
